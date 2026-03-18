@@ -21,6 +21,14 @@ export interface BlackboardEntry {
   content: string;
   tokenCount: number;
   version: number;
+  // Actor-specific metadata (optional)
+  metadata?: {
+    characterCardFor?: string;  // agentId — marks entry as a character card for this actor
+    dialogueFor?: string;       // sceneId — marks entry as dialogue for this scene
+    unverifiedFacts?: boolean;  // hallucination flag from actor generation
+    unverifiedClaims?: string[]; // specific claims flagged as unverified
+    voiceConstraints?: boolean; // true if this entry stores voice constraints in procedural layer
+  };
 }
 
 // === Write request/response ===
@@ -152,4 +160,5 @@ export interface AuditLogEntry {
   entryContentHash?: string; // SHA-256 of entry content
   role?: AgentRole;
   violationType?: ViolationType;
+  metadata?: Record<string, unknown>; // actor-specific tracking
 }
