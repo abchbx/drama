@@ -3,17 +3,21 @@ import request from 'supertest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import jwt from 'jsonwebtoken';
 
 import express = require('express');
-import { blackboardRouter, setAuditLog as setBlackboardAuditLog } from '../src/routes/blackboard.js';
+import { blackboardRouter, setAuditLog as setBlackboardAuditLog, setSnapshotService, setCapabilityService as setBlackboardCapabilityService } from '../src/routes/blackboard.js';
 import { auditRouter, setAuditLog as setAuditRouterAuditLog } from '../src/routes/audit.js';
 import { healthRouter } from '../src/routes/health.js';
 import { BlackboardService } from '../src/services/blackboard.js';
 import { SnapshotService } from '../src/services/snapshot.js';
 import { AuditLogService } from '../src/services/auditLog.js';
-import { setSnapshotService } from '../src/routes/blackboard.js';
+import { createCapabilityService } from '../src/services/capability.js';
 
-// Helper: create a fully wired app for testing
+// Load env vars so createCapabilityService works in tests
+import 'dotenv/config';
+
+// Helper: create a fully wired app for testing with capability service
 function createTestApp(dataDir: string) {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
@@ -21,19 +25,30 @@ function createTestApp(dataDir: string) {
   const snapshotService = new SnapshotService(dataDir);
   const auditLogService = new AuditLogService(dataDir);
   const blackboardService = new BlackboardService(snapshotService.tryRestore());
+  const capabilityService = createCapabilityService();
 
   setBlackboardAuditLog(auditLogService);
   setAuditRouterAuditLog(auditLogService);
   setSnapshotService(snapshotService);
+  setBlackboardCapabilityService(capabilityService);
 
-  // Wire blackboard service into app.locals so routes can access it
   app.locals.blackboard = blackboardService;
+  app.locals.capabilityService = capabilityService;
 
   app.use('/blackboard/audit', auditRouter);
   app.use('/blackboard', blackboardRouter);
   app.use('/health', healthRouter);
 
-  return { app, snapshotService, auditLogService, blackboardService };
+  return { app, snapshotService, auditLogService, blackboardService, capabilityService };
+}
+
+// Issue a test JWT for a given agentId and role
+function issueToken(capabilityService: ReturnType<typeof createCapabilityService>, agentId: string, role: string): string {
+  return jwt.sign(
+    { agentId, role },
+    capabilityService.jwtSecret,
+    { expiresIn: '1h', algorithm: 'HS256' } as jwt.SignOptions,
+  );
 }
 
 describe('Blackboard REST API — Phase 1 Success Criteria', () => {
@@ -41,28 +56,30 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
   let base: ReturnType<typeof request.Supertest.prototype>;
   let snapshotService: SnapshotService;
   let auditLogPath: string;
+  let capabilityService: ReturnType<typeof createCapabilityService>;
 
   beforeEach(() => {
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blackboard-test-'));
-    const { app, snapshotService: ss } = createTestApp(dataDir);
-    base = request(app);
-    snapshotService = ss;
+    const result = createTestApp(dataDir);
+    base = request(result.app);
+    snapshotService = result.snapshotService;
+    capabilityService = result.capabilityService;
     auditLogPath = path.join(dataDir, `audit-${new Date().toISOString().slice(0, 10)}.jsonl`);
   });
 
   afterEach(() => {
-    // Stop timer and clean up
     try { snapshotService.stopTimer(); } catch {}
     try { fs.rmSync(dataDir, { recursive: true }); } catch {}
   });
 
   // ─── SC1: Write-read roundtrip ────────────────────────────────────────────
   it('SC1: write then read returns the same entry', async () => {
+    const token = issueToken(capabilityService, 'test-agent', 'Director');
     const payload = { content: 'Hello world from test agent', messageId: 'msg-001' };
 
     const postRes = await base
       .post('/blackboard/layers/core/entries')
-      .set('X-Agent-ID', 'test-agent')
+      .set('Authorization', `Bearer ${token}`)
       .send(payload)
       .expect(201);
 
@@ -74,6 +91,7 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
 
     const getRes = await base
       .get(`/blackboard/layers/core/entries/${postRes.body.entry.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(getRes.body.entry.content).toBe(payload.content);
@@ -82,12 +100,12 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
 
   // ─── SC2: Token budget enforcement ────────────────────────────────────────
   it('SC2: write exceeding layer budget returns 413', async () => {
-    // Core layer: 2000 tokens. 'word ' is ~1 token, so 2500 words ≈ 2500 tokens.
+    const token = issueToken(capabilityService, 'test-agent', 'Director');
     const largeContent = 'word '.repeat(2500);
 
     const res = await base
       .post('/blackboard/layers/core/entries')
-      .set('X-Agent-ID', 'test-agent')
+      .set('Authorization', `Bearer ${token}`)
       .send({ content: largeContent })
       .expect(413);
 
@@ -99,18 +117,19 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
 
   // ─── SC3: Optimistic locking version conflict ─────────────────────────────
   it('SC3: stale expectedVersion returns 409', async () => {
-    // First write succeeds
+    const token = issueToken(capabilityService, 'agent-a', 'Director');
+
     await base
       .post('/blackboard/layers/scenario/entries')
-      .set('X-Agent-ID', 'agent-a')
+      .set('Authorization', `Bearer ${token}`)
       .send({ content: 'First write' })
       .expect(201);
 
-    // Second write with wrong expectedVersion → 409
+    const tokenB = issueToken(capabilityService, 'agent-b', 'Director');
     const res = await base
       .post('/blackboard/layers/scenario/entries')
-      .set('X-Agent-ID', 'agent-b')
-      .send({ content: 'Conflicting write', expectedVersion: 0 }) // should be 1
+      .set('Authorization', `Bearer ${tokenB}`)
+      .send({ content: 'Conflicting write', expectedVersion: 0 })
       .expect(409);
 
     expect(res.body.error).toBe('Conflict');
@@ -120,13 +139,14 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
 
   // ─── SC4: Audit log entries ──────────────────────────────────────────────
   it('SC4: successful write appears in audit log', async () => {
+    const token = issueToken(capabilityService, 'auditor-agent', 'Director');
+
     await base
       .post('/blackboard/layers/semantic/entries')
-      .set('X-Agent-ID', 'auditor-agent')
+      .set('Authorization', `Bearer ${token}`)
       .send({ content: 'Audit test', messageId: 'audit-msg-42' })
       .expect(201);
 
-    // Wait for async write to complete
     await new Promise(r => setTimeout(r, 50));
 
     const logContent = fs.readFileSync(auditLogPath, 'utf8');
@@ -143,11 +163,11 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
   });
 
   it('SC4b: rejected writes appear in audit log with rejectionReason', async () => {
-    // Write exceeds budget → rejected
+    const token = issueToken(capabilityService, 'reject-agent', 'Director');
     const largeContent = 'word '.repeat(2500);
     await base
       .post('/blackboard/layers/core/entries')
-      .set('X-Agent-ID', 'reject-agent')
+      .set('Authorization', `Bearer ${token}`)
       .send({ content: largeContent })
       .expect(413);
 
@@ -165,14 +185,14 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
 
   // ─── SC5: Snapshot restore ───────────────────────────────────────────────
   it('SC5: state restored from snapshot after restart', async () => {
-    // Write an entry
+    const token = issueToken(capabilityService, 'persist-agent', 'Director');
+
     await base
       .post('/blackboard/layers/core/entries')
-      .set('X-Agent-ID', 'persist-agent')
+      .set('Authorization', `Bearer ${token}`)
       .send({ content: 'Persistent data' })
       .expect(201);
 
-    // Manually trigger snapshot save
     const snapshotPath = path.join(dataDir, 'blackboard.json');
     const snapshotState = {
       schemaVersion: '1.0',
@@ -199,7 +219,6 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
     };
     fs.writeFileSync(snapshotPath, JSON.stringify(snapshotState));
 
-    // Create new snapshot service and restore
     const restoredSnapshot = new SnapshotService(dataDir);
     const restoredState = restoredSnapshot.tryRestore();
 
@@ -217,10 +236,10 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
   });
 
   it('audit endpoint returns entries', async () => {
-    // Write something first
+    const token = issueToken(capabilityService, 'audit-test', 'Director');
     await base
       .post('/blackboard/layers/procedural/entries')
-      .set('X-Agent-ID', 'audit-test')
+      .set('Authorization', `Bearer ${token}`)
       .send({ content: 'Audit endpoint test' })
       .expect(201);
 
@@ -231,18 +250,19 @@ describe('Blackboard REST API — Phase 1 Success Criteria', () => {
     expect(Array.isArray(res.body.entries)).toBe(true);
   });
 
-  it('X-Agent-ID required on POST', async () => {
+  it('Authorization header required on POST (no X-Agent-ID fallback)', async () => {
     const res = await base
       .post('/blackboard/layers/core/entries')
       .send({ content: 'test' })
-      .expect(400);
-    expect(res.body.message).toContain('X-Agent-ID');
+      .expect(401);
+    expect(res.body.error).toBe('Unauthorized');
   });
 
   it('invalid layer returns 400', async () => {
+    const token = issueToken(capabilityService, 'test', 'Director');
     const res = await base
       .post('/blackboard/layers/invalid/entries')
-      .set('X-Agent-ID', 'test')
+      .set('Authorization', `Bearer ${token}`)
       .send({ content: 'test' })
       .expect(400);
     expect(res.body.error).toBe('Bad Request');
