@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import crypto from 'crypto';
+import { createHash } from 'node:crypto';
 
 import {
   LAYER_NAMES,
@@ -86,14 +86,14 @@ blackboardRouter.post('/layers/:layer/entries', async (req, res) => {
     return res.status(400).json({ error: 'Bad Request', message: parsed.error.message });
   }
 
-  const writeReq: WriteEntryRequest = parsed.data;
+  const writeReq: WriteEntryRequest = parsed.data as WriteEntryRequest;
 
   try {
     const result = (req.app.locals.blackboard as BlackboardService).writeEntry(layer, agentId, writeReq);
 
     // Write to audit log
     if (auditLog) {
-      const contentHash = crypto.createHash('sha256').update(req.body.content).digest('hex');
+      const contentHash = createHash('sha256').update(req.body.content).digest('hex');
       await auditLog.write({
         timestamp: new Date().toISOString(),
         agentId,
