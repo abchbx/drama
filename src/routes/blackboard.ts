@@ -31,6 +31,18 @@ export function setAuditLog(service: AuditLogServiceInterface): void {
   auditLog = service;
 }
 
+// Snapshot service — injected via setSnapshotService() at startup
+let snapshotService: SnapshotServiceInterface | undefined;
+
+export interface SnapshotServiceInterface {
+  markDirty(): void;
+  saveImmediately(state: unknown): void;
+}
+
+export function setSnapshotService(service: SnapshotServiceInterface): void {
+  snapshotService = service;
+}
+
 const writeEntrySchema = z.object({
   content: z.string().min(1),
   expectedVersion: z.number().int().nonnegative().optional(),
@@ -104,6 +116,11 @@ blackboardRouter.post('/layers/:layer/entries', async (req, res) => {
       }, contentHash);
     }
 
+    // Mark snapshot dirty for periodic persistence
+    if (snapshotService) {
+      snapshotService.markDirty();
+    }
+
     return res.status(201).json(result);
   } catch (err) {
     if (err instanceof VersionConflictError) {
@@ -166,6 +183,12 @@ blackboardRouter.delete('/layers/:layer/entries/:id', (req, res) => {
 
   try {
     (req.app.locals.blackboard as BlackboardService).deleteEntry(layer, req.params.id!, agentId);
+
+    // Mark snapshot dirty after delete
+    if (snapshotService) {
+      snapshotService.markDirty();
+    }
+
     return res.status(204).send();
   } catch (err) {
     if (err instanceof NotFoundError) {
