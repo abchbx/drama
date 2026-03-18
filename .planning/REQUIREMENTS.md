@@ -24,11 +24,11 @@
 
 ### Phase 3: Actor Agents
 
-- [ ] **ACTR-01**: Actor agents generate dialogue constrained by their character card
-- [ ] **ACTR-02**: Actor agents have scoped blackboard read access (character card + current scene only)
-- [ ] **ACTR-03**: Hallucination flag system marks unverified details in blackboard entries
-- [ ] **ACTR-04**: Character voice consistency: character voice stored as explicit style constraints in procedural layer
-- [ ] **ACTR-05**: Director acts as character consistency auditor and fact-checks scenes against core layer
+- [x] **ACTR-01**: Actor agents generate dialogue constrained by their character card
+- [x] **ACTR-02**: Actor agents have scoped blackboard read access (character card + current scene only)
+- [x] **ACTR-03**: Hallucination flag system marks unverified details in blackboard entries
+- [x] **ACTR-04**: Character voice consistency: character voice stored as explicit style constraints in procedural layer
+- [x] **ACTR-05**: Director acts as character consistency auditor and fact-checks scenes against core layer
 
 ### Phase 4: Director Agent
 

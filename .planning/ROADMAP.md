@@ -63,6 +63,13 @@
 4. After 10 scene exchanges, character voice remains consistent (Director validation)
 5. Actors respect scoped read access (no plot backbone access)
 
+**Status:** Complete (2026-03-18) — 43 tests pass
+- Actor class with generate(), getCharacterCard(), readFactContext()
+- LlmProvider abstract interface (concrete impl deferred to Phase 7)
+- Actor types: CharacterCard, VoiceConstraints, SceneContext, DialogueOutput, Zod schemas
+- Actor-specific metadata fields on BlackboardEntry
+- GET /me/scope returns character card from semantic layer
+
 ---
 
 ### Phase 4: Director Agent

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T15:01:00.000Z"
+last_updated: "2026-03-18T15:11:15.000Z"
 progress:
   total_phases: 7
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # State: Multi-Agent Drama System
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-18 after initialization)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Phase 3: Actor Agents — plan and build the actor agent layer
+**Current focus:** Phase 4: Director Agent — coordinate actor scene exchanges
 
 ---
 
@@ -38,7 +38,7 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 |-------|------|--------|-------|----------|
 | 1 | Shared Blackboard Service | ✓ Complete | 2/2 done | 100% |
 | 2 | Cognitive Boundary Control | ✓ Complete | 1/1 done | 100% |
-| 3 | Actor Agents | ◆ Planned | 1/1 done | 100% |
+| 3 | Actor Agents | ✓ Complete | 1/1 done | 100% |
 | 4 | Director Agent | ○ Pending | — | 0% |
 | 5 | Message Routing Hub | ○ Pending | — | 0% |
 | 6 | Memory Management Engine | ○ Pending | — | 0% |
@@ -58,9 +58,10 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 - Phase 1 Plan 1 (foundation) complete: blackboard REST API scaffolded
 - Phase 2 Plan 1 (context) complete: cognitive boundary control researched and planned
 - Phase 2 Plan 2 (execution) complete: JWT auth, capability service, boundary enforcement, 26 tests pass
+- Phase 3 Plan 3 (execution) complete: Actor class, LlmProvider interface, actor types, 43 tests pass
 
 ### What's Next
-Phase 3: `/gsd:execute-phase 3` — execute the Actor agents plan
+Phase 4: Director Agent — `/gsd:execute-phase 4` — coordinate actor scene exchanges, call actor.generate() with SceneContext
 
 ### What's Blocked
 Nothing blocked. All prerequisites for Phase 1 are satisfied.
@@ -80,7 +81,10 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 | import express = require('express') | NodeNext module resolution requires TypeScript require syntax for CommonJS export= modules | — Resolved |
 | HS256 JWT for agent tokens | Service-internal symmetric tokens; no asymmetric key management needed | — Resolved |
 | YOLO mode for v1 validation | Speed over robustness for architecture validation | — Pending |
-| "YOLO ends here" at Phase 7 | Error handling and chaos testing complete at milestone end | — Pending |
+| Actor is in-process TypeScript class | No separate process or HTTP client — server calls actor.generate() directly | — Resolved (Phase 3) |
+| LlmProvider abstract interface | No hardcoded LLM SDK — concrete impl deferred to Phase 7 | — Resolved (Phase 3) |
+| Actor is stateless | No in-memory conversation history — blackboard is memory | — Resolved (Phase 3) |
+| Structured JSON dialogue output | Zod-validated DialogueOutput with per-entry hallucination flags | — Resolved (Phase 3) |
 
 ---
 
@@ -108,7 +112,8 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 | 2026-03-18 | Phase 1 | Plan 01 execution | 01-foundation complete — REST API scaffolded |
 | 2026-03-18 | Phase 2 | Plan 02 execution | 02-cognitive-boundary-control complete — JWT auth, capability enforcement, 26 tests pass |
 | 2026-03-18 | Phase 3 | Plan created | 03-RESEARCH.md + 03-actor-agents-PLAN.md committed |
+| 2026-03-18 | Phase 3 | Plan 03 execution | 03-actor-agents complete — Actor class, LlmProvider interface, actor types, 43 tests pass |
 
 ---
 
-*State last updated: 2026-03-18 after Phase 2 Plan 2 execution (JWT auth + capability enforcement)*
+*State last updated: 2026-03-18 after Phase 3 Plan 3 execution (Actor class, LlmProvider, actor types, 43 tests pass)*
