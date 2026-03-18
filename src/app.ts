@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express = require('express');
 import { pino } from 'pino';
 import { blackboardRouter } from './routes/blackboard.js';
 import { healthRouter } from './routes/health.js';
