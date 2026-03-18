@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-03-18 after initialization)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Phase 1: Shared Blackboard Service — Plan 01 complete, executing Plan 02 (infrastructure)
+**Current focus:** Phase 1: Shared Blackboard Service — complete, all 5 success criteria verified by integration tests
 
 ---
 
@@ -23,7 +23,7 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 
 | Phase | Name | Status | Plans | Progress |
 |-------|------|--------|-------|----------|
-| 1 | Shared Blackboard Service | ◆ In Progress | 1/2 done | 50% |
+| 1 | Shared Blackboard Service | ✓ Complete | 2/2 done | 100% |
 | 2 | Cognitive Boundary Control | ○ Pending | — | 0% |
 | 3 | Actor Agents | ○ Pending | — | 0% |
 | 4 | Director Agent | ○ Pending | — | 0% |
