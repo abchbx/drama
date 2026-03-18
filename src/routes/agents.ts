@@ -59,7 +59,18 @@ agentsRouter.get('/me/scope', (req, res) => {
   const blackboard = req.app.locals.blackboard as BlackboardService;
 
   if (agent.role === 'Actor') {
-    const character_card = null;
+    // Try to read character card from semantic layer
+    let character_card: unknown = null;
+    try {
+      const layer = blackboard.readLayer('semantic');
+      const cardEntry = layer.entries.find(e => e.metadata?.characterCardFor === agent.agentId);
+      if (cardEntry) {
+        character_card = JSON.parse(cardEntry.content);
+      }
+    } catch {
+      // Fall through: character_card stays null
+    }
+
     let current_scene: unknown = null;
     try {
       current_scene = blackboard.readEntry('semantic', 'current_scene');
