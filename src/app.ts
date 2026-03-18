@@ -3,6 +3,7 @@ import { pino } from 'pino';
 import { blackboardRouter } from './routes/blackboard.js';
 import { auditRouter } from './routes/audit.js';
 import { healthRouter } from './routes/health.js';
+import { agentsRouter } from './routes/agents.js';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 
@@ -29,7 +30,11 @@ export function createApp() {
   // Mount routes — audit BEFORE blackboard layers to avoid :layer treating 'audit' as a layer
   app.use('/blackboard/audit', auditRouter);
   app.use('/blackboard', blackboardRouter);
+  app.use('/blackboard/agents', agentsRouter);
   app.use('/health', healthRouter);
+
+  // Expose logger so violation handler can use it
+  app.locals.logger = logger;
 
   return app;
 }

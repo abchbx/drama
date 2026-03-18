@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { createHash } from 'node:crypto';
+import express from 'express';
 
 import {
   LAYER_NAMES,
@@ -14,9 +15,13 @@ import {
   TokenBudgetExceededError,
   NotFoundError,
   ValidationError,
+  BoundaryViolationError,
+  type ViolationType,
+  type BoundaryOperation,
 } from '../types/blackboard.js';
 
 import { BlackboardService } from '../services/blackboard.js';
+import { extractBearerToken, verifyAgentToken, type AgentJwtPayload, type CapabilityService } from '../services/capability.js';
 
 export { BlackboardService };
 
@@ -43,6 +48,64 @@ export function setSnapshotService(service: SnapshotServiceInterface): void {
   snapshotService = service;
 }
 
+// Capability service — injected via setCapabilityService() at startup
+export function setCapabilityService(s: CapabilityService): void {
+  capabilityService = s;
+}
+
+let capabilityService: CapabilityService | undefined;
+
+function requireAuth(req: express.Request, res: express.Response): AgentJwtPayload | null {
+  if (!capabilityService) {
+    res.status(500).json({ error: 'Internal Server Error', message: 'Capability service not initialized' });
+    return null;
+  }
+  const authHeader = req.headers.authorization;
+  const token = extractBearerToken(authHeader);
+  if (!token) {
+    res.status(401).json({ error: 'Unauthorized', message: 'Missing or invalid Authorization header' });
+    return null;
+  }
+  try {
+    return capabilityService.verify(req);
+  } catch {
+    res.status(401).json({ error: 'Unauthorized', message: 'Invalid or missing token' });
+    return null;
+  }
+}
+
+// Helper: handle a boundary violation — log it and return 403
+function handleViolation(
+  res: express.Response,
+  agent: AgentJwtPayload,
+  layer: BlackboardLayer,
+  operation: 'read' | 'write',
+  violationType: ViolationType,
+  allowedLayers: BlackboardLayer[],
+): void {
+  const err = new BoundaryViolationError(violationType, layer, operation, allowedLayers);
+  if (auditLog) {
+    auditLog.write({
+      timestamp: new Date().toISOString(),
+      agentId: agent.agentId,
+      role: agent.role,
+      layer,
+      operation: 'violation',
+      violationType,
+    }, '');
+  }
+  const logger = (res.app.locals as { logger?: import('pino').Logger }).logger;
+  logger?.warn({ agentId: agent.agentId, role: agent.role, layer, violationType }, 'boundary violation');
+  res.status(403).json({
+    error: 'Forbidden',
+    violationType: err.violationType,
+    targetLayer: err.targetLayer,
+    operation: err.operation,
+    allowedLayers: err.allowedLayers,
+    message: err.message,
+  });
+}
+
 const writeEntrySchema = z.object({
   content: z.string().min(1),
   expectedVersion: z.number().int().nonnegative().optional(),
@@ -57,7 +120,15 @@ blackboardRouter.get('/layers/:layer/entries', (req, res) => {
   if (!LAYER_NAMES.includes(layer)) {
     return res.status(400).json({ error: 'Bad Request', message: `Invalid layer: ${layer}. Must be one of: ${LAYER_NAMES.join(', ')}` });
   }
-  // GET requests don't require X-Agent-ID
+
+  const agent = requireAuth(req, res);
+  if (!agent) return;
+
+  const check = capabilityService!.check(agent, layer, 'read');
+  if (!check.allowed) {
+    return handleViolation(res, agent, layer, 'read', check.violationType!, check.allowedLayers);
+  }
+
   const result = (req.app.locals.blackboard as BlackboardService).readLayer(layer);
   return res.status(200).json(result);
 });
@@ -68,6 +139,15 @@ blackboardRouter.get('/layers/:layer/entries/:id', (req, res) => {
   if (!LAYER_NAMES.includes(layer)) {
     return res.status(400).json({ error: 'Bad Request', message: `Invalid layer: ${layer}` });
   }
+
+  const agent = requireAuth(req, res);
+  if (!agent) return;
+
+  const check = capabilityService!.check(agent, layer, 'read');
+  if (!check.allowed) {
+    return handleViolation(res, agent, layer, 'read', check.violationType!, check.allowedLayers);
+  }
+
   try {
     const result = (req.app.locals.blackboard as BlackboardService).readEntry(layer, req.params.id!);
     return res.status(200).json(result);
@@ -86,24 +166,25 @@ blackboardRouter.post('/layers/:layer/entries', async (req, res) => {
     return res.status(400).json({ error: 'Bad Request', message: `Invalid layer: ${layer}` });
   }
 
-  // X-Agent-ID is required
-  const agentId = req.headers['x-agent-id'] as string | undefined;
-  if (!agentId) {
-    return res.status(400).json({ error: 'Bad Request', message: 'X-Agent-ID header is required' });
+  const agent = requireAuth(req, res);
+  if (!agent) return;
+
+  const check = capabilityService!.check(agent, layer, 'write');
+  if (!check.allowed) {
+    return handleViolation(res, agent, layer, 'write', check.violationType!, check.allowedLayers);
   }
 
-  // Validate body
   const parsed = writeEntrySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'Bad Request', message: parsed.error.message });
   }
 
   const writeReq: WriteEntryRequest = parsed.data as WriteEntryRequest;
+  const agentId = agent.agentId;
 
   try {
     const result = (req.app.locals.blackboard as BlackboardService).writeEntry(layer, agentId, writeReq);
 
-    // Write to audit log
     if (auditLog) {
       const contentHash = createHash('sha256').update(req.body.content).digest('hex');
       await auditLog.write({
@@ -116,15 +197,17 @@ blackboardRouter.post('/layers/:layer/entries', async (req, res) => {
       }, contentHash);
     }
 
-    // Mark snapshot dirty for periodic persistence
     if (snapshotService) {
       snapshotService.markDirty();
     }
 
     return res.status(201).json(result);
   } catch (err) {
+    if (err instanceof BoundaryViolationError) {
+      handleViolation(res, agent, layer, 'write', err.violationType, err.allowedLayers);
+      return;
+    }
     if (err instanceof VersionConflictError) {
-      // Log rejection to audit
       if (auditLog) {
         await auditLog.write({
           timestamp: new Date().toISOString(),
@@ -143,7 +226,6 @@ blackboardRouter.post('/layers/:layer/entries', async (req, res) => {
       });
     }
     if (err instanceof TokenBudgetExceededError) {
-      // Log rejection to audit
       if (auditLog) {
         await auditLog.write({
           timestamp: new Date().toISOString(),
@@ -176,15 +258,17 @@ blackboardRouter.delete('/layers/:layer/entries/:id', (req, res) => {
     return res.status(400).json({ error: 'Bad Request', message: `Invalid layer: ${layer}` });
   }
 
-  const agentId = req.headers['x-agent-id'] as string | undefined;
-  if (!agentId) {
-    return res.status(400).json({ error: 'Bad Request', message: 'X-Agent-ID header is required' });
+  const agent = requireAuth(req, res);
+  if (!agent) return;
+
+  const check = capabilityService!.check(agent, layer, 'write');
+  if (!check.allowed) {
+    return handleViolation(res, agent, layer, 'write', check.violationType!, check.allowedLayers);
   }
 
   try {
-    (req.app.locals.blackboard as BlackboardService).deleteEntry(layer, req.params.id!, agentId);
+    (req.app.locals.blackboard as BlackboardService).deleteEntry(layer, req.params.id!, agent.agentId);
 
-    // Mark snapshot dirty after delete
     if (snapshotService) {
       snapshotService.markDirty();
     }

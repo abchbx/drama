@@ -4,9 +4,12 @@ import { pino } from 'pino';
 import { BlackboardService } from './services/blackboard.js';
 import { SnapshotService } from './services/snapshot.js';
 import { AuditLogService } from './services/auditLog.js';
+import { createCapabilityService } from './services/capability.js';
 import { setAuditLog as setBlackboardAuditLog } from './routes/blackboard.js';
 import { setAuditLog as setAuditRouterAuditLog } from './routes/audit.js';
 import { setSnapshotService } from './routes/blackboard.js';
+import { setCapabilityService as setAgentsCapabilityService } from './routes/agents.js';
+import { setCapabilityService as setBlackboardCapabilityService } from './routes/blackboard.js';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 
@@ -30,11 +33,17 @@ setAuditRouterAuditLog(auditLogService);
 // 5. Wire snapshot service into route handlers
 setSnapshotService(snapshotService);
 
+// 5b. Capability service
+const capabilityService = createCapabilityService();
+setAgentsCapabilityService(capabilityService);
+setBlackboardCapabilityService(capabilityService);
+
 // 6. Create and start app
 const app = createApp();
 
 // Wire blackboard service into app.locals so route handlers can access it
 app.locals.blackboard = blackboardService;
+app.locals.capabilityService = capabilityService;
 
 app.listen(PORT, () => {
   logger.info({ port: PORT, snapshotRestored: !!initialState }, 'blackboard service started');
