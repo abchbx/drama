@@ -1,0 +1,153 @@
+import { encoding_for_model } from 'tiktoken';
+
+import type {
+  BlackboardLayer,
+  BlackboardEntry,
+  WriteEntryRequest,
+  WriteEntryResponse,
+  LayerReadResponse,
+  EntryReadResponse,
+  BlackboardState,
+} from '../types/blackboard.js';
+
+import {
+  LAYER_BUDGETS,
+  LAYER_NAMES,
+  VersionConflictError,
+  TokenBudgetExceededError,
+  NotFoundError,
+  ValidationError,
+} from '../types/blackboard.js';
+
+export {
+  VersionConflictError,
+  TokenBudgetExceededError,
+  NotFoundError,
+  ValidationError,
+};
+
+// Cached tiktoken encoder — created once, reused for all token counting
+let _encoder: ReturnType<typeof encoding_for_model> | null = null;
+
+function getEncoder(): ReturnType<typeof encoding_for_model> {
+  if (!_encoder) {
+    // encoding_for_model('gpt-4') uses cl100k_base encoding (same as GPT-4)
+    _encoder = encoding_for_model('gpt-4');
+  }
+  return _encoder;
+}
+
+function createInitialState(): BlackboardState {
+  return {
+    core: { entries: [], version: 0 },
+    scenario: { entries: [], version: 0 },
+    semantic: { entries: [], version: 0 },
+    procedural: { entries: [], version: 0 },
+  };
+}
+
+export class BlackboardService {
+  private state: BlackboardState;
+
+  constructor(initialState?: BlackboardState) {
+    this.state = initialState ?? createInitialState();
+  }
+
+  /**
+   * Count tokens using tiktoken (cl100k_base encoding).
+   * Synchronous — encoder is pre-initialized as a module-level singleton.
+   */
+  countTokens(text: string): number {
+    return getEncoder().encode(text).length;
+  }
+
+  private sumTokenCount(entries: BlackboardEntry[]): number {
+    return entries.reduce((sum, e) => sum + e.tokenCount, 0);
+  }
+
+  readLayer(layer: BlackboardLayer): LayerReadResponse {
+    if (!LAYER_NAMES.includes(layer)) {
+      throw new ValidationError(`Invalid layer: ${String(layer)}`);
+    }
+    const ls = this.state[layer];
+    const tokenCount = this.sumTokenCount(ls.entries);
+    const budget = LAYER_BUDGETS[layer];
+    return {
+      layer,
+      currentVersion: ls.version,
+      tokenCount,
+      tokenBudget: budget,
+      budgetUsedPct: budget > 0 ? Math.round((tokenCount / budget) * 100) : 0,
+      entries: ls.entries.slice(), // return copy to preserve insertion order
+    };
+  }
+
+  readEntry(layer: BlackboardLayer, entryId: string): EntryReadResponse {
+    if (!LAYER_NAMES.includes(layer)) {
+      throw new ValidationError(`Invalid layer: ${String(layer)}`);
+    }
+    const ls = this.state[layer];
+    const entry = ls.entries.find(e => e.id === entryId);
+    if (!entry) {
+      throw new NotFoundError(layer, entryId);
+    }
+    return { entry, currentVersion: ls.version };
+  }
+
+  writeEntry(layer: BlackboardLayer, agentId: string, req: WriteEntryRequest): WriteEntryResponse {
+    if (!LAYER_NAMES.includes(layer)) {
+      throw new ValidationError(`Invalid layer: ${String(layer)}`);
+    }
+    if (typeof req.content !== 'string' || req.content.trim().length === 0) {
+      throw new ValidationError('content must be a non-empty string');
+    }
+
+    const tokenCount = this.countTokens(req.content);
+    const ls = this.state[layer];
+
+    // Optimistic locking check
+    if (req.expectedVersion !== undefined && req.expectedVersion !== ls.version) {
+      throw new VersionConflictError(ls.version, req.expectedVersion);
+    }
+
+    // Token budget check
+    const currentTotal = this.sumTokenCount(ls.entries);
+    const budget = LAYER_BUDGETS[layer];
+    if (currentTotal + tokenCount > budget) {
+      throw new TokenBudgetExceededError(layer, budget, currentTotal, tokenCount);
+    }
+
+    // Create entry
+    const entry: BlackboardEntry = {
+      id: crypto.randomUUID(),
+      agentId,
+      messageId: req.messageId,
+      timestamp: new Date().toISOString(),
+      content: req.content,
+      tokenCount,
+      version: ls.version + 1,
+    };
+
+    ls.entries.push(entry);
+    ls.version = ls.version + 1;
+
+    return { entry, layerVersion: ls.version };
+  }
+
+  deleteEntry(layer: BlackboardLayer, entryId: string, _agentId: string): void {
+    if (!LAYER_NAMES.includes(layer)) {
+      throw new ValidationError(`Invalid layer: ${String(layer)}`);
+    }
+    const ls = this.state[layer];
+    const idx = ls.entries.findIndex(e => e.id === entryId);
+    if (idx === -1) {
+      throw new NotFoundError(layer, entryId);
+    }
+    ls.entries.splice(idx, 1);
+    ls.version = ls.version + 1;
+  }
+
+  exportState(): BlackboardState {
+    return JSON.parse(JSON.stringify(this.state));
+  }
+}
