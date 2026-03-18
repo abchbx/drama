@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-03-18 after initialization)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Initializing project — Phase 1 not yet started
+**Current focus:** Phase 1: Shared Blackboard Service — context gathered, ready for planning
 
 ---
 
@@ -23,7 +23,7 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 
 | Phase | Name | Status | Plans | Progress |
 |-------|------|--------|-------|----------|
-| 1 | Shared Blackboard Service | ○ Pending | — | 0% |
+| 1 | Shared Blackboard Service | ◆ In Progress | — | 0% |
 | 2 | Cognitive Boundary Control | ○ Pending | — | 0% |
 | 3 | Actor Agents | ○ Pending | — | 0% |
 | 4 | Director Agent | ○ Pending | — | 0% |
@@ -44,7 +44,7 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 - Roadmap committed: 7 phases with success criteria per phase
 
 ### What's Next
-Phase 1: Shared Blackboard Service — `/gsd:discuss-phase 1`
+Phase 1: `/gsd:plan-phase 1` — plan and build the blackboard REST API
 
 ### What's Blocked
 Nothing blocked. All prerequisites for Phase 1 are satisfied.
@@ -83,7 +83,8 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 | 2026-03-18 | Research | ARCHITECTURE, SUMMARY written | Both committed |
 | 2026-03-18 | Requirements | v1 requirements defined | REQUIREMENTS.md committed |
 | 2026-03-18 | Roadmap | 7-phase roadmap created | ROADMAP.md committed |
+| 2026-03-18 | Phase 1 | Context gathered | 01-CONTEXT.md committed |
 
 ---
 
-*State last updated: 2026-03-18 after roadmap creation*
+*State last updated: 2026-03-18 after Phase 1 context gathering*
