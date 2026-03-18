@@ -17,10 +17,10 @@
 
 ### Phase 2: Cognitive Boundary Control
 
-- [ ] **BOUND-01**: Write-layer gate rejects entries that violate capability closure (actors cannot write to core layer)
-- [ ] **BOUND-02**: Namespace isolation: Actor agents can only read their character card and current scene
-- [ ] **BOUND-03**: Per-agent input scope restriction enforced at the blackboard API layer
-- [ ] **BOUND-04**: Boundary enforcement is hard (programmatic), not soft (prompt-based)
+- [x] **BOUND-01**: Write-layer gate rejects entries that violate capability closure (actors cannot write to core layer)
+- [x] **BOUND-02**: Namespace isolation: Actor agents can only read their character card and current scene
+- [x] **BOUND-03**: Per-agent input scope restriction enforced at the blackboard API layer
+- [x] **BOUND-04**: Boundary enforcement is hard (programmatic), not soft (prompt-based)
 
 ### Phase 3: Actor Agents
 
@@ -117,10 +117,10 @@
 | BLKB-03 | Phase 1 | Complete |
 | BLKB-04 | Phase 1 | Complete |
 | BLKB-05 | Phase 1 | Complete |
-| BOUND-01 | Phase 2 | Pending |
-| BOUND-02 | Phase 2 | Pending |
-| BOUND-03 | Phase 2 | Pending |
-| BOUND-04 | Phase 2 | Pending |
+| BOUND-01 | Phase 2 | Complete |
+| BOUND-02 | Phase 2 | Complete |
+| BOUND-03 | Phase 2 | Complete |
+| BOUND-04 | Phase 2 | Complete |
 | ACTR-01 | Phase 3 | Pending |
 | ACTR-02 | Phase 3 | Pending |
 | ACTR-03 | Phase 3 | Pending |
@@ -162,4 +162,4 @@
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial research synthesis*
+*Last updated: 2026-03-18 after Phase 2 Plan 2 execution (BOUND-01 to BOUND-04 complete)*

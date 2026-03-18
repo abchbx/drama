@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T12:07:35.336Z"
+last_updated: "2026-03-18T14:20:31Z"
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_phases: 7
+  completed_phases: 2
+  total_plans: 11
+  completed_plans: 3
 ---
 
 # State: Multi-Agent Drama System
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-18 after initialization)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Phase 2: Cognitive Boundary Control — context gathered, ready for planning
+**Current focus:** Phase 3: Actor Agents — plan and build the actor agent layer
 
 ---
 
@@ -37,7 +37,7 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 | Phase | Name | Status | Plans | Progress |
 |-------|------|--------|-------|----------|
 | 1 | Shared Blackboard Service | ✓ Complete | 2/2 done | 100% |
-| 2 | Cognitive Boundary Control | ◆ Context Gathered | — | 0% |
+| 2 | Cognitive Boundary Control | ✓ Complete | 1/1 done | 100% |
 | 3 | Actor Agents | ○ Pending | — | 0% |
 | 4 | Director Agent | ○ Pending | — | 0% |
 | 5 | Message Routing Hub | ○ Pending | — | 0% |
@@ -56,9 +56,11 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 - Requirements defined: 41 v1 requirements across 7 phases
 - Roadmap committed: 7 phases with success criteria per phase
 - Phase 1 Plan 1 (foundation) complete: blackboard REST API scaffolded
+- Phase 2 Plan 1 (context) complete: cognitive boundary control researched and planned
+- Phase 2 Plan 2 (execution) complete: JWT auth, capability service, boundary enforcement, 26 tests pass
 
 ### What's Next
-Phase 2: `/gsd:plan-phase 2` — plan and build the cognitive boundary control layer
+Phase 3: `/gsd:plan-phase 3` — plan and build Actor agents with scoped context reads
 
 ### What's Blocked
 Nothing blocked. All prerequisites for Phase 1 are satisfied.
@@ -76,6 +78,7 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 | tiktoken v1.x for token counting | Synchronous WASM encoder (gpt-4 encoding = cl100k_base) | — Resolved |
 | pino v9 + manual request logger | pino-http v10 type-incompatible with pino v9 export= pattern | — Resolved |
 | import express = require('express') | NodeNext module resolution requires TypeScript require syntax for CommonJS export= modules | — Resolved |
+| HS256 JWT for agent tokens | Service-internal symmetric tokens; no asymmetric key management needed | — Resolved |
 | YOLO mode for v1 validation | Speed over robustness for architecture validation | — Pending |
 | "YOLO ends here" at Phase 7 | Error handling and chaos testing complete at milestone end | — Pending |
 
@@ -103,7 +106,8 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 | 2026-03-18 | Phase 1 | Context gathered | 01-CONTEXT.md committed |
 | 2026-03-18 | Phase 2 | Context gathered | 02-CONTEXT.md committed |
 | 2026-03-18 | Phase 1 | Plan 01 execution | 01-foundation complete — REST API scaffolded |
+| 2026-03-18 | Phase 2 | Plan 02 execution | 02-cognitive-boundary-control complete — JWT auth, capability enforcement, 26 tests pass |
 
 ---
 
-*State last updated: 2026-03-18 after Phase 2 context gathering*
+*State last updated: 2026-03-18 after Phase 2 Plan 2 execution (JWT auth + capability enforcement)*

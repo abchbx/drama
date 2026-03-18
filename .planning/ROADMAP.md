@@ -195,3 +195,4 @@
 
 *Roadmap created: 2026-03-18*
 *Ready for execution: yes*
+*Phase 2: Complete (Plan 02 executed 2026-03-18 — JWT auth + capability enforcement, 26 tests pass)*
