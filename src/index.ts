@@ -33,6 +33,9 @@ setSnapshotService(snapshotService);
 // 6. Create and start app
 const app = createApp();
 
+// Wire blackboard service into app.locals so route handlers can access it
+app.locals.blackboard = blackboardService;
+
 app.listen(PORT, () => {
   logger.info({ port: PORT, snapshotRestored: !!initialState }, 'blackboard service started');
 });
