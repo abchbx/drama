@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-03-18 after initialization)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Phase 1: Shared Blackboard Service — context gathered, ready for planning
+**Current focus:** Phase 1: Shared Blackboard Service — Plan 01 complete, executing Plan 02 (infrastructure)
 
 ---
 
@@ -23,7 +23,7 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 
 | Phase | Name | Status | Plans | Progress |
 |-------|------|--------|-------|----------|
-| 1 | Shared Blackboard Service | ◆ In Progress | — | 0% |
+| 1 | Shared Blackboard Service | ◆ In Progress | 1/2 done | 50% |
 | 2 | Cognitive Boundary Control | ○ Pending | — | 0% |
 | 3 | Actor Agents | ○ Pending | — | 0% |
 | 4 | Director Agent | ○ Pending | — | 0% |
@@ -42,6 +42,7 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 - Research complete: PITFALLS.md, STACK.md, FEATURES.md, ARCHITECTURE.md, SUMMARY.md
 - Requirements defined: 41 v1 requirements across 7 phases
 - Roadmap committed: 7 phases with success criteria per phase
+- Phase 1 Plan 1 (foundation) complete: blackboard REST API scaffolded
 
 ### What's Next
 Phase 1: `/gsd:plan-phase 1` — plan and build the blackboard REST API
@@ -55,10 +56,13 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 
 | Decision | Rationale | Status |
 |----------|-----------|--------|
-| Node.js 20 LTS + TypeScript | Async I/O for concurrent agents; npm ecosystem; type safety | — Pending |
+| Node.js 22 LTS + TypeScript 5.5 | Async I/O for concurrent agents; npm ecosystem; type safety | — Resolved |
 | Socket.IO for message routing | Built-in heartbeat prevents deadlocks; rooms map to routing modes | — Pending |
-| Zod for JSON validation | Runtime schema enforcement; TypeScript inference | — Pending |
-| In-memory + JSON snapshots for v1 | Speed of iteration; Redis deferred to scale phase | — Pending |
+| Zod for JSON validation | Runtime schema enforcement; TypeScript inference | — Resolved |
+| In-memory + JSON snapshots for v1 | Speed of iteration; Redis deferred to scale phase | — Resolved |
+| tiktoken v1.x for token counting | Synchronous WASM encoder (gpt-4 encoding = cl100k_base) | — Resolved |
+| pino v9 + manual request logger | pino-http v10 type-incompatible with pino v9 export= pattern | — Resolved |
+| import express = require('express') | NodeNext module resolution requires TypeScript require syntax for CommonJS export= modules | — Resolved |
 | YOLO mode for v1 validation | Speed over robustness for architecture validation | — Pending |
 | "YOLO ends here" at Phase 7 | Error handling and chaos testing complete at milestone end | — Pending |
 
@@ -84,6 +88,7 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 | 2026-03-18 | Requirements | v1 requirements defined | REQUIREMENTS.md committed |
 | 2026-03-18 | Roadmap | 7-phase roadmap created | ROADMAP.md committed |
 | 2026-03-18 | Phase 1 | Context gathered | 01-CONTEXT.md committed |
+| 2026-03-18 | Phase 1 | Plan 01 execution | 01-foundation complete — REST API scaffolded |
 
 ---
 
