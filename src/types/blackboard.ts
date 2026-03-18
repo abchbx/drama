@@ -1,0 +1,128 @@
+// === Layer constants ===
+export const LAYER_NAMES = ['core', 'scenario', 'semantic', 'procedural'] as const;
+export type BlackboardLayer = typeof LAYER_NAMES[number];
+
+export const LAYER_BUDGETS: Record<BlackboardLayer, number> = {
+  core: 2000,        // 2K tokens
+  scenario: 8000,    // 8K tokens
+  semantic: 8000,    // 8K tokens
+  procedural: 4000,  // 4K tokens
+} as const;
+
+// 60% alert threshold
+export const BUDGET_ALERT_THRESHOLD = 0.6;
+
+// === Entry ===
+export interface BlackboardEntry {
+  id: string;
+  agentId: string;
+  messageId?: string;
+  timestamp: string; // ISO 8601
+  content: string;
+  tokenCount: number;
+  version: number;
+}
+
+// === Write request/response ===
+export interface WriteEntryRequest {
+  content: string;
+  expectedVersion?: number; // optimistic locking
+  messageId?: string;
+}
+
+export interface WriteEntryResponse {
+  entry: BlackboardEntry;
+  layerVersion: number;
+}
+
+// === Read responses ===
+export interface LayerReadResponse {
+  layer: BlackboardLayer;
+  currentVersion: number;
+  tokenCount: number;
+  tokenBudget: number;
+  budgetUsedPct: number;
+  entries: BlackboardEntry[];
+}
+
+export interface EntryReadResponse {
+  entry: BlackboardEntry;
+  currentVersion: number;
+}
+
+// === Error shapes ===
+export interface ErrorResponse {
+  error: string;
+  message: string;
+  [key: string]: unknown;
+}
+
+// === Service errors (thrown by BlackboardService) ===
+export class VersionConflictError extends Error {
+  readonly currentVersion: number;
+  readonly expectedVersion: number;
+  constructor(currentVersion: number, expectedVersion: number) {
+    super(`Version conflict: expected ${expectedVersion}, current ${currentVersion}`);
+    this.name = 'VersionConflictError';
+    this.currentVersion = currentVersion;
+    this.expectedVersion = expectedVersion;
+  }
+}
+
+export class TokenBudgetExceededError extends Error {
+  readonly layer: BlackboardLayer;
+  readonly budget: number;
+  readonly currentCount: number;
+  readonly attemptedCount: number;
+  constructor(layer: BlackboardLayer, budget: number, currentCount: number, attemptedCount: number) {
+    super(`Token budget exceeded for layer '${layer}': budget=${budget}, current=${currentCount}, attempted=${attemptedCount}`);
+    this.name = 'TokenBudgetExceededError';
+    this.layer = layer;
+    this.budget = budget;
+    this.currentCount = currentCount;
+    this.attemptedCount = attemptedCount;
+  }
+}
+
+export class NotFoundError extends Error {
+  readonly layer: BlackboardLayer;
+  readonly entryId: string;
+  constructor(layer: BlackboardLayer, entryId: string) {
+    super(`Entry '${entryId}' not found in layer '${layer}'`);
+    this.name = 'NotFoundError';
+    this.layer = layer;
+    this.entryId = entryId;
+  }
+}
+
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+// === Board state (for snapshot + service) ===
+export interface LayerState {
+  entries: BlackboardEntry[];
+  version: number;
+}
+
+export interface BlackboardState {
+  core: LayerState;
+  scenario: LayerState;
+  semantic: LayerState;
+  procedural: LayerState;
+}
+
+// === Audit log (written by routes, consumed by audit service) ===
+export interface AuditLogEntry {
+  timestamp: string; // ISO 8601
+  agentId: string;
+  layer: BlackboardLayer;
+  messageId?: string;
+  entryId?: string;
+  operation: 'write' | 'reject';
+  rejectionReason?: string;
+  entryContentHash?: string; // SHA-256 of entry content
+}
