@@ -102,6 +102,31 @@ export class ValidationError extends Error {
   }
 }
 
+// === Agent roles & boundary types ===
+export type AgentRole = 'Actor' | 'Director' | 'Admin';
+export type ViolationType = 'CAPABILITY_CLOSED' | 'NAMESPACE_VIOLATION' | 'INPUT_SCOPE_VIOLATION';
+export type BoundaryOperation = 'read' | 'write';
+
+export class BoundaryViolationError extends Error {
+  readonly violationType: ViolationType;
+  readonly targetLayer: BlackboardLayer;
+  readonly operation: BoundaryOperation;
+  readonly allowedLayers: BlackboardLayer[];
+  constructor(
+    violationType: ViolationType,
+    targetLayer: BlackboardLayer,
+    operation: BoundaryOperation,
+    allowedLayers: BlackboardLayer[],
+  ) {
+    super(`Boundary violation: ${operation} on '${targetLayer}' denied — ${violationType}`);
+    this.name = 'BoundaryViolationError';
+    this.violationType = violationType;
+    this.targetLayer = targetLayer;
+    this.operation = operation;
+    this.allowedLayers = allowedLayers;
+  }
+}
+
 // === Board state (for snapshot + service) ===
 export interface LayerState {
   entries: BlackboardEntry[];
@@ -122,7 +147,9 @@ export interface AuditLogEntry {
   layer: BlackboardLayer;
   messageId?: string;
   entryId?: string;
-  operation: 'write' | 'reject';
+  operation: 'write' | 'reject' | 'violation';
   rejectionReason?: string;
   entryContentHash?: string; // SHA-256 of entry content
+  role?: AgentRole;
+  violationType?: ViolationType;
 }
