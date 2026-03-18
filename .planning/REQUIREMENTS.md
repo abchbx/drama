@@ -9,11 +9,11 @@
 
 ### Phase 1: Shared Blackboard Service
 
-- [ ] **BLKB-01**: Shared blackboard service exposes REST API for read/write operations
-- [ ] **BLKB-02**: Four-layer memory model (core/scenario/semantic/procedural) with hard token budgets per layer
-- [ ] **BLKB-03**: Optimistic locking with version vectors on all blackboard writes
-- [ ] **BLKB-04**: Audit log: every write attributed to agent ID, timestamp, and message ID
-- [ ] **BLKB-05**: JSON file snapshot persistence for blackboard state
+- [x] **BLKB-01**: Shared blackboard service exposes REST API for read/write operations
+- [x] **BLKB-02**: Four-layer memory model (core/scenario/semantic/procedural) with hard token budgets per layer
+- [x] **BLKB-03**: Optimistic locking with version vectors on all blackboard writes
+- [x] **BLKB-04**: Audit log: every write attributed to agent ID, timestamp, and message ID
+- [x] **BLKB-05**: JSON file snapshot persistence for blackboard state
 
 ### Phase 2: Cognitive Boundary Control
 
@@ -112,11 +112,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BLKB-01 | Phase 1 | Pending |
-| BLKB-02 | Phase 1 | Pending |
-| BLKB-03 | Phase 1 | Pending |
-| BLKB-04 | Phase 1 | Pending |
-| BLKB-05 | Phase 1 | Pending |
+| BLKB-01 | Phase 1 | Complete |
+| BLKB-02 | Phase 1 | Complete |
+| BLKB-03 | Phase 1 | Complete |
+| BLKB-04 | Phase 1 | Complete |
+| BLKB-05 | Phase 1 | Complete |
 | BOUND-01 | Phase 2 | Pending |
 | BOUND-02 | Phase 2 | Pending |
 | BOUND-03 | Phase 2 | Pending |
