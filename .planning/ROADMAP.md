@@ -10,8 +10,7 @@
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
 | 1 | Shared Blackboard Service | Central state store with four-layer hierarchy and concurrency control | BLKB-01–05 | 5 |
-| 2 | Cognitive Boundary Control | Hard write-layer enforcement preventing boundary leakage | BOUND-01–04 | 4 |
-| 3 | Actor Agents | Character-driven dialogue generation with scoped context | ACTR-01–05 | 5 |
+| 2 | Cognitive Boundary Control | Hard write-layer enforcement preventing boundary leakage | BOUND-01–04 | 4 | 1/1 | Complete   | 2026-03-19 | Character-driven dialogue generation with scoped context | ACTR-01–05 | 5 |
 | 4 | Director Agent | Orchestration, arbitration, and inter-phase validation | DIR-01–06 | 6 |
 | 5 | Message Routing Hub | Real-time communication with deadlock prevention | ROUTE-01–06 | 6 |
 | 6 | Memory Management Engine | Token-budget-aware folding preserving narrative priority | MEM-01–05 | 5 |
@@ -85,6 +84,12 @@
 4. Director arbitrates conflicting Actor outputs; decision written to scenario layer
 5. Character name change in plot backbone propagates to Actor dialogue within one scene
 6. Director issues scene_start and scene_end signals correctly
+
+**Status:** Complete (2026-03-19) — 65 tests pass (22 new Director tests)
+- Director class with planBackbone(), arbitrate(), factCheck(), signalSceneStart(), signalSceneEnd()
+- Director prompt builders: buildDirectorSystemPrompt, buildDirectorUserPrompt, buildFactCheckUserPrompt
+- Hard semantic-layer capability assertion in constructor (DIR-03)
+- ensureCoreBudget() prunes core at 75% threshold, summary written to scenario layer
 
 ---
 
