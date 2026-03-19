@@ -8,20 +8,51 @@ A shared blackboard-driven decentralized multi-agent system for collaborative dr
 
 Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
+## Current Milestone: v1.1 — Routing, Memory & Integration
+
+**Goal:** Complete the remaining Phases 5–7: Socket.IO real-time routing, memory folding engine, and end-to-end integration testing.
+
+**Target features:**
+- Message Routing Hub (Phase 5) — Socket.IO broadcast/p2p/multicast, heartbeat, timeout fallbacks
+- Memory Management Engine (Phase 6) — four-layer token counting, automated folding, core preservation
+- Integration + Chaos Testing (Phase 7) — E2E drama session, adversarial robustness, LLM provider abstraction
+- Cross-cutting: Dynamic Communication Protocol (PROTO-01–05) — formalized Zod schemas, .env config, agent logging
+
+**Validated from v1.0:**
+- ✓ Shared Blackboard Service — REST API, four-layer model, optimistic locking, audit log, JSON snapshots
+- ✓ Cognitive Boundary Control — hard write-layer enforcement, namespace isolation
+- ✓ Actor Agents — dialogue generation, scoped reads, hallucination flags, voice consistency
+- ✓ Director Agent — plot backbone planning, arbitration, fact-checking, role contract
+
+## Current Milestone: v1.1 — Routing, Memory & Integration
+
+**Goal:** Complete Phases 5–7: Socket.IO real-time routing hub, memory folding engine, and end-to-end integration testing.
+
+**Target features:**
+- Phase 5: Message Routing Hub — Socket.IO broadcast/p2p/multicast, heartbeat, timeout fallbacks
+- Phase 6: Memory Management Engine — four-layer token counting, automated folding, core preservation
+- Phase 7: Integration + Chaos Testing — E2E drama session, adversarial robustness, LLM provider abstraction
+- Cross-cutting: Dynamic Communication Protocol (PROTO-01–05) — formalized Zod schemas, .env config, agent logging
+
+**Validated from v1.0:**
+- ✓ Shared Blackboard Service — REST API, four-layer model, optimistic locking, audit log, JSON snapshots
+- ✓ Cognitive Boundary Control — hard write-layer enforcement, namespace isolation
+- ✓ Actor Agents — dialogue generation, scoped reads, hallucination flags, voice consistency
+- ✓ Director Agent — plot backbone planning, arbitration, fact-checking, role contract
+
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Director Agent: orchestrates plot planning, arbitrates key decisions, verifies context consistency — v1.0
+- [x] Actor Agents: play specific roles, generate dialogue based on character settings — v1.0
+- [x] Shared Blackboard Service: central memory hub storing plot backbone and character state snapshots — v1.0
+- [x] Three-Layer Cognitive Boundary Control: input limits, capability closure, decision authority isolation — v1.0
 
 ### Active
 
-- [ ] Director Agent: orchestrates plot planning, arbitrates key decisions, verifies context consistency
-- [ ] Actor Agents: play specific roles, generate dialogue based on character settings
-- [ ] Shared Blackboard Service: central memory hub storing plot backbone and character state snapshots
 - [ ] Message Routing Hub: dynamic message distribution with broadcast, peer-to-peer, and multicast modes
 - [ ] Memory Management Engine: four-layer memory (core, scenario, semantic, procedural) with fold/unfold mechanisms
-- [ ] Three-Layer Cognitive Boundary Control: input limits, capability closure, decision authority isolation
 - [ ] Dynamic Communication Protocol: standardized JSON messages with speaker identification and real-time cognitive updates
 
 ### Out of Scope
@@ -53,10 +84,17 @@ The system solves two core problems in multi-agent drama creation:
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Shared blackboard as central state store | Avoids full-prompt re-injection, solves context drift | — Pending |
-| JSON message protocol for all inter-agent communication | Standardized, extensible, easy to route | — Pending |
-| Four-layer memory architecture | Simulates human cognition, enables token-efficient context management | — Pending |
-| YOLO execution mode for v1 | Speed of iteration critical for architecture validation | — Pending |
+| Shared blackboard as central state store | Avoids full-prompt re-injection, solves context drift | ✓ Good (Phase 1) |
+| JSON message protocol for all inter-agent communication | Standardized, extensible, easy to route | — Pending (Phase 5) |
+| Four-layer memory architecture | Simulates human cognition, enables token-efficient context management | — Pending (Phase 6) |
+| YOLO execution mode for v1 | Speed of iteration critical for architecture validation | — Pending (Phase 7) |
+| Node.js 22 LTS + TypeScript 5.5 | Async I/O for concurrent agents; npm ecosystem; type safety | ✓ Good (Phase 1) |
+| Socket.IO for message routing | Built-in heartbeat prevents deadlocks; rooms map to routing modes | ✓ Good (Phase 5) |
+| Zod for JSON validation | Runtime schema enforcement; TypeScript inference | ✓ Good (Phase 3) |
+| tiktoken v1.x for token counting | Synchronous WASM encoder (gpt-4 encoding = cl100k_base) | ✓ Good (Phase 1) |
+| pino v9 + pino-http | Structured JSON logging with agent attribution | ✓ Good (Phase 1) |
+| LLM Provider abstract interface | Swappable OpenAI/Anthropic adapters — no agent code changes | ✓ Good (Phase 3) |
+| HS256 JWT for agent tokens | Service-internal symmetric tokens; no asymmetric key management | ✓ Good (Phase 2) |
 
 ---
-*Last updated: 2026-03-18 after initialization*
+*Last updated: 2026-03-19 after v1.1 milestone initialization — Routing, Memory & Integration*

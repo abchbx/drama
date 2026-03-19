@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-03-19T02:00:42.106Z"
+milestone: v1.1
+milestone_name: Routing, Memory & Integration
+status: defining_requirements
+last_updated: "2026-03-19T12:00:00.000Z"
 progress:
-  total_phases: 4
+  total_phases: 7
   completed_phases: 4
   total_plans: 5
   completed_plans: 5
@@ -14,25 +14,25 @@ progress:
 # State: Multi-Agent Drama System
 
 **Project:** Multi-Agent Drama System
-**Updated:** 2026-03-18
+**Updated:** 2026-03-19
 
 ---
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18 after initialization)
+See: .planning/PROJECT.md (updated 2026-03-19 after v1.1 initialization)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Phase 4: Director Agent — coordinate actor scene exchanges
+**Current focus:** Defining v1.1 requirements — Phases 5–7 (Routing, Memory & Integration)
 
 ---
 
 ## Milestone Status
 
-**Current milestone:** v1.0 — Foundation
+**Current milestone:** v1.1 — Routing, Memory & Integration
 
-This milestone encompasses Phases 1–7, building the complete multi-agent drama system from shared blackboard to integrated testing.
+This milestone completes Phases 5–7: Socket.IO routing hub, memory folding engine, and integration + chaos testing.
 
 | Phase | Name | Status | Plans | Progress |
 |-------|------|--------|-------|----------|
@@ -51,21 +51,17 @@ This milestone encompasses Phases 1–7, building the complete multi-agent drama
 ## Context
 
 ### What's Established
-- Project skeleton initialized with `PROJECT.md` and `config.json`
-- Research complete: PITFALLS.md, STACK.md, FEATURES.md, ARCHITECTURE.md, SUMMARY.md
-- Requirements defined: 41 v1 requirements across 7 phases
-- Roadmap committed: 7 phases with success criteria per phase
-- Phase 1 Plan 1 (foundation) complete: blackboard REST API scaffolded
-- Phase 2 Plan 1 (context) complete: cognitive boundary control researched and planned
-- Phase 2 Plan 2 (execution) complete: JWT auth, capability service, boundary enforcement, 26 tests pass
-- Phase 3 Plan 3 (execution) complete: Actor class, LlmProvider interface, actor types, 43 tests pass
-- Phase 4 Plan 1 (execution) complete: Director class, planBackbone/arbitrate/factCheck, 22 new tests, 65 total tests pass
+- Phase 1 complete: blackboard REST API scaffolded, 26 tests pass
+- Phase 2 complete: JWT auth, capability service, boundary enforcement
+- Phase 3 complete: Actor class, LlmProvider interface, actor types, 43 tests pass
+- Phase 4 complete: Director class, planBackbone/arbitrate/factCheck, 22 new tests, 65 total tests pass
+- v1.0 validated: Shared Blackboard + Cognitive Boundaries + Actor Agents + Director Agent all ship
 
 ### What's Next
 Phase 5: Message Routing Hub — `/gsd:execute-phase 5` — Socket.IO-based real-time communication, heartbeat signals, deadlock prevention
 
 ### What's Blocked
-Nothing blocked. All prerequisites for Phase 1 are satisfied.
+Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors, director all exist).
 
 ---
 
@@ -119,7 +115,9 @@ Nothing blocked. All prerequisites for Phase 1 are satisfied.
 | 2026-03-18 | Phase 3 | Plan created | 03-RESEARCH.md + 03-actor-agents-PLAN.md committed |
 | 2026-03-18 | Phase 3 | Plan 03 execution | 03-actor-agents complete — Actor class, LlmProvider interface, actor types, 43 tests pass |
 | 2026-03-19 | Phase 4 | Plan 04 execution | 04-director-agent complete — Director class, 22 tests, 65 total tests pass |
+| 2026-03-19 | v1.1 | Milestone initialized | v1.1 milestone started — Routing, Memory & Integration |
+| 2026-03-19 | v1.1 | Research spawned | 4 parallel researchers targeting Phase 5–7 stack/features/architecture/pitfalls |
 
 ---
 
-*State last updated: 2026-03-19 after Phase 4 Plan 04 execution (Director class, 22 tests, 65 total tests pass)*
+*State last updated: 2026-03-19 after v1.1 milestone requirements defined*
