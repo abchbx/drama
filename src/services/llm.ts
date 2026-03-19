@@ -1,4 +1,5 @@
 import type { CharacterCard, SceneContext } from '../types/actor.js';
+import type { PlanningContext } from '../types/director.js';
 
 /**
  * Abstract LLM Provider interface.
@@ -80,6 +81,112 @@ export function buildActorUserPrompt(context: SceneContext): string {
   }
 
   lines.push('', '[Your Task]', 'Generate 1-3 dialogue lines as your character. Respond with JSON only.');
+
+  return lines.join('\n');
+}
+
+/**
+ * Build a system prompt for the Director.
+ * Encodes the role contract: plan, arbitrate, fact-check — never write dialogue.
+ */
+export function buildDirectorSystemPrompt(): string {
+  const lines: string[] = [
+    'You are the Director of this multi-agent drama session.',
+    'Your role is to plan the plot backbone, coordinate actors, arbitrate conflicts, and fact-check.',
+    "You MUST NOT write dialogue for any character. That is the actors' exclusive role.",
+    'You MUST respond with valid JSON only — no prose, no markdown, no explanation.',
+    '',
+    'Core responsibilities:',
+    '- Write plot backbone prose to the core layer. Use [ACTOR DISCRETION] markers for scenes where actors control the outcome.',
+    '- When writing the backbone, preserve all existing [ACTOR DISCRETION: ...] markers from prior versions.',
+    '- Arbitrate conflicting actor outputs: write the canonical outcome to the scenario layer.',
+    '- Fact-check actor outputs against established core layer facts. Only flag contradictions of objective world state.',
+    '- Do NOT flag character opinions, emotional reactions, or dramatic statements as contradictions.',
+    '',
+    'Token budget: The core layer has a 2K token budget. Monitor usage and prune/summarize when approaching capacity.',
+    '',
+    'Respond with JSON only.',
+  ];
+  return lines.join('\n');
+}
+
+/**
+ * Build a user prompt for the Director to plan or update the plot backbone.
+ */
+export function buildDirectorUserPrompt(context: PlanningContext, factContext: string): string {
+  const lines: string[] = [
+    '[Session]',
+    `Drama ID: ${context.dramaId}`,
+    '',
+    '[Characters]',
+    ...context.characters.map(c => `- ${c.name} (${c.role}): ${c.objectives.join('; ')}`),
+    '',
+    '[Existing Backbone — preserve all [ACTOR DISCRETION: ...] markers]',
+    context.existingBackbone || '(new session — no existing backbone)',
+    '',
+    '[Previous Scenes]',
+  ];
+
+  if (context.previousScenes.length > 0) {
+    for (const scene of context.previousScenes) {
+      lines.push(`Scene ${scene.sceneId}: ${scene.outcome}`);
+      if (scene.conflicts.length > 0) {
+        lines.push(`  Unresolved conflicts: ${scene.conflicts.join(', ')}`);
+      }
+      lines.push(`  Plot advancement: ${scene.plotAdvancement}`);
+    }
+  } else {
+    lines.push('(no previous scenes — this is the first scene)');
+  }
+
+  if (factContext.trim().length > 0) {
+    lines.push('', '[Fact Context — established facts, do not contradict]', factContext);
+  } else {
+    lines.push('', '[Fact Context — no established facts yet]');
+  }
+
+  lines.push('', '[Your Task]', 'Write or update the plot backbone prose. Include at least one [ACTOR DISCRETION] scene. Respond with JSON only.');
+
+  return lines.join('\n');
+}
+
+/**
+ * Build a user prompt for the Director to fact-check actor outputs.
+ */
+export function buildFactCheckUserPrompt(params: {
+  sceneId: string;
+  actorOutputs: Array<{ agentId: string; name: string; entries: Array<{ speaker: string; text: string; unverifiedFacts: boolean }> }>;
+  coreFacts: string;
+  scenarioFacts: string;
+}): string {
+  const lines: string[] = [
+    '[Task]',
+    `Fact-check the following actor outputs for Scene ${params.sceneId}.`,
+    '',
+    '[Established Facts — Core Layer]',
+    params.coreFacts || '(no core facts established)',
+    '',
+    '[Established Facts — Scenario Layer]',
+    params.scenarioFacts || '(no scenario facts established)',
+    '',
+    '[Actor Outputs]',
+  ];
+
+  for (const actor of params.actorOutputs) {
+    lines.push(`\n${actor.name} (${actor.agentId}):`);
+    for (const entry of actor.entries) {
+      lines.push(`  [${entry.speaker}]: ${entry.text}`);
+    }
+  }
+
+  lines.push(
+    '',
+    '[Instructions]',
+    "Compare each actor's claims against the established facts above.",
+    'Only flag contradictions of objective world state (who did what, when, where).',
+    'Do NOT flag character opinions, emotional reactions, dramatic statements, or rhetorical choices.',
+    'Return a JSON array of contradiction entries with severity: high (core contradiction), medium (scenario contradiction), low (minor detail).',
+  );
 
   return lines.join('\n');
 }
