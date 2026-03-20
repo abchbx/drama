@@ -9,3 +9,4 @@ export * from './llm.js';
 export { OpenAiLlmProvider, type OpenAiConfig } from './llm/openai.js';
 export { AnthropicLlmProvider, type AnthropicConfig } from './llm/anthropic.js';
 export { logger, childLogger, sessionLogger } from './logger.js';
+export { DramaSession, type SceneConfig, type SceneResult, type DramaResult, type ChaosHooks } from '../session.js';
