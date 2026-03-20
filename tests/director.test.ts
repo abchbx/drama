@@ -170,6 +170,18 @@ function createPlanningContext(existingBackbone = ''): PlanningContext {
   };
 }
 
+function createMockMemoryManager() {
+  return {
+    writeEntryWithMemoryManagement: vi.fn().mockImplementation((layer: string, agentId: string, req: any) => {
+      return { entry: { id: 'mem-entry-1', agentId, content: req.content }, layerVersion: 1 };
+    }),
+    promoteScenarioEntryToCore: vi.fn().mockImplementation((scenarioEntryId: string, directorAgentId: string) => {
+      return { coreEntryId: 'core-1', scenarioEntryId };
+    }),
+    getActorSemanticContinuity: vi.fn().mockReturnValue(''),
+  } as unknown as import('../src/services/memoryManager.js').MemoryManagerService;
+}
+
 function createTestDirector(
   llmProvider: MockLlmProvider,
   mockBlackboard?: ReturnType<typeof createMockBlackboard>,
@@ -177,6 +189,7 @@ function createTestDirector(
   const blackboard = mockBlackboard ?? createMockBlackboard();
   const capabilityService = createMockCapabilityService();
   const logger = createMockLogger();
+  const memoryManager = createMockMemoryManager();
 
   const director = new Director({
     blackboard,
@@ -184,9 +197,10 @@ function createTestDirector(
     llmProvider,
     logger,
     agentId: 'director-1',
+    memoryManager,
   });
 
-  return { director, blackboard, llmProvider, capabilityService };
+  return { director, blackboard, llmProvider, capabilityService, memoryManager };
 }
 
 // ---------------------------------------------------------------------------
@@ -237,13 +251,10 @@ describe('Director class — DIR-01: planBackbone writes to core layer', () => {
     expect(discretionScenes[0].type).toBe('actor_discretion');
   });
 
-  it('DIR-01c: planBackbone() checks core budget at 75%; prunes before write', async () => {
-    // Seed core with entries that push usage ABOVE 75% (>1500 tokens)
-    // Each 'x'.repeat(2000) = 500 tokens via Math.ceil(len/4)
-    // 4 entries = 2000 tokens > threshold (1500)
+  it('DIR-01c: planBackbone() writes directly to core without pruning (MEM-04)', async () => {
+    // MEM-04: Core layer is NEVER auto-evicted
     const mockBlackboard = createMockBlackboard();
-    const largeContent = 'x'.repeat(2000);
-    mockBlackboard.seedBackbone([largeContent, largeContent, largeContent, largeContent]);
+    mockBlackboard.seedBackbone(['Old backbone content.']);
 
     const mockLLM = new MockLlmProvider([{
       content: JSON.stringify({
@@ -257,10 +268,9 @@ describe('Director class — DIR-01: planBackbone writes to core layer', () => {
 
     await director.planBackbone(createPlanningContext());
 
-    const scenarioWrites = mockBlackboard._writeCalls.filter(c => c.layer === 'scenario');
     const coreWrites = mockBlackboard._writeCalls.filter(c => c.layer === 'core');
-    expect(scenarioWrites.length).toBeGreaterThanOrEqual(1); // summary was written
     expect(coreWrites).toHaveLength(1); // new backbone written
+    expect(coreWrites[0].content).toBe('New backbone content.');
   });
 });
 
@@ -336,6 +346,7 @@ describe('Director class — DIR-03: Director MUST NOT write to semantic layer',
     } as unknown as CapabilityService;
     const mockLLM = new MockLlmProvider([]);
     const logger = createMockLogger();
+    const memoryManager = createMockMemoryManager();
 
     expect(() => new Director({
       blackboard: badBlackboard,
@@ -343,6 +354,7 @@ describe('Director class — DIR-03: Director MUST NOT write to semantic layer',
       llmProvider: mockLLM,
       logger,
       agentId: 'director-1',
+      memoryManager,
     })).toThrow('semantic layer write must be denied');
   });
 

@@ -25,6 +25,7 @@ export {
   NotFoundError,
   ValidationError,
 };
+export type { WriteEntryResponse };
 
 // Cached tiktoken encoder — created once, reused for all token counting
 let _encoder: ReturnType<typeof encoding_for_model> | null = null;

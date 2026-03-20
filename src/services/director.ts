@@ -1,7 +1,7 @@
 import type pino from 'pino';
-import { LAYER_BUDGETS } from '../types/blackboard.js';
 import type { BlackboardService } from './blackboard.js';
 import type { CapabilityService } from './capability.js';
+import type { MemoryManagerService } from './memoryManager.js';
 import { type LlmProvider } from './llm.js';
 import {
   buildDirectorSystemPrompt,
@@ -27,6 +27,7 @@ export interface DirectorOptions {
   blackboard: BlackboardService;
   capabilityService: CapabilityService;
   llmProvider: LlmProvider;
+  memoryManager: MemoryManagerService;
   logger: pino.Logger;
   agentId: string;
 }
@@ -35,6 +36,7 @@ export class Director {
   private readonly blackboard: BlackboardService;
   private readonly capabilityService: CapabilityService;
   private readonly llmProvider: LlmProvider;
+  private readonly memoryManager: MemoryManagerService;
   private readonly logger: pino.Logger;
   private readonly agentId: string;
 
@@ -42,12 +44,14 @@ export class Director {
     if (!options.blackboard) throw new Error('Director requires blackboard service');
     if (!options.capabilityService) throw new Error('Director requires capability service');
     if (!options.llmProvider) throw new Error('Director requires LLM provider');
+    if (!options.memoryManager) throw new Error('Director requires memory manager');
     if (!options.logger) throw new Error('Director requires logger');
     if (!options.agentId) throw new Error('Director requires agentId');
 
     this.blackboard = options.blackboard;
     this.capabilityService = options.capabilityService;
     this.llmProvider = options.llmProvider;
+    this.memoryManager = options.memoryManager;
     this.logger = options.logger;
     this.agentId = options.agentId;
 
@@ -96,13 +100,6 @@ export class Director {
 
     // Read fact context from all layers
     const factContext = this.readAllLayerContext();
-
-    // Check core budget — prune if approaching 75%
-    const core = this.blackboard.readLayer('core');
-    const threshold = LAYER_BUDGETS.core * 0.75;
-    if (core.tokenCount > threshold) {
-      await this.ensureCoreBudget(0);
-    }
 
     // Build prompts
     const system = buildDirectorSystemPrompt();
@@ -166,38 +163,12 @@ export class Director {
   }
 
   /**
-   * Ensure core layer has enough budget for additionalTokens.
-   * Prunes the oldest half of entries by moving a summary to scenario layer.
+   * Explicit Director-only promotion: copy a scenario entry to core.
+   * MEM-05: Only the Director should call this.
    */
-  private async ensureCoreBudget(additionalTokens: number): Promise<void> {
-    const core = this.blackboard.readLayer('core');
-    if (core.tokenCount + additionalTokens <= LAYER_BUDGETS.core) {
-      return;
-    }
-
-    this.logger.debug({ tokenCount: core.tokenCount, budget: LAYER_BUDGETS.core }, 'Director.ensureCoreBudget: pruning core layer');
-
-    if (core.entries.length === 0) return;
-
-    // Summarize the first half of entries
-    const half = Math.floor(core.entries.length / 2);
-    const toPrune = core.entries.slice(0, half);
-    const summaryText = toPrune.map(e => e.content).join('\n\n');
-
-    // Write summary to scenario layer
-    this.blackboard.writeEntry('scenario', this.agentId, {
-      content: 'Summary of pruned core: ' + summaryText,
-      messageId: crypto.randomUUID(),
-    });
-
-    // Delete pruned entries from core
-    for (const entry of toPrune) {
-      try {
-        this.blackboard.deleteEntry('core', entry.id, this.agentId);
-      } catch (err) {
-        this.logger.warn({ err, entryId: entry.id }, 'Director.ensureCoreBudget: failed to delete entry');
-      }
-    }
+  async promoteScenarioEntryToCore(scenarioEntryId: string): Promise<{ coreEntryId: string; scenarioEntryId: string }> {
+    this.logger.debug({ scenarioEntryId, agentId: this.agentId }, 'Director.promote: starting');
+    return this.memoryManager.promoteScenarioEntryToCore(scenarioEntryId, this.agentId);
   }
 
   /**

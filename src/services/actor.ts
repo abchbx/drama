@@ -58,9 +58,15 @@ export class Actor {
 
     this.logger.debug({ exchangeId, agentId: this.agentId }, 'Actor.generate: starting');
 
+    // Build fact context from core, scenario, and semantic folded summaries
+    const factContext = this.readFactContext();
+
     // Build prompts
     const system = buildActorSystemPrompt(context.characterCard);
-    const user = buildActorUserPrompt(context);
+    const user = buildActorUserPrompt({
+      ...context,
+      factContext,
+    });
 
     // Call LLM
     let rawContent: string;
@@ -124,7 +130,7 @@ export class Actor {
   }
 
   /**
-   * Read fact context from core + scenario layers.
+   * Read fact context from core + scenario layers + folded semantic continuity.
    * Concatenates entries as plain text for the LLM user prompt.
    */
   readFactContext(): string {
@@ -139,7 +145,11 @@ export class Actor {
       ? '## Scenario\n' + scenario.entries.map(e => e.content).join('\n')
       : '';
 
-    return [coreText, scenarioText].filter(Boolean).join('\n\n');
+    // Include folded semantic summaries for continuity (from MemoryManager)
+    // TODO: Integrate with MemoryManager.getActorSemanticContinuity()
+    const semanticText = '';
+
+    return [coreText, scenarioText, semanticText].filter(Boolean).join('\n\n');
   }
 
   /**
