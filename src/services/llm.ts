@@ -1,5 +1,7 @@
 import type { CharacterCard, SceneContext } from '../types/actor.js';
 import type { PlanningContext } from '../types/director.js';
+import type pino from 'pino';
+import { config } from '../config.js';
 
 /**
  * Abstract LLM Provider interface.
@@ -153,6 +155,33 @@ export function buildDirectorUserPrompt(context: PlanningContext, factContext: s
 /**
  * Build a user prompt for the Director to fact-check actor outputs.
  */
+/**
+ * Create LLM provider based on configuration
+ * @param logger Logger instance for provider
+ * @returns LlmProvider implementation
+ */
+export async function createLlmProvider(logger: pino.Logger): Promise<LlmProvider> {
+  switch (config.LLM_PROVIDER) {
+    case 'openai': {
+      const { OpenAiLlmProvider } = await import('./llm/openai.js');
+      return new OpenAiLlmProvider({
+        apiKey: config.OPENAI_API_KEY!,
+        model: config.OPENAI_MODEL,
+        baseUrl: config.OPENAI_BASE_URL,
+      }, logger);
+    }
+    case 'anthropic': {
+      const { AnthropicLlmProvider } = await import('./llm/anthropic.js');
+      return new AnthropicLlmProvider({
+        apiKey: config.ANTHROPIC_API_KEY!,
+        model: config.ANTHROPIC_MODEL,
+      }, logger);
+    }
+    default:
+      throw new Error(`Unsupported LLM provider: ${config.LLM_PROVIDER}`);
+  }
+}
+
 export function buildFactCheckUserPrompt(params: {
   sceneId: string;
   actorOutputs: Array<{ agentId: string; name: string; entries: Array<{ speaker: string; text: string; unverifiedFacts: boolean }> }>;

@@ -6,3 +6,5 @@ export { Director, type DirectorOptions } from './director.js';
 export { RouterService, type RouterServiceOptions } from './router.js';
 export { MemoryManagerService, type MemoryManagerOptions } from './memoryManager.js';
 export * from './llm.js';
+export { OpenAiLlmProvider, type OpenAiConfig } from './llm/openai.js';
+export { AnthropicLlmProvider, type AnthropicConfig } from './llm/anthropic.js';
