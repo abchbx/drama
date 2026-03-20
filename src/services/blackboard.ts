@@ -117,7 +117,7 @@ export class BlackboardService {
       throw new TokenBudgetExceededError(layer, budget, currentTotal, tokenCount);
     }
 
-    // Create entry
+    // Create entry — merge caller-supplied metadata (Phase 6 fold/promotion fields)
     const entry: BlackboardEntry = {
       id: crypto.randomUUID(),
       agentId,
@@ -126,12 +126,53 @@ export class BlackboardService {
       content: req.content,
       tokenCount,
       version: ls.version + 1,
+      metadata: req.metadata ? { ...req.metadata } : undefined,
     };
 
     ls.entries.push(entry);
     ls.version = ls.version + 1;
 
     return { entry, layerVersion: ls.version };
+  }
+
+  /**
+   * Patch metadata on an existing entry.
+   * Used by MemoryManagerService for fold/promotion updates.
+   */
+  updateEntryMetadata(
+    layer: BlackboardLayer,
+    entryId: string,
+    metadataPatch: Partial<BlackboardEntry['metadata']>,
+    _agentId: string,
+  ): void {
+    if (!LAYER_NAMES.includes(layer)) {
+      throw new ValidationError(`Invalid layer: ${String(layer)}`);
+    }
+    const ls = this.state[layer];
+    const entry = ls.entries.find(e => e.id === entryId);
+    if (!entry) {
+      throw new NotFoundError(layer, entryId);
+    }
+    entry.metadata = { ...entry.metadata, ...metadataPatch };
+    ls.version = ls.version + 1;
+  }
+
+  /**
+   * Delete multiple entries by ID from a layer.
+   * Used by MemoryManagerService when folding older entries into a summary.
+   */
+  deleteEntries(layer: BlackboardLayer, entryIds: string[]): void {
+    if (!LAYER_NAMES.includes(layer)) {
+      throw new ValidationError(`Invalid layer: ${String(layer)}`);
+    }
+    const ls = this.state[layer];
+    for (const id of entryIds) {
+      const idx = ls.entries.findIndex(e => e.id === id);
+      if (idx !== -1) {
+        ls.entries.splice(idx, 1);
+      }
+    }
+    ls.version = ls.version + 1;
   }
 
   deleteEntry(layer: BlackboardLayer, entryId: string, _agentId: string): void {
