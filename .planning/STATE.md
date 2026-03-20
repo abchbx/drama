@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Routing, Memory & Integration
-status: defining_requirements
-last_updated: "2026-03-19T12:00:00.000Z"
+status: executing_phase
+last_updated: "2026-03-20T00:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 5
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # State: Multi-Agent Drama System
 
 **Project:** Multi-Agent Drama System
-**Updated:** 2026-03-19
+**Updated:** 2026-03-20
 
 ---
 
@@ -40,7 +40,7 @@ This milestone completes Phases 5–7: Socket.IO routing hub, memory folding eng
 | 2 | Cognitive Boundary Control | ✓ Complete | 1/1 done | 100% |
 | 3 | Actor Agents | ✓ Complete | 1/1 done | 100% |
 | 4 | Director Agent | ✓ Complete | 1/1 done | 100% |
-| 5 | Message Routing Hub | ○ Pending | — | 0% |
+| 5 | Message Routing Hub | ✓ Complete | 1/1 done | 100% |
 | 6 | Memory Management Engine | ○ Pending | — | 0% |
 | 7 | Integration + Chaos Testing | ○ Pending | — | 0% |
 
@@ -55,10 +55,11 @@ This milestone completes Phases 5–7: Socket.IO routing hub, memory folding eng
 - Phase 2 complete: JWT auth, capability service, boundary enforcement
 - Phase 3 complete: Actor class, LlmProvider interface, actor types, 43 tests pass
 - Phase 4 complete: Director class, planBackbone/arbitrate/factCheck, 22 new tests, 65 total tests pass
-- v1.0 validated: Shared Blackboard + Cognitive Boundaries + Actor Agents + Director Agent all ship
+- Phase 5 complete: Socket.IO routing hub with heartbeat/timeout/message buffering, 65 tests pass
+- v1.1 in progress: Routing complete, Memory & Integration pending
 
 ### What's Next
-Phase 5: Message Routing Hub — `/gsd:execute-phase 5` — Socket.IO-based real-time communication, heartbeat signals, deadlock prevention
+Phase 6: Memory Management Engine — `/gsd:execute-phase 6` — Token-budget-aware folding, semantic layer compression, scene promotion
 
 ### What's Blocked
 Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors, director all exist).
@@ -70,7 +71,7 @@ Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors
 | Decision | Rationale | Status |
 |----------|-----------|--------|
 | Node.js 22 LTS + TypeScript 5.5 | Async I/O for concurrent agents; npm ecosystem; type safety | — Resolved |
-| Socket.IO for message routing | Built-in heartbeat prevents deadlocks; rooms map to routing modes | — Pending |
+| Socket.IO for message routing | Built-in heartbeat prevents deadlocks; rooms map to routing modes | — Resolved (Phase 5) |
 | Zod for JSON validation | Runtime schema enforcement; TypeScript inference | — Resolved |
 | In-memory + JSON snapshots for v1 | Speed of iteration; Redis deferred to scale phase | — Resolved |
 | tiktoken v1.x for token counting | Synchronous WASM encoder (gpt-4 encoding = cl100k_base) | — Resolved |
@@ -117,6 +118,7 @@ Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors
 | 2026-03-19 | Phase 4 | Plan 04 execution | 04-director-agent complete — Director class, 22 tests, 65 total tests pass |
 | 2026-03-19 | v1.1 | Milestone initialized | v1.1 milestone started — Routing, Memory & Integration |
 | 2026-03-19 | v1.1 | Research spawned | 4 parallel researchers targeting Phase 5–7 stack/features/architecture/pitfalls |
+| 2026-03-20 | Phase 5 | Plan 05 execution | 05-message-routing-hub complete — RouterService, heartbeat, timeout manager, buffering, build passes, 65 tests pass |
 
 ---
 

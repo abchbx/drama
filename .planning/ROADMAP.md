@@ -10,7 +10,8 @@
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
 | 1 | Shared Blackboard Service | Central state store with four-layer hierarchy and concurrency control | BLKB-01–05 | 5 |
-| 2 | Cognitive Boundary Control | Hard write-layer enforcement preventing boundary leakage | BOUND-01–04 | 4 | 1/1 | Complete   | 2026-03-19 | Character-driven dialogue generation with scoped context | ACTR-01–05 | 5 |
+| 2 | Cognitive Boundary Control | Hard write-layer enforcement preventing boundary leakage | BOUND-01–04 | 4 |
+| 3 | Actor Agents | Character-driven dialogue generation with scoped context | ACTR-01–05 | 5 |
 | 4 | Director Agent | Orchestration, arbitration, and inter-phase validation | DIR-01–06 | 6 |
 | 5 | Message Routing Hub | Real-time communication with deadlock prevention | ROUTE-01–06 | 6 |
 | 6 | Memory Management Engine | Token-budget-aware folding preserving narrative priority | MEM-01–05 | 5 |
@@ -107,7 +108,12 @@
 5. Network disconnect + reconnect: Socket.IO reconnects automatically
 6. Heartbeat: alive signal observed every 5s from all connected agents
 
----
+**Status:** Complete (2026-03-20) — RouterService, HeartbeatService, TimeoutManager, MessageBuffer implemented, build passes, 65 tests pass
+- RouterService with Socket.IO: broadcast, p2p, multicast, sendYourTurn
+- HeartbeatService: ping/pong, dead agent detection (3-miss threshold)
+- TimeoutManager: actor retry timers, scene ceiling, grace period
+- MessageBuffer: offline message buffering with replay on reconnect
+- Routing types: Zod schemas for all message formats
 
 ### Phase 6: Memory Management Engine
 
