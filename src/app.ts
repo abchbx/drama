@@ -1,20 +1,30 @@
 import express = require('express');
-import { pino } from 'pino';
+import type pino from 'pino';
 import { blackboardRouter } from './routes/blackboard.js';
 import { auditRouter } from './routes/audit.js';
 import { healthRouter } from './routes/health.js';
 import { agentsRouter } from './routes/agents.js';
+import type { BlackboardService } from './services/blackboard.js';
+import type { CapabilityService } from './services/capability.js';
+import type { RouterService } from './services/router.js';
+import type { DramaSession } from './session.js';
 
-const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
+export interface AppServices {
+  logger: pino.Logger;
+  blackboard: BlackboardService;
+  capabilityService: CapabilityService;
+  routerService: RouterService;
+  dramaSession?: DramaSession;
+}
 
-export function createApp() {
+export function createApp(services: AppServices) {
   const app = express();
 
   app.use(express.json({ limit: '1mb' }));
 
   // Simple request logging middleware using pino
   app.use((req, _res, next) => {
-    logger.info({ method: req.method, url: req.url }, 'incoming request');
+    services.logger.info({ method: req.method, url: req.url }, 'incoming request');
     next();
   });
 
@@ -33,8 +43,11 @@ export function createApp() {
   app.use('/blackboard/agents', agentsRouter);
   app.use('/health', healthRouter);
 
-  // Expose logger so violation handler can use it
-  app.locals.logger = logger;
+  // Expose services via app.locals
+  app.locals.logger = services.logger;
+  app.locals.blackboard = services.blackboard;
+  app.locals.capabilityService = services.capabilityService;
+  app.locals.routerService = services.routerService;
 
   return app;
 }

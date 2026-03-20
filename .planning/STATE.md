@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-03-20T10:34:37.871Z"
+milestone: v1.1
+milestone_name: Routing, Memory & Integration
+status: complete
+last_updated: "2026-03-20T14:30:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 8
 ---
 
 # State: Multi-Agent Drama System
@@ -30,9 +30,9 @@ See: .planning/PROJECT.md (updated 2026-03-19 after v1.1 initialization)
 
 ## Milestone Status
 
-**Current milestone:** v1.1 — Routing, Memory & Integration
+**Current milestone:** v1.1 — Routing, Memory & Integration ✅ COMPLETE
 
-This milestone completes Phases 5–7: Socket.IO routing hub, memory folding engine, and integration + chaos testing.
+This milestone completed Phases 5–7: Socket.IO routing hub, memory folding engine, and integration + chaos testing. All 104 tests pass.
 
 | Phase | Name | Status | Plans | Progress |
 |-------|------|--------|-------|----------|
@@ -42,7 +42,7 @@ This milestone completes Phases 5–7: Socket.IO routing hub, memory folding eng
 | 4 | Director Agent | ✓ Complete | 1/1 done | 100% |
 | 5 | Message Routing Hub | ✓ Complete | 1/1 done | 100% |
 | 6 | Memory Management Engine | ✓ Complete | 1/1 done | 100% |
-| 7 | Integration + Chaos Testing | ○ Pending | — | 0% |
+| 7 | Integration + Chaos Testing | ✓ Complete | 1/1 done | 100% |
 
 **Legend:** ○ Pending | ◆ In Progress | ✓ Complete | ⚠️ Blocked
 
@@ -57,13 +57,13 @@ This milestone completes Phases 5–7: Socket.IO routing hub, memory folding eng
 - Phase 4 complete: Director class, planBackbone/arbitrate/factCheck, 22 new tests, 65 total tests pass
 - Phase 5 complete: Socket.IO routing hub with heartbeat/timeout/message buffering, 65 tests pass
 - Phase 6 complete: MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass
-- v1.1 in progress: Routing and Memory complete, Integration pending
+- Phase 7 complete: DramaSession orchestrator, LLM providers (OpenAI + Anthropic), structured logging, protocol validation, chaos tests, 104 tests pass
 
 ### What's Next
-Phase 7: Integration + Chaos Testing — End-to-end session + adversarial robustness tests
+v1.1 milestone complete. Awaiting v1.2 planning.
 
 ### What's Blocked
-Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors, director all exist).
+Nothing blocked. All v1.1 phases are complete.
 
 ---
 
@@ -121,7 +121,8 @@ Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors
 | 2026-03-19 | v1.1 | Research spawned | 4 parallel researchers targeting Phase 5–7 stack/features/architecture/pitfalls |
 | 2026-03-20 | Phase 5 | Plan 05 execution | 05-message-routing-hub complete — RouterService, heartbeat, timeout manager, buffering, build passes, 65 tests pass |
 | 2026-03-20 | Phase 6 | Plan 06 execution | 06-memory-management-engine complete — MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass |
+| 2026-03-20 | Phase 7 | Plan 07 execution | 07-integration-and-chaos-testing complete — DramaSession, LLM providers, protocol validation, chaos tests, 104 tests pass |
 
 ---
 
-*State last updated: 2026-03-19 after v1.1 milestone requirements defined*
+*State last updated: 2026-03-20 after v1.1 milestone completion - all 7 phases complete, 104 tests pass*

@@ -149,6 +149,16 @@
 10. All log entries include agent attribution (agent ID in every log line)
 11. YOLO mode assessment: documented which error paths are handled vs. instrumented-only
 
+**Status:** Complete (2026-03-20) — DramaSession orchestrator, LLM providers (OpenAI + Anthropic), structured logging, protocol validation, chaos tests, 104 tests pass
+- src/config.ts: Zod-validated .env config
+- src/services/llm/openai.ts: OpenAI adapter
+- src/services/llm/anthropic.ts: Anthropic adapter
+- src/services/logger.ts: structured logger with agent attribution
+- src/session.ts: DramaSession orchestrator with error recovery and chaos hooks
+- tests/e2e.test.ts: E2E tests TEST-01–06
+- tests/chaos.test.ts: chaos test harness
+- tests/protocol.test.ts: protocol validation tests
+
 ---
 
 ## Phase Ordering Rationale

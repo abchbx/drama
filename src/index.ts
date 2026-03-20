@@ -7,24 +7,27 @@ import { SnapshotService } from './services/snapshot.js';
 import { AuditLogService } from './services/auditLog.js';
 import { createCapabilityService } from './services/capability.js';
 import { RouterService } from './services/router.js';
+import { MemoryManagerService } from './services/memoryManager.js';
+import { createLlmProvider } from './services/llm.js';
+import { DramaSession } from './session.js';
+import { config } from './config.js';
 import { setAuditLog as setBlackboardAuditLog } from './routes/blackboard.js';
 import { setAuditLog as setAuditRouterAuditLog } from './routes/audit.js';
 import { setSnapshotService } from './routes/blackboard.js';
 import { setCapabilityService as setAgentsCapabilityService } from './routes/agents.js';
 import { setCapabilityService as setBlackboardCapabilityService } from './routes/blackboard.js';
 
-const app = createApp();
+const logger = pino({ level: config.LOG_LEVEL });
 
-const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
-const DATA_DIR = process.env.BLACKBOARD_DATA_DIR ?? './data';
+// ---------------------------------------------------------------------------
+// Initialize all services from config
+// ---------------------------------------------------------------------------
 
 // 1. Snapshot service (must be created before blackboard for tryRestore)
-const snapshotService = new SnapshotService(DATA_DIR);
+const snapshotService = new SnapshotService(config.BLACKBOARD_DATA_DIR);
 
 // 2. Audit log service
-const auditLogService = new AuditLogService(DATA_DIR);
+const auditLogService = new AuditLogService(config.BLACKBOARD_DATA_DIR);
 
 // 3. Blackboard service (restore from snapshot if available)
 const initialState = snapshotService.tryRestore();
@@ -37,36 +40,111 @@ setAuditRouterAuditLog(auditLogService);
 // 5. Wire snapshot service into route handlers
 setSnapshotService(snapshotService);
 
-// 5b. Capability service
+// 6. Capability service
 const capabilityService = createCapabilityService();
 setAgentsCapabilityService(capabilityService);
 setBlackboardCapabilityService(capabilityService);
 
-// 6. Create httpServer + app, wire services
+// 7. Create httpServer + app, wire services
+const app = createApp({
+  logger,
+  blackboard: blackboardService,
+  capabilityService,
+  routerService: null as any, // Will be initialized after httpServer
+});
+
 const httpServer = createServer(app);
 
-// 7. Socket.IO router (also handles heartbeat, timeout, reconnect)
-const socketPort = parseInt(process.env.SOCKET_PORT ?? '3001', 10);
-const routerService = new RouterService(httpServer, pino({ level: process.env.LOG_LEVEL ?? 'info' }), {
-  port: socketPort,
-  heartbeatIntervalMs: parseInt(process.env.HEARTBEAT_INTERVAL_MS ?? '5000', 10),
-  actorTimeoutMs: parseInt(process.env.ACTOR_TIMEOUT_MS ?? '30000', 10),
-  actorRetryTimeoutMs: parseInt(process.env.ACTOR_RETRY_TIMEOUT_MS ?? '15000', 10),
-  gracePeriodMs: parseInt(process.env.SOCKET_GRACE_PERIOD_MS ?? '10000', 10),
-  sceneTimeoutMs: parseInt(process.env.SCENE_TIMEOUT_MS ?? '300000', 10),
+// 8. Socket.IO router (also handles heartbeat, timeout, reconnect)
+const routerService = new RouterService(httpServer, logger, {
+  port: config.SOCKET_PORT,
+  heartbeatIntervalMs: config.HEARTBEAT_INTERVAL_MS,
+  actorTimeoutMs: config.ACTOR_TIMEOUT_MS,
+  actorRetryTimeoutMs: config.ACTOR_RETRY_TIMEOUT_MS,
+  gracePeriodMs: config.SOCKET_GRACE_PERIOD_MS,
+  sceneTimeoutMs: config.SCENE_TIMEOUT_MS,
 });
 
-// 8. Wire blackboard service into app.locals so route handlers can access it
-app.locals.blackboard = blackboardService;
-app.locals.capabilityService = capabilityService;
 app.locals.routerService = routerService;
 
-// 9. Start listening
-httpServer.listen(PORT, () => {
-  logger.info({ port: PORT, socketPort, snapshotRestored: !!initialState }, 'blackboard service started');
+// 9. Memory manager (initialized with blackboard + LLM provider for folding)
+//    Budgets are configured via LAYER_BUDGETS in types/blackboard.ts
+const llmProvider = await createLlmProvider(logger);
+const memoryManager = new MemoryManagerService({
+  blackboard: blackboardService,
+  llmProvider,
+  logger,
+  alertCallback: (layer, metadata) => {
+    logger.warn({ layer, usagePct: metadata.usagePct }, 'Memory alert: layer approaching budget');
+  },
+  foldCallback: (layer, metadata) => {
+    logger.info({ layer, foldedEntryCount: metadata.foldedEntryCount, summaryEntryId: metadata.summaryEntryId }, 'Memory fold completed');
+  },
+  promoteCallback: (metadata) => {
+    logger.info({ sourceScenarioEntryId: metadata.sourceScenarioEntryId, targetCoreEntryId: metadata.targetCoreEntryId, promotedBy: metadata.promotedBy }, 'Scenario entry promoted to core');
+  },
 });
 
-// 10. Graceful shutdown: flush snapshot before exit
+// ---------------------------------------------------------------------------
+// Drama Session endpoint
+// ---------------------------------------------------------------------------
+
+// POST /session - create a new drama session
+app.post('/session', async (req, res) => {
+  try {
+    const session = new DramaSession({
+      config: {
+        sceneTimeoutMs: config.SCENE_TIMEOUT_MS,
+        actorTimeoutMs: config.ACTOR_TIMEOUT_MS,
+      },
+      blackboard: blackboardService,
+      router: routerService,
+      memoryManager,
+      llmProvider,
+      capabilityService,
+      logger,
+    });
+    res.json({ dramaId: session.dramaId, status: 'created' });
+  } catch (err) {
+    logger.error({ err }, 'Failed to create drama session');
+    res.status(500).json({ error: 'Failed to create session' });
+  }
+});
+
+// GET /health - enhanced health check with all services
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    services: {
+      blackboard: 'connected',
+      router: routerService ? 'connected' : 'disconnected',
+      capability: 'connected',
+      memory: 'connected',
+    },
+    config: {
+      llmProvider: config.LLM_PROVIDER,
+      logLevel: config.LOG_LEVEL,
+    },
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Start server
+// ---------------------------------------------------------------------------
+
+httpServer.listen(config.PORT, () => {
+  logger.info({
+    port: config.PORT,
+    socketPort: config.SOCKET_PORT,
+    logLevel: config.LOG_LEVEL,
+    snapshotRestored: !!initialState,
+  }, 'blackboard service started');
+});
+
+// ---------------------------------------------------------------------------
+// Graceful shutdown
+// ---------------------------------------------------------------------------
+
 const shutdown = async () => {
   logger.info('shutting down...');
   snapshotService.stopTimer();
