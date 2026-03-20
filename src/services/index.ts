@@ -8,3 +8,4 @@ export { MemoryManagerService, type MemoryManagerOptions } from './memoryManager
 export * from './llm.js';
 export { OpenAiLlmProvider, type OpenAiConfig } from './llm/openai.js';
 export { AnthropicLlmProvider, type AnthropicConfig } from './llm/anthropic.js';
+export { logger, childLogger, sessionLogger } from './logger.js';
