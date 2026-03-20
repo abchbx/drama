@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Routing, Memory & Integration
-status: executing_phase
-last_updated: "2026-03-20T00:00:00.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-03-20T10:34:37.871Z"
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 6
+  completed_phases: 6
+  total_plans: 8
   completed_plans: 6
 ---
 
@@ -41,7 +41,7 @@ This milestone completes Phases 5–7: Socket.IO routing hub, memory folding eng
 | 3 | Actor Agents | ✓ Complete | 1/1 done | 100% |
 | 4 | Director Agent | ✓ Complete | 1/1 done | 100% |
 | 5 | Message Routing Hub | ✓ Complete | 1/1 done | 100% |
-| 6 | Memory Management Engine | ○ Pending | — | 0% |
+| 6 | Memory Management Engine | ✓ Complete | 1/1 done | 100% |
 | 7 | Integration + Chaos Testing | ○ Pending | — | 0% |
 
 **Legend:** ○ Pending | ◆ In Progress | ✓ Complete | ⚠️ Blocked
@@ -56,10 +56,11 @@ This milestone completes Phases 5–7: Socket.IO routing hub, memory folding eng
 - Phase 3 complete: Actor class, LlmProvider interface, actor types, 43 tests pass
 - Phase 4 complete: Director class, planBackbone/arbitrate/factCheck, 22 new tests, 65 total tests pass
 - Phase 5 complete: Socket.IO routing hub with heartbeat/timeout/message buffering, 65 tests pass
-- v1.1 in progress: Routing complete, Memory & Integration pending
+- Phase 6 complete: MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass
+- v1.1 in progress: Routing and Memory complete, Integration pending
 
 ### What's Next
-Phase 6: Memory Management Engine — `/gsd:execute-phase 6` — Token-budget-aware folding, semantic layer compression, scene promotion
+Phase 7: Integration + Chaos Testing — End-to-end session + adversarial robustness tests
 
 ### What's Blocked
 Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors, director all exist).
@@ -119,6 +120,7 @@ Nothing blocked. All prerequisites for Phase 5 are satisfied (blackboard, actors
 | 2026-03-19 | v1.1 | Milestone initialized | v1.1 milestone started — Routing, Memory & Integration |
 | 2026-03-19 | v1.1 | Research spawned | 4 parallel researchers targeting Phase 5–7 stack/features/architecture/pitfalls |
 | 2026-03-20 | Phase 5 | Plan 05 execution | 05-message-routing-hub complete — RouterService, heartbeat, timeout manager, buffering, build passes, 65 tests pass |
+| 2026-03-20 | Phase 6 | Plan 06 execution | 06-memory-management-engine complete — MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass |
 
 ---
 
