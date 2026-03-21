@@ -2,23 +2,23 @@
 
 ## Milestones
 
-- ✅ **v1.0 — Foundation** — Phases 1-4 (shipped 2026-03-19)
-- ✅ **v1.1 — Routing, Memory & Integration** — Phases 5-7 (shipped 2026-03-20)
-- 📋 **v1.2 — Frontend & Documentation** — Phases 8-13 (in progress)
+- [x] **v1.0 — Foundation** — Phases 1-4 (shipped 2026-03-19)
+- [x] **v1.1 — Routing, Memory & Integration** — Phases 5-7 (shipped 2026-03-20)
+- [ ] **v1.2 — Frontend & Documentation** — Phases 8-13 (in progress)
 
 ---
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Foundation (Phases 1-4) — SHIPPED 2026-03-19</summary>
+<summary>[x] v1.0 Foundation (Phases 1-4) — SHIPPED 2026-03-19</summary>
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
-| 1 | Shared Blackboard Service | Central state store with four-layer hierarchy and concurrency control | BLKB-01–05 | 5 |
-| 2 | Cognitive Boundary Control | Hard write-layer enforcement preventing boundary leakage | BOUND-01–04 | 4 |
-| 3 | Actor Agents | Character-driven dialogue generation with scoped context | ACTR-01–05 | 5 |
-| 4 | Director Agent | Orchestration, arbitration, and inter-phase validation | DIR-01–06 | 6 |
+| 1 | Shared Blackboard Service | Central state store with four-layer hierarchy and concurrency control | BLKB-01-05 | 5 |
+| 2 | Cognitive Boundary Control | Hard write-layer enforcement preventing boundary leakage | BOUND-01-04 | 4 |
+| 3 | Actor Agents | Character-driven dialogue generation with scoped context | ACTR-01-05 | 5 |
+| 4 | Director Agent | Orchestration, arbitration, and inter-phase validation | DIR-01-06 | 6 |
 
 - [x] Phase 1: Foundation (2/2 plans) — completed 2026-03-18
 - [x] Phase 2: Cognitive Boundary Control (1/1 plan) — completed 2026-03-18
@@ -34,13 +34,13 @@
 </details>
 
 <details>
-<summary>✅ v1.1 Routing, Memory & Integration (Phases 5-7) — SHIPPED 2026-03-20</summary>
+<summary>[x] v1.1 Routing, Memory & Integration (Phases 5-7) — SHIPPED 2026-03-20</summary>
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
-| 5 | Message Routing Hub | Real-time communication with deadlock prevention | ROUTE-01–06 | 6 |
-| 6 | Memory Management Engine | Token-budget-aware folding preserving narrative priority | MEM-01–05 | 5 |
-| 7 | Integration + Chaos Testing | End-to-end session + adversarial robustness tests | TEST-01–06 + PROTO-01–05 | 11 |
+| 5 | Message Routing Hub | Real-time communication with deadlock prevention | ROUTE-01-06 | 6 |
+| 6 | Memory Management Engine | Token-budget-aware folding preserving narrative priority | MEM-01-05 | 5 |
+| 7 | Integration + Chaos Testing | End-to-end session + adversarial robustness tests | TEST-01-06 + PROTO-01-05 | 11 |
 
 - [x] Phase 5: Message Routing Hub (1/1 plan) — completed 2026-03-20
 - [x] Phase 6: Memory Management Engine (1/1 plan) — completed 2026-03-20
@@ -80,7 +80,14 @@
   3. Frontend automatically reconnects if Socket.IO connection drops
   4. User can start and stop drama scenes from the interface
   5. API base URL and Socket.IO settings are configurable via environment variables
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Backend session registry and REST API for session management
+- [ ] 08-02-PLAN.md — Frontend React + Vite app bootstrap with API and Socket.IO clients
+- [ ] 08-03-PLAN.md — Session list and creation form UI components
+- [ ] 08-04a-PLAN.md — Scene start/stop controls and connection status indicator
+- [ ] 08-04b-PLAN.md — Toast notifications, Socket.IO wiring, and human verification
 
 #### Phase 9: Session Configuration & Agent Dashboard
 **Goal**: User can configure session parameters and monitor agent status
@@ -145,7 +152,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. Frontend Foundation | 0/0 | Not started | - |
+| 8. Frontend Foundation | 0/5 | Planning complete | - |
 | 9. Session Configuration & Agent Dashboard | 0/0 | Not started | - |
 | 10. Real-Time Visualization | 0/0 | Not started | - |
 | 11. Script Generation & Export | 0/0 | Not started | - |
@@ -156,8 +163,8 @@
 
 **Total v1.2 requirements:** 23
 **Mapped to phases:** 23
-**Unmapped:** 0 ✓
+**Unmapped:** 0
 
 ---
 
-*Roadmap last updated: 2026-03-21 with v1.2 phase definitions*
+*Roadmap last updated: 2026-03-21 with Phase 8 plan split (08-04 -> 08-04a + 08-04b)*
