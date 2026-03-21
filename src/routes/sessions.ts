@@ -32,8 +32,13 @@ sessionsRouter.get('/:id', (req: Request, res: Response) => {
   try {
     const registry = (req.app.locals as any).sessionRegistry as SessionRegistry;
     const { id } = req.params;
+    const dramaId = Array.isArray(id) ? id[0] : id;
 
-    const session = registry.get(id);
+    if (!dramaId) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
+
+    const session = registry.get(dramaId);
     res.json(session);
   } catch (err: any) {
     if (err.message.includes('not found')) {
@@ -78,8 +83,13 @@ sessionsRouter.post('/:id/scene/start', (req: Request, res: Response) => {
   try {
     const registry = (req.app.locals as any).sessionRegistry as SessionRegistry;
     const { id } = req.params;
+    const dramaId = Array.isArray(id) ? id[0] : id;
 
-    const session = registry.startScene(id, `scene-${Date.now()}`);
+    if (!dramaId) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
+
+    const session = registry.startScene(dramaId, `scene-${Date.now()}`);
     res.json({
       status: session.status,
       sceneId: session.activeSceneId,
@@ -106,12 +116,17 @@ sessionsRouter.post('/:id/scene/stop', (req: Request, res: Response) => {
     const registry = (req.app.locals as any).sessionRegistry as SessionRegistry;
     const { id } = req.params;
     const { status } = req.body;
+    const dramaId = Array.isArray(id) ? id[0] : id;
+
+    if (!dramaId) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
 
     if (!status || !['completed', 'interrupted', 'timeout'].includes(status)) {
       return res.status(400).json({ error: 'Invalid or missing status. Must be one of: completed, interrupted, timeout' });
     }
 
-    const session = registry.stopScene(id, status);
+    const session = registry.stopScene(dramaId, status);
     res.json({ status: session.status });
   } catch (err: any) {
     if (err.message.includes('not found')) {
