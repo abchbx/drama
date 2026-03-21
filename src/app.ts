@@ -5,6 +5,7 @@ import { auditRouter } from './routes/audit.js';
 import { healthRouter } from './routes/health.js';
 import { agentsRouter } from './routes/agents.js';
 import { sessionsRouter } from './routes/sessions.js';
+import { configRouter } from './routes/config.js';
 import type { BlackboardService } from './services/blackboard.js';
 import type { CapabilityService } from './services/capability.js';
 import type { RouterService } from './services/router.js';
@@ -48,6 +49,7 @@ export function createApp(services: AppServices) {
   app.use('/blackboard/agents', agentsRouter);
   app.use('/health', healthRouter);
   app.use('/sessions', sessionsRouter);
+  app.use('/config', configRouter);
 
   // Expose services via app.locals
   app.locals.logger = services.logger;
