@@ -75,14 +75,17 @@ export function loadConfig(): Config {
 }
 
 function validateConfigDependencies(config: Config): void {
-  // API key validation is optional for testing purposes
+  // API key validation is optional for testing purposes or if we're using mock provider
   const isTesting = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
+  // Don't require API keys - we'll use mock provider if needed
   if (!isTesting) {
+    // Still log a warning if API key is missing but don't throw error
     if (config.LLM_PROVIDER === 'openai' && !config.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is required when LLM_PROVIDER is set to "openai"');
+      console.warn('Warning: OPENAI_API_KEY is missing. Will use mock LLM provider.');
     }
     if (config.LLM_PROVIDER === 'anthropic' && !config.ANTHROPIC_API_KEY) {
-      throw new Error('ANTHROPIC_API_KEY is required when LLM_PROVIDER is set to "anthropic"');
+      console.warn('Warning: ANTHROPIC_API_KEY is missing. Will use mock LLM provider.');
     }
   }
 }

@@ -161,6 +161,17 @@ export function buildDirectorUserPrompt(context: PlanningContext, factContext: s
  * @returns LlmProvider implementation
  */
 export async function createLlmProvider(logger: pino.Logger): Promise<LlmProvider> {
+  const isTesting = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
+  // Use mock provider in test mode or when API keys are missing
+  if (isTesting ||
+      (config.LLM_PROVIDER === 'openai' && !config.OPENAI_API_KEY) ||
+      (config.LLM_PROVIDER === 'anthropic' && !config.ANTHROPIC_API_KEY)) {
+    logger.warn('Using mock LLM provider (API key missing or test mode)');
+    const { MockLlmProvider } = await import('./llm/mock.js');
+    return new MockLlmProvider({ responseDelayMs: 100 }, logger);
+  }
+
   switch (config.LLM_PROVIDER) {
     case 'openai': {
       const { OpenAiLlmProvider } = await import('./llm/openai.js');

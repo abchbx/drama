@@ -1,4 +1,4 @@
-import express = require('express');
+import express from 'express';
 import type pino from 'pino';
 import { blackboardRouter } from './routes/blackboard.js';
 import { auditRouter } from './routes/audit.js';
