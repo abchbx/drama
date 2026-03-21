@@ -83,7 +83,7 @@
 **Plans**: 5 plans
 
 Plans:
-- [x] 08-01-PLAN.md — Backend session registry and REST API for session management
+- [x] 08-01-PLAN.md — Backend session registry and REST API for session management ✓
 - [x] 08-02-PLAN.md — Frontend React + Vite app bootstrap with API and Socket.IO clients
 - [x] 08-03-PLAN.md — Session list and creation form UI components
 - [x] 08-04a-PLAN.md — Scene start/stop controls and connection status indicator

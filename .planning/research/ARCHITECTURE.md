@@ -1,462 +1,743 @@
-# Architecture Research
+# Architecture for v1.2 Frontend & Documentation
 
-**Domain:** Multi-agent LLM-based collaborative drama creation with shared blackboard architecture
-**Researched:** 2026-03-18
-**Confidence:** MEDIUM
+**Project:** Multi-Agent Drama System
+**Version:** v1.2
+**Researched:** 2026-03-21
+**Confidence:** HIGH
 
----
+## Recommended Architecture Overview
 
-## Standard Architecture
+The v1.2 architecture extends the existing multi-agent drama system with a modern frontend interface and comprehensive documentation. The frontend will provide real-time visualization of agent communication and blackboard state, while the documentation will make the system accessible to non-technical users.
 
-### System Overview
+### High-Level Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    EXTERNAL LLM PROVIDERS                         │
-│         (OpenAI GPT, Anthropic Claude, OpenAI-Compatible)        │
+│                     Frontend Layer                              │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌─────────────┐  Director  ┌─────────────────────────────────┐  │
-│  │  Director   │────────────│     Shared Blackboard Service     │  │
-│  │  Agent      │   plans,   │  ┌─────────────────────────────┐│  │
-│  │  (LLM)      │  arbitrates│  │  CORE LAYER  (max 2K tokens) ││  │
-│  └──────┬──────┘  verifies │  │  plot backbone, characters,   ││  │
-│         │                  │  │  core facts — NEVER evicted   ││  │
-│         │                  │  ├─────────────────────────────┤│  │
-│         │                  │  │  SCENARIO LAYER (max 8K)    ││  │
-│         │                  │  │  scene state, active events  ││  │
-│         │                  │  ├─────────────────────────────┤│  │
-│         │                  │  │  SEMANTIC LAYER (foldable)  ││  │
-│         │                  │  │  summaries, character state  ││  │
-│         │                  │  ├─────────────────────────────┤│  │
-│         │                  │  │  PROCEDURAL LAYER (foldable)││  │
-│         │                  │  │  character voice, protocols ││  │
-│         │                  │  └─────────────────────────────┘│  │
-│         │                  └───────────────┬──────────────────┘  │
-│         │                                  │                      │
-│         │           ┌─────────────────────┼─────────────────┐    │
-│         │           │                     │                  │    │
-│         ▼           ▼                     ▼                  ▼    │
-│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐        │
-│  │  Actor A  │ │  Actor B  │ │  Actor C  │ │  Actor N  │        │
-│  │  (LLM)    │ │  (LLM)    │ │  (LLM)    │ │  (LLM)    │        │
-│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘        │
-│        │             │             │             │                │
-│        └─────────────┴─────────────┴─────────────┘                │
-│                              │                                    │
-│                    ┌─────────▼──────────┐                        │
-│                    │ Message Routing Hub │                         │
-│                    │ (Socket.IO Server)  │                        │
-│                    │ broadcast / p2p /   │                        │
-│                    │ multicast + timeout │                        │
-│                    └─────────────────────┘                        │
-│                                                                   │
-├──────────────────────────────────────────────────────────────────┤
-│                      Cognitive Boundary Controller                  │
-│   Input Filter  │  Capability Closure  │  Decision Authority       │
-└──────────────────────────────────────────────────────────────────┘
+│ • React 18 UI components with TypeScript 5.5                     │
+│ • Zustand for client-side state management                       │
+│ • Socket.IO client for real-time communication                   │
+│ • Responsive design with Tailwind CSS 3.x                        │
+│ • Recharts for data visualization (agent communication graphs)  │
+└─────────────────────────────────────────────────────────────────┘
+                          │
+                          │ HTTP API + Socket.IO
+                          │
+┌─────────────────────────────────────────────────────────────────┐
+│                     Backend Layer                               │
+├─────────────────────────────────────────────────────────────────┤
+│ • Express.js 4.19 REST API (existing)                            │
+│ • Socket.IO 4.8 server for real-time messaging (existing)        │
+│ • Static file serving for documentation and frontend assets     │
+│ • OpenAPI 3.1 documentation generator                            │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Three Data Flows
+## Component Boundaries
 
-**Vertical Control Flow** (top-down):
+### New Components
+
+| Component | Responsibility | Communicates With |
+|-----------|---------------|-------------------|
+| **Frontend App** | Interactive UI for managing drama sessions, real-time visualization | Express API, Socket.IO server |
+| **Documentation Site** | Static documentation built with MkDocs or Docusaurus | Express static file server |
+| **API Documentation** | OpenAPI 3.1 specification generated from TypeScript types | Express API, frontend |
+| **Socket.IO Client Service** | Wrapper around Socket.IO client for connection management and event handling | Socket.IO server, Zustand store |
+| **Zustand Store** | Client-side state management for session data, agent communication, blackboard state | Frontend components, Socket.IO client |
+
+### Existing Components (Modified)
+
+| Component | Changes |
+|-----------|---------|
+| **Express App** | Add static file serving middleware for frontend and documentation | |
+| **RouterService** | Add Socket.IO event handlers for frontend-specific events | |
+| **Session Management** | Extend with REST API endpoints for session configuration and control | |
+
+## Data Flow
+
+### Real-Time UI Updates from Agent Communication
+
 ```
-Director LLM → writes plot backbone → Blackboard → scene_start signal → Actors
-```
-**Horizontal Perception Flow** (peer-to-peer):
-```
-Actor A writes dialogue → Blackboard update → Actor B receives notification → reads context → responds
-```
-**Bidirectional Sync Flow** (periodic):
-```
-All Agents → submit_state_summary() → Blackboard
-All Agents → pull_latest_global_view() → Blackboard
+┌──────────────────────────────────────────────────────────────┐
+│  Director/Actor Agents (in-process)                        │
+│  • Generate routing messages via RouterService             │
+│  • Send to Socket.IO server via routing:message event      │
+└──────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│  RouterService (existing)                                  │
+│  • Routes messages to intended recipients                   │
+│  • Emits 'message:received' event with RoutingMessage       │
+│  • Handles agent connection/disconnection events             │
+└──────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│  Socket.IO Server (existing)                                │
+│  • Broadcasts messages to connected clients in 'actors' room │
+│  • Emits agent state events to 'monitor' room                │
+└──────────────────────────────────────────────────────────────┘
+                          │
+                          │ WebSocket
+                          │
+┌──────────────────────────────────────────────────────────────┐
+│  Socket.IO Client Service (new)                             │
+│  • Establishes connection with backend                       │
+│  • Listens for 'routing:message' and agent state events      │
+│  • Transforms raw data into typed structures                 │
+│  • Calls Zustand store actions to update state                │
+└──────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│  Zustand Store (new)                                        │
+│  • Stores session data, agent list, message history         │
+│  • Manages blackboard layer snapshots                        │
+│  • Provides reactive state to UI components                   │
+└──────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│  React UI Components (new)                                  │
+│  • Real-time message feed                                    │
+│  • Agent status dashboard                                    │
+│  • Blackboard layer visualization                            │
+│  • Session configuration form                                │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+### Key Socket.IO Event Types for Frontend
 
-| Component | Responsibility | Implementation |
-|-----------|----------------|----------------|
-| Director Agent | Plot planning, arbitration, verification, blackboard size management | LLM process + structured output parsing |
-| Actor Agents | Dialogue generation within character constraints, character voice maintenance | LLM process + character card grounding |
-| Shared Blackboard Service | Central state persistence, layer management, token budgets, locking | Express.js REST + in-memory store + JSON file snapshots |
-| Message Routing Hub | Real-time message delivery, broadcast/p2p/multicast, heartbeat, timeout/fallback | Socket.IO server with rooms |
-| Cognitive Boundary Controller | Input filtering, write-layer enforcement, namespace isolation | Middleware on blackboard write path |
-| Memory Management Engine | Layer folding, token counting, eviction policy enforcement | Standalone service + blackboard layer integration |
-| LLM Provider Abstraction | Unified interface for OpenAI/Anthropic/custom APIs | Adapter pattern with provider-specific retry logic |
-| Audit Log | Every write attributed, timestamps, message IDs | Append-only log file + in-memory ring buffer |
+| Event Name | Payload Type | Purpose |
+|------------|--------------|---------|
+| `routing:message` | `RoutingMessage` | Incoming agent communication messages |
+| `agent:connected` | `{ agentId: string; role: AgentRole; socketId: string }` | Agent joins the system |
+| `agent:disconnected` | `{ agentId: string; role: AgentRole; socketId: string; graceful: boolean }` | Agent leaves the system |
+| `agent:unavailable` | `{ agentId: string; reason: 'timeout' | 'disconnect' | 'dead' }` | Agent becomes unavailable |
+| `agent:reconnected` | `{ agentId: string }` | Agent reconnects after timeout |
+| `scene:started` | `SceneStartPayload` | Director signals scene start |
+| `scene:ended` | `SceneEndPayload` | Director signals scene end |
+| `message:received` | `RoutingMessage` | Message received by router (internal) |
 
----
+## Backend Modifications for Frontend
 
-## Recommended Project Structure
+### New Socket.IO Room: `monitor`
+
+The frontend will connect to a new `monitor` room to receive all agent communication events without interfering with agent communication:
+
+```typescript
+// In RouterService.registerConnection()
+// Add after existing room joins
+if (role === 'monitor') {
+  socket.join('monitor');
+}
+```
+
+### New REST API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/session` | POST | Create a new drama session |
+| `/session/:dramaId` | GET | Get session status |
+| `/session/:dramaId/initialize` | POST | Initialize session with character cards |
+| `/session/:dramaId/scene` | POST | Start a new scene |
+| `/session/:dramaId/scene/:sceneId` | GET | Get scene results |
+| `/session/:dramaId/script` | GET | Export generated script |
+| `/docs` | GET | Serve documentation site |
+| `/api-docs` | GET | Serve OpenAPI JSON specification |
+
+### Express App Enhancements
+
+```typescript
+// In createApp()
+import path from 'node:path';
+
+// Serve frontend static assets
+app.use(express.static(path.join(process.cwd(), 'frontend/dist')));
+
+// Serve documentation
+app.use('/docs', express.static(path.join(process.cwd(), 'docs/build')));
+
+// Fallback to index.html for SPA routing
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/blackboard') ||
+      req.path.startsWith('/health') ||
+      req.path.startsWith('/session') ||
+      req.path.startsWith('/docs') ||
+      req.path.startsWith('/api-docs')) {
+    return next();
+  }
+  res.sendFile(path.join(process.cwd(), 'frontend/dist/index.html'));
+});
+```
+
+## Patterns to Follow
+
+### Pattern 1: Socket.IO Client Singleton with Zustand
+
+```typescript
+// src/frontend/services/socket.ts
+import { io, type Socket } from 'socket.io-client';
+
+class SocketService {
+  private socket: Socket | null = null;
+  private listeners: Map<string, (data: any) => void> = new Map();
+
+  connect(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.socket = io(url, {
+        autoConnect: false,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        auth: {
+          role: 'monitor',
+          agentId: `frontend-${crypto.randomUUID()}`,
+        },
+      });
+
+      this.socket.on('connect', () => resolve());
+      this.socket.on('connect_error', (error) => reject(error));
+      this.socket.connect();
+    });
+  }
+
+  on<T = any>(event: string, callback: (data: T) => void): void {
+    if (!this.socket) return;
+
+    const listener = (data: T) => callback(data);
+    this.listeners.set(event, listener);
+    this.socket.on(event, listener);
+  }
+
+  off(event: string): void {
+    const listener = this.listeners.get(event);
+    if (listener && this.socket) {
+      this.socket.off(event, listener);
+      this.listeners.delete(event);
+    }
+  }
+
+  disconnect(): void {
+    this.listeners.clear();
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+}
+
+export const socketService = new SocketService();
+```
+
+```typescript
+// src/frontend/store/sessionStore.ts
+import { create } from 'zustand';
+import { socketService } from '../services/socket';
+import type { RoutingMessage, ConnectedAgent, SceneStartPayload, SceneEndPayload } from '../../types/routing';
+
+interface SessionState {
+  sessionId: string | null;
+  agents: ConnectedAgent[];
+  messages: RoutingMessage[];
+  currentScene: SceneStartPayload | null;
+  isConnected: boolean;
+  isSessionActive: boolean;
+  connect: (url: string) => Promise<void>;
+  disconnect: () => void;
+  clearMessages: () => void;
+  setSessionActive: (active: boolean) => void;
+}
+
+export const useSessionStore = create<SessionState>((set, get) => ({
+  sessionId: null,
+  agents: [],
+  messages: [],
+  currentScene: null,
+  isConnected: false,
+  isSessionActive: false,
+  connect: async (url) => {
+    try {
+      await socketService.connect(url);
+      set({ isConnected: true });
+
+      socketService.on('agent:connected', (agent: ConnectedAgent) =>
+        set((state) => ({ agents: [...state.agents, agent] }))
+      );
+
+      socketService.on('agent:disconnected', (data: { agentId: string }) =>
+        set((state) => ({
+          agents: state.agents.filter((a) => a.agentId !== data.agentId),
+        }))
+      );
+
+      socketService.on('agent:unavailable', (data: { agentId: string }) =>
+        // Update agent status in array
+        set((state) => ({
+          agents: state.agents.map(a =>
+            a.agentId === data.agentId ? { ...a, status: 'unavailable' as any } : a
+          ),
+        }))
+      );
+
+      socketService.on('routing:message', (message: RoutingMessage) =>
+        set((state) => ({ messages: [...state.messages, message] }))
+      );
+
+      socketService.on('scene:started', (payload: SceneStartPayload) =>
+        set({ currentScene: payload })
+      );
+
+      socketService.on('scene:ended', (payload: SceneEndPayload) => {
+        set((state) => ({
+          currentScene: null,
+          isSessionActive: false,
+        }));
+      });
+    } catch (error) {
+      console.error('Failed to connect:', error);
+      set({ isConnected: false });
+    }
+  },
+  disconnect: () => {
+    socketService.disconnect();
+    set({
+      sessionId: null,
+      agents: [],
+      messages: [],
+      currentScene: null,
+      isConnected: false,
+      isSessionActive: false,
+    });
+  },
+  clearMessages: () => set({ messages: [] }),
+  setSessionActive: (active) => set({ isSessionActive: active }),
+}));
+```
+
+### Pattern 2: Type-Safe API Client with Zod
+
+```typescript
+// src/frontend/services/apiClient.ts
+import { z } from 'zod';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+// Response schemas
+const HealthResponseSchema = z.object({
+  status: z.string(),
+  timestamp: z.string(),
+  snapshotLoaded: z.boolean(),
+  services: z.record(z.string()),
+  config: z.object({
+    llmProvider: z.string(),
+    logLevel: z.string(),
+  }),
+});
+
+const SessionCreateResponseSchema = z.object({
+  dramaId: z.string(),
+  status: z.string(),
+});
+
+export class ApiClient {
+  private baseUrl: string;
+
+  constructor(baseUrl: string = API_BASE_URL) {
+    this.baseUrl = baseUrl;
+  }
+
+  async createSession(): Promise<z.infer<typeof SessionCreateResponseSchema>> {
+    const response = await fetch(`${this.baseUrl}/session`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create session');
+    }
+
+    const data = await response.json();
+    return SessionCreateResponseSchema.parse(data);
+  }
+
+  async getHealth(): Promise<z.infer<typeof HealthResponseSchema>> {
+    const response = await fetch(`${this.baseUrl}/health`);
+
+    if (!response.ok) {
+      throw new Error('Failed to get health');
+    }
+
+    const data = await response.json();
+    return HealthResponseSchema.parse(data);
+  }
+
+  async initializeSession(
+    dramaId: string,
+    characterCards: Array<{ id: string; name: string; role: string; backstory: string }>
+  ): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/session/${dramaId}/initialize`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ characterCards }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to initialize session');
+    }
+  }
+
+  async startScene(
+    dramaId: string,
+    sceneConfig: { id: string; location: string; description: string; tone: string; actorIds: string[] }
+  ): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/session/${dramaId}/scene`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(sceneConfig),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to start scene');
+    }
+  }
+
+  async exportScript(dramaId: string, format: 'json' | 'markdown' | 'pdf'): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/session/${dramaId}/script?format=${format}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to export script');
+    }
+
+    return response.blob();
+  }
+}
+
+export const apiClient = new ApiClient();
+```
+
+### Pattern 3: Blackboard State Management with Zustand
+
+```typescript
+// src/frontend/store/blackboardStore.ts
+import { create } from 'zustand';
+import type { BlackboardLayer, LayerReadResponse, BlackboardEntry } from '../../types/blackboard';
+import { apiClient } from '../services/apiClient';
+
+interface BlackboardState {
+  layers: Record<BlackboardLayer, LayerReadResponse | null>;
+  loadingLayers: BlackboardLayer[];
+  token: string | null;
+  setToken: (token: string) => void;
+  fetchLayer: (layer: BlackboardLayer) => Promise<void>;
+  fetchAllLayers: () => Promise<void>;
+  clearLayers: () => void;
+}
+
+export const useBlackboardStore = create<BlackboardState>((set, get) => ({
+  layers: {
+    core: null,
+    scenario: null,
+    semantic: null,
+    procedural: null,
+  },
+  loadingLayers: [],
+  token: null,
+
+  setToken: (token) => set({ token }),
+
+  fetchLayer: async (layer) => {
+    const { token, loadingLayers } = get();
+
+    if (!token || loadingLayers.includes(layer)) return;
+
+    set((state) => ({ loadingLayers: [...state.loadingLayers, layer] }));
+
+    try {
+      const data = await apiClient.getBlackboardLayer(layer, token);
+      set((state) => ({
+        layers: { ...state.layers, [layer]: data },
+      }));
+    } catch (error) {
+      console.error(`Failed to fetch layer ${layer}:`, error);
+    } finally {
+      set((state) => ({
+        loadingLayers: state.loadingLayers.filter((l) => l !== layer),
+      }));
+    }
+  },
+
+  fetchAllLayers: async () => {
+    const layers: BlackboardLayer[] = ['core', 'scenario', 'semantic', 'procedural'];
+    await Promise.all(layers.map((layer) => get().fetchLayer(layer)));
+  },
+
+  clearLayers: () =>
+    set({
+      layers: {
+        core: null,
+        scenario: null,
+        semantic: null,
+        procedural: null,
+      },
+    }),
+}));
+```
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Direct DOM Manipulation with Socket.IO Events
+
+**What:** Handling Socket.IO events by directly updating the DOM instead of using a state management library.
+
+**Why bad:** Leads to hard-to-maintain code, inconsistent state, and poor performance.
+
+**Instead:** Use Zustand to manage state and let React handle DOM updates.
+
+### Anti-Pattern 2: Uncontrolled Socket.IO Connections
+
+**What:** Creating Socket.IO connections in component lifecycle methods without proper cleanup.
+
+**Why bad:** Leads to memory leaks and connection conflicts.
+
+**Instead:** Use a singleton socket service with proper connection management.
+
+### Anti-Pattern 3: Overloading the Blackboard with UI State
+
+**What:** Storing UI state (like view preferences, selected tab, etc.) on the blackboard.
+
+**Why bad:** Pollutes the blackboard with non-drama-related state, violates separation of concerns.
+
+**Instead:** Store UI state in the Zustand store.
+
+### Anti-Pattern 4: Polling for Blackboard Updates
+
+**What:** Using HTTP polling to refresh blackboard state instead of listening for Socket.IO events.
+
+**Why bad:** Wastes bandwidth, introduces latency, doesn't scale.
+
+**Instead:** Listen for `blackboard:updated` events and fetch layers on demand.
+
+## Documentation Architecture
+
+### Documentation Structure
+
+```
+docs/
+├── index.md                    # Home page
+├── getting-started.md          # Quick start guide
+├── user-guide/
+│   ├── creating-sessions.md    # How to create drama sessions
+│   ├── configuring-agents.md   # How to configure Director/Actor agents
+│   ├── managing-scenes.md      # How to start and manage scenes
+│   └── exporting-scripts.md    # How to export generated scripts
+├── api-reference/
+│   ├── rest-api.md             # REST API documentation
+│   ├── socket-events.md        # Socket.IO events documentation
+│   └── types.md                # TypeScript types
+├── architecture/               # System architecture docs
+│   └── README.md               # Existing architecture docs
+├── API.md                      # Existing API reference (to be merged)
+└── mkdocs.yml                  # MkDocs configuration
+```
+
+### Documentation Tools
+
+| Tool | Purpose | Why |
+|------|---------|-----|
+| **MkDocs Material** | Documentation site generator | Markdown-based, customizable, static site generation, great documentation |
+| **TypeDoc** | API documentation from TypeScript | Generates documentation from TypeScript types and JSDoc comments |
+| **zod-to-openapi** | OpenAPI 3.1 specification | Generates OpenAPI from existing Zod schemas |
+| **Swagger UI** | Interactive API docs | Built into Express, allows testing API endpoints directly |
+
+### API Documentation Generation
+
+```typescript
+// src/docs/openapi.ts
+import { z } from 'zod';
+import { extendZodWithOpenApi, createDocument } from '@asteasolutions/zod-to-openapi';
+import type { OpenAPIV3_1 } from 'openapi-types';
+
+extendZodWithOpenApi(z);
+
+// Define OpenAPI components from existing Zod schemas
+export function generateOpenAPISpec(): OpenAPIV3_1.Document {
+  return createDocument({
+    openapi: '3.1.0',
+    info: {
+      title: 'Multi-Agent Drama System API',
+      version: '1.2.0',
+      description: 'REST API for managing multi-agent drama sessions',
+    },
+    servers: [
+      { url: 'http://localhost:3000', description: 'Local development server' },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+  });
+}
+```
+
+```typescript
+// In app.ts
+import swaggerUi from 'swagger-ui-express';
+import { generateOpenAPISpec } from './docs/openapi.js';
+
+// Serve OpenAPI JSON
+app.get('/api-docs.json', (_req, res) => {
+  res.json(generateOpenAPISpec());
+});
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(generateOpenAPISpec()));
+```
+
+## Project Structure for v1.2
 
 ```
 drama/
 ├── src/
-│   ├── agents/
-│   │   ├── base/           # BaseAgent abstract class, shared LLM client setup
-│   │   ├── director/        # Director agent implementation + role contract
-│   │   └── actors/          # Actor agent implementation + character card management
-│   ├── blackboard/
-│   │   ├── layers/          # Layer definitions (core, scenario, semantic, procedural)
-│   │   ├── concurrency/     # Optimistic locking, version vectors, write queue
-│   │   ├── memoryFolding/   # Fold/unfold logic, token counting
-│   │   ├── accessControl/   # Namespace isolation, capability closure enforcement
-│   │   ├── audit/           # Audit log writer, log entry schema
-│   │   └── persistence/     # JSON file snapshots, in-memory store
-│   ├── messaging/
-│   │   ├── protocol/        # JSON message schema (Zod), message types
-│   │   ├── routing/         # Socket.IO rooms, broadcast/p2p/multicast logic
-│   │   └── heartbeat/       # Heartbeat signals, timeout wrappers
-│   ├── llm/
-│   │   └── providers/       # openai.ts, anthropic.ts, ollama.ts adapters
-│   ├── cognitiveBoundary/
-│   │   ├── inputFilter.ts   # Per-agent input scope restriction
-│   │   ├── capabilityClosure.ts  # Write-layer enforcement
-│   │   └── authorityIsolation.ts  # Decision authority boundaries
-│   ├── drama/
-│   │   ├── plotBackbone.ts  # Plot backbone data structures
-│   │   ├── scene.ts         # Scene management
-│   │   └── characterCard.ts # Character card schema
-│   └── index.ts             # Entry point — spawns Director + Actors
-├── tests/
-│   ├── integration/         # End-to-end drama session tests
-│   ├── chaos/               # Boundary violations, silent agents, deadlocks
-│   └── unit/                # Layer folding, message routing, locking
-├── .env.example             # API keys, ports, token budgets
-├── package.json
-├── tsconfig.json
-└── vitest.config.ts
+│   ├── index.ts                 # Existing entry point
+│   ├── app.ts                   # Modified with static file serving
+│   ├── frontend/                # NEW: Frontend app
+│   │   ├── index.html
+│   │   ├── src/
+│   │   │   ├── main.tsx         # React entry point
+│   │   │   ├── App.tsx          # Main app component
+│   │   │   ├── components/
+│   │   │   │   ├── SessionDashboard.tsx
+│   │   │   │   ├── MessageFeed.tsx
+│   │   │   │   ├── AgentStatus.tsx
+│   │   │   │   ├── BlackboardViewer.tsx
+│   │   │   │   └── SceneConfig.tsx
+│   │   │   ├── store/
+│   │   │   │   ├── sessionStore.ts
+│   │   │   │   └── blackboardStore.ts
+│   │   │   ├── services/
+│   │   │   │   ├── socket.ts
+│   │   │   │   └── apiClient.ts
+│   │   │   └── types/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── vite.config.ts
+│   │   └── tailwind.config.js
+│   ├── docs/                    # NEW: Documentation generation
+│   │   └── openapi.ts
+│   └── routes/
+│       └── session.ts           # NEW: Session management endpoints
+├── docs/                        # Documentation site (MkDocs)
+│   ├── index.md
+│   ├── getting-started.md
+│   ├── user-guide/
+│   ├── api-reference/
+│   ├── architecture/
+│   └── mkdocs.yml
+├── .planning/research/
+│   ├── ARCHITECTURE.md          # This file
+│   ├── STACK.md                 # Frontend stack recommendations
+│   └── ...
+└── package.json                 # Modified with frontend build scripts
 ```
 
-### Structure Rationale
+## Build/Deployment Considerations
 
-- **`agents/base/`**: All agent types inherit from `BaseAgent` — shared LLM client, message sending, blackboard read. Keeps Director and Actor implementations DRY.
-- **`blackboard/`**: One directory per concern (layers, concurrency, folding, access, audit, persistence). Clear ownership, easy to test each in isolation.
-- **`cognitiveBoundary/`**: Separate from `blackboard/` because boundary enforcement is policy, not storage. This separation makes it testable as its own subsystem.
-- **`llm/providers/`**: Adapter pattern means swapping from OpenAI to Claude to Ollama requires only a new file in this directory.
-- **`tests/chaos/`**: Dedicated chaos testing directory — makes it explicit that adversarial tests are part of the QA culture (Pitfall 15 mitigation).
+### Frontend Build
 
----
+```bash
+# From frontend directory
+cd src/frontend
 
-## Architectural Patterns
+# Install dependencies
+npm install
 
-### Pattern 1: Blackboard Pattern with Four-Layer Hierarchy
+# Development server (Vite)
+npm run dev
 
-**What:** Shared mutable state store with four distinct layers, each with its own eviction policy.
+# Build for production
+npm run build
 
-**When to use:** Default for all inter-agent state sharing.
-
-**Trade-offs:**
-- Pros: Decouples agents from each other's internal context; prevents full-prompt re-injection; enables token-efficient long sessions
-- Cons: Requires explicit concurrency control; layer boundary enforcement must be programmatic not conventional
-
-**Example:**
-```typescript
-interface BlackboardEntry {
-  layer: 'core' | 'scenario' | 'semantic' | 'procedural';
-  content: string;
-  tokenCount: number;
-  authorAgentId: string;
-  messageId: string;
-  timestamp: number;
-  version: number;
-  hallucinationFlag?: boolean;
-}
-
-// Core layer: NEVER evicted, only explicitly updated
-// Scenario layer: evicted when semantic layer folds
-// Semantic layer: folded when >8K tokens; summary replaces entries
-// Procedural layer: folded when >4K tokens; character voice constraints preserved
+# Preview production build
+npm run preview
 ```
 
-### Pattern 2: Cognitive Boundary Enforcement via Write-Layer Gating
+### Documentation Build
 
-**What:** Every blackboard write is intercepted by a boundary controller that enforces namespace isolation and capability closure before the write is accepted.
+```bash
+# Install MkDocs
+pip install mkdocs-material
 
-**When to use:** Every agent write operation — non-negotiable.
+# Serve documentation locally
+mkdocs serve
 
-**Trade-offs:**
-- Pros: Hard enforcement vs. LLM self-restraint; prevents boundary leakage (Pitfall 4); makes violations testable
-- Cons: Adds latency to every write; requires careful namespace design upfront
+# Build documentation
+mkdocs build
+```
 
-**Example:**
-```typescript
-function canWrite(agent: Agent, entry: BlackboardEntry): boolean {
-  const boundary = BOUNDARY_CONFIG[agent.role]; // e.g., director vs actor
+### Backend Build
 
-  // Capability closure: actors cannot write to core layer
-  if (entry.layer === 'core' && agent.role !== 'director') return false;
+```bash
+# From root directory
+npm install
 
-  // Namespace isolation: actors can only read their own character + current scene
-  if (agent.role === 'actor') {
-    const allowedLayers = ['semantic', 'procedural'];
-    if (!allowedLayers.includes(entry.layer)) return false;
+# Build TypeScript
+npm run build
+
+# Build frontend and documentation
+npm run build:frontend
+npm run build:docs
+
+# Start server (serves API, frontend, and docs)
+npm start
+```
+
+### Package.json Scripts Additions
+
+```json
+{
+  "scripts": {
+    "dev:frontend": "cd src/frontend && npm run dev",
+    "dev:docs": "mkdocs serve",
+    "build:frontend": "cd src/frontend && npm install && npm run build",
+    "build:docs": "mkdocs build",
+    "build": "tsc && npm run build:frontend && npm run build:docs"
   }
-
-  return true;
 }
 ```
 
-### Pattern 3: Message Routing with Delivery Guarantees
-
-**What:** Socket.IO rooms implement broadcast, peer-to-peer, and multicast routing with explicit timeout/fallback for every wait operation.
-
-**When to use:** All inter-agent communication.
-
-**Trade-offs:**
-- Pros: Built-in heartbeat prevents silent deadlock; rooms map cleanly to routing modes; reconnect on network drop
-- Cons: Socket.IO overhead vs. raw WebSocket; requires server running; rooms are in-memory (no persistence)
-
-**Example:**
-```typescript
-// Director broadcasts scene_start to all actors
-io.to('scene-' + sceneId).emit('scene_start', {
-  messageId: uuid(),
-  speaker: 'director',
-  sceneId,
-  sceneContext: sceneLayerSnapshot,
-  cognitiveState: { phase: 'scene_start', emotionalTone: 'neutral' },
-  timeout: ms('30s'),
-});
-
-// Actor waits for response with explicit timeout
-const response = await Promise.race([
-  waitForMessage(socket, 'director_ack'),
-  new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), ms('30s')))
-]);
-```
-
-### Pattern 4: Optimistic Locking with Version Vectors
-
-**What:** Every blackboard write includes a version number. Concurrent writes are detected and the writer must re-read and retry.
-
-**When to use:** Blackboard write operations (especially scenario and core layers).
-
-**Trade-offs:**
-- Pros: Detects race conditions without requiring a lock manager; scene sequence integrity preserved
-- Cons: Retry overhead under high contention; requires clients to implement retry logic
-
-**Example:**
-```typescript
-async function writeWithOptimisticLock(
-  entry: BlackboardEntry,
-  expectedVersion: number
-): Promise<WriteResult> {
-  const current = await blackboard.getVersion(entry.layer);
-
-  if (current.version !== expectedVersion) {
-    return { success: false, conflict: true, currentVersion: current.version };
-  }
-
-  return blackboard.commit({ ...entry, version: current.version + 1 });
-}
-```
-
----
-
-## Data Flow
-
-### Vertical Control Flow (Director → Blackboard → Actors)
-
-```
-1. Director reads current blackboard state (core + scenario layers)
-2. Director generates plot backbone update OR scene plan
-3. Director writes to blackboard core/scenario layer (with optimistic lock)
-4. Director emits 'scene_start' signal via Socket.IO (broadcast to relevant actors)
-5. Actors receive signal, read their scoped blackboard view (character card + scene)
-6. Actors generate dialogue, write to semantic layer
-7. Director reads actor outputs, verifies consistency against core layer
-8. Director emits 'scene_end' or 'continue' signal
-```
-
-### Horizontal Perception Flow (Actor → Actor)
-
-```
-1. Actor A writes dialogue to semantic layer
-2. Blackboard emits 'updated' event via Socket.IO to all connected agents
-3. Actor B receives notification, reads new semantic layer content
-4. Actor B generates response constrained by their character card + Actor A's dialogue
-5. Actor B writes response to semantic layer
-6. Repeat until scene concludes
-```
-
-### Bidirectional Sync Flow (Periodic)
-
-```
-Every N messages OR every scene transition:
-1. All agents call submit_state_summary() → writes summary to semantic layer
-2. All agents call pull_latest_global_view() → reads all layers within their scope
-3. Agents update internal mental model
-4. Director checks for context drift (actor summaries vs. core layer consistency)
-```
-
----
-
-## Concurrency Control
-
-The shared blackboard is the single source of truth for all agent state. Without explicit concurrency control, race conditions silently destroy narrative coherence.
-
-### Strategy: Version Vectors + Serialized Write Queue
-
-```
-[Agent A] ──write(v3)──┐
-                        ├──→ [Conflict Detection] ──→ [Blackboard Commit]
-[Agent B] ──write(v3)──┘         │
-                                 ▼
-                    "Version mismatch: expected 3, got 3"
-                    → Agent A + Agent B must re-read and retry
-```
-
-### Rules
-1. **Reads are concurrent** — all agents can read simultaneously
-2. **Writes are serialized** — one agent writes at a time per layer
-3. **Optimistic locking** — writer declares expected version; if mismatch, retry
-4. **Immutable committed snapshots** — once a scene is committed to core layer, it is immutable
-5. **Audit log is append-only** — every write operation is logged with full attribution
-
----
-
-## LLM Integration
-
-### Provider Abstraction
-
-```typescript
-interface LLMProvider {
-  complete(prompt: string, options: LLMOptions): Promise<LLMResponse>;
-  stream(prompt: string, options: LLMOptions): AsyncIterable<LLMResponse>;
-}
-
-// Usage in Director: this.llm.complete(directorPrompt, { model: 'gpt-4o' })
-// Usage in Actors: this.llm.complete(actorPrompt, { model: 'claude-sonnet-4-20250514' })
-```
-
-### Token Budget Integration
-
-```typescript
-// Before every blackboard write:
-const tokenCount = await countTokens(entry.content);
-if (tokenCount > LAYER_BUDGETS[entry.layer]) {
-  throw new Error(`Layer ${entry.layer} budget exceeded: ${tokenCount} > ${LAYER_BUDGETS[entry.layer]}`);
-}
-```
-
-### Per-Role Prompt Construction
-
-```typescript
-// Director prompt: includes full blackboard access + arbitration role contract
-// Actor prompt: includes ONLY character card + current scene context
-// Prompt construction enforces cognitive boundary at generation time
-```
-
----
-
-## Scaling Considerations
-
-| Scale | Architecture |
-|-------|-------------|
-| 0–1 session | Single Node.js process, in-memory blackboard, direct LLM API calls |
-| 1–10 sessions | In-memory blackboard with JSON snapshots; add process monitoring |
-| 10–50 sessions | Redis-backed blackboard for persistence + atomic operations; Redis Streams for message delivery |
-| 50–200 sessions | Horizontal actor scaling; dedicated Director per session; load balancer for Socket.IO |
-| 200+ sessions | Kubernetes pods per session; Redis Cluster; CDN for static assets |
-
-### Scaling Priorities
-
-1. **First bottleneck:** Blackboard write serialization under concurrent actor load → Redis atomic ops
-2. **Second bottleneck:** LLM API rate limits → request queuing + provider rotation
-
----
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Full-Prompt Re-Injection
-
-**What people do:** Pass the entire blackboard content into every agent's LLM prompt on every turn.
-
-**Why it's wrong:** Causes context overflow (Pitfall 1); agents spend tokens re-reading content they already know; billing waste.
-
-**Do this instead:** Agents request scoped reads from the blackboard. Only the Director sees the full core layer.
-
-### Anti-Pattern 2: Soft Boundary Enforcement (LLM Prompts Only)
-
-**What people do:** Rely on "you are an Actor agent, do not modify the plot backbone" in the prompt.
-
-**Why it's wrong:** LLMs optimize for producing good output; they will overstep when given full context (Pitfall 4). The boundary must be enforced at the write layer.
-
-**Do this instead:** Hard enforcement: the blackboard rejects actor writes to the core layer regardless of what the LLM was told.
-
-### Anti-Pattern 3: Complete Plot Pre-Planning
-
-**What people do:** Director writes a full scene-by-scene script before any Actor contributes.
-
-**Why it's wrong:** The system becomes a single-agent writer with extra steps; all creative value is lost (Pitfall 5).
-
-**Do this instead:** Director specifies beats and character arcs; "intentional holes" are mandated for Actor discretion.
-
-### Anti-Pattern 4: YOLO Mode Persistence
-
-**What people do:** Ship v1 without error handling, logging, or retry logic because "it's just for prototyping."
-
-**Why it's wrong:** The system grows around its unvalidated foundation; technical debt compounds; "YOLO" never ends (Pitfall 10).
-
-**Do this instead:** Define an explicit "YOLO ends here" milestone. Instrument YOLO mode from day one (log what would fail even if you don't handle it yet).
-
----
-
-## Integration Points
-
-### External Services
-
-| Service | Integration | Notes |
-|---------|-------------|-------|
-| OpenAI API | `openai` SDK via `LLMProvider` adapter | Streaming, retry, rate limit handling |
-| Anthropic API | `anthropic` SDK via `LLMProvider` adapter | Streaming, alpha/beta SDK stability risk |
-| Ollama / LM Studio | OpenAI-compatible API endpoint via `openai` SDK | `baseURL` override; no streaming guarantees |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Agent ↔ Blackboard | REST API (HTTP) + WebSocket events | Agents never access blackboard directly; all access via API |
-| Agent ↔ Message Hub | Socket.IO events | Hub is the network layer; blackboard is the state layer |
-| Director ↔ Actors | Messages via Hub + shared blackboard reads | No direct peer-to-peer LLM calls |
-| CognitiveBoundary ↔ Blackboard | Middleware intercept | Boundary controller is a middleware wrapping blackboard write path |
-
----
-
-## Pitfall Coverage Summary
-
-| Pitfall | Architecture Mitigation |
-|---------|------------------------|
-| 1. Blackboard Content Explosion | Hard token budgets per layer + automated folding triggers |
-| 2. Director Monopolizing Authority | Explicit role contract in Director; "intentional holes" mandated |
-| 3. Shared State Race Conditions | Optimistic locking with version vectors + serialized write queue |
-| 4. Cognitive Boundary Leakage | Hard enforcement at blackboard write layer + strict input filtering |
-| 5. Premature Plot Lock-In | Intentional holes in plot backbone mandated by Director role contract |
-| 6. Message Routing Deadlock | Timeout + fallback on every wait; heartbeat signals; Director fallback |
-| 7. Hallucination Amplification | Core layer as source of truth; Director fact-checks each scene |
-| 8. Actor Character Voice Drift | Character voice in procedural layer; Director as consistency auditor |
-| 9. Flat Memory Architecture | Programmatic layer enforcement; core layer NEVER evicted |
-| 10. YOLO Mode Persistence | Explicit "YOLO ends here" milestone; phase gates for error handling |
-| 11. Excessive Synchronization | Irreversible vs. reversible decision distinction; actors act first |
-| 12. Under-Specifying JSON Protocol | JSON Schema before implementation; extensible cognitive_state field |
-| 13. No Inter-Phase Validation Gates | Director validates Actor output at every phase transition |
-| 14. Implicit Agent Identity | Audit log is first-class; every write attributed with agent ID + timestamp |
-| 15. Happy-Path-Only Testing | Dedicated chaos/ test directory; adversarial tests required |
-
----
+## Scalability Considerations
+
+| Concern | At 100 users | At 10K users | At 1M users |
+|---------|--------------|--------------|-------------|
+| **Socket.IO Connections** | Single server instance with Socket.IO's built-in scaling | Redis adapter for Socket.IO | Kubernetes cluster with Redis adapter and load balancing |
+| **Frontend Performance** | Static assets served via Express static middleware | CDN for static assets | CDN + edge computing |
+| **API Rate Limiting** | Basic rate limiting middleware | Redis-based rate limiting | Advanced rate limiting with analytics |
+| **Documentation** | Static files served via Express | CDN for documentation | Dedicated documentation hosting (Netlify, Vercel) |
 
 ## Sources
 
-- **MEDIUM**: AutoGen (Microsoft) multi-agent framework -- Director/Worker role confusion as primary failure mode. https://github.com/microsoft/autogen
-- **MEDIUM**: CrewAI community patterns -- role boundary erosion in multi-actor systems. https://docs.crewai.com
-- **MEDIUM**: LangGraph/LangChain multi-agent architecture guides -- state management failures. https://python.langchain.com/docs/concepts/agentic-systems
-- **MEDIUM**: Blackboard pattern (Corkill 1991, Jennings et al. 1996) -- concurrency control failures in shared-blackboard architectures.
-- **MEDIUM**: Socket.IO documentation -- rooms, namespaces, heartbeat for multi-agent routing. https://socket.io/docs/v4
-- **Note**: Verify all SDK versions and Node.js compatibility against current documentation before Phase 2 implementation.
+- [Socket.IO Documentation](https://socket.io/docs/v4/)
+- [React Documentation](https://react.dev/)
+- [Zustand Documentation](https://docs.pmnd.rs/zustand/getting-started/introduction)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [MkDocs Material Documentation](https://squidfunk.github.io/mkdocs-material/)
+- [TypeDoc Documentation](https://typedoc.org/)
+- [Socket.IO and React Best Practices (LogRocket)](https://blog.logrocket.com/real-time-apps-react-socket-io-best-practices-2024/)
+- [Zustand and Socket.IO Patterns (LogRocket)](https://blog.logrocket.com/real-time-react-apps-with-socket-io-and-zustand/)
+- [React Express Socket.IO Guide (Medium)](https://medium.com/@shahidshaikh_76282/real-time-application-with-react-express-and-socket-io-2024-guide-36f22c931057)
+- [Socket.IO Examples (GitHub)](https://github.com/socketio/socket.io/tree/main/examples/react-express)
 
 ---
-
-*Architecture research for: Multi-agent LLM-based collaborative drama creation*
-*Researched: 2026-03-18*
+*Architecture research for v1.2 Frontend & Documentation*
+*Researched: 2026-03-21*

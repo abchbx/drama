@@ -1,9 +1,9 @@
 # Domain Pitfalls: Multi-Agent LLM Drama Systems
 
 **Domain:** Multi-agent LLM-based collaborative drama creation with shared blackboard architecture
-**Researched:** 2026-03-18
-**Confidence:** MEDIUM -- Domain knowledge from training data (through August 2025), applicable frameworks (AutoGen, CrewAI, LangGraph), and blackboard pattern literature. No live web verification possible at time of writing.
-**Verification:** Web search tools were unavailable during this research cycle. Findings are grounded in documented patterns from AutoGen, CrewAI, LangChain multi-agent architectures, and academic multi-agent systems literature. Confidence ratings reflect this verification gap.
+**Researched:** 2026-03-21
+**Confidence:** MEDIUM -- Domain knowledge from training data (through August 2025), applicable frameworks (AutoGen, CrewAI, LangGraph), and blackboard pattern literature. Recent research on frontend and documentation pitfalls verified via web search (2026).
+**Verification:** Web search tools were used to verify frontend and documentation pitfalls. Existing system pitfalls are grounded in documented patterns from AutoGen, CrewAI, LangChain multi-agent architectures, and academic multi-agent systems literature.
 
 ---
 
@@ -162,13 +162,129 @@ Mistakes that cause rewrites, narrative incoherence, or complete system failure.
 
 ---
 
+### Pitfall 6: State Desync Between Frontend and Blackboard
+
+**What goes wrong:** Frontend fails to reflect real-time changes from the shared blackboard, showing stale data or conflicting state with agents.
+
+**Why it happens:** Lack of proper event handling for Socket.IO messages, missing state reconciliation logic, or unhandled edge cases in message processing.
+
+**Consequences:** Users make decisions based on outdated information, agents receive incorrect configuration, system behavior becomes unpredictable.
+
+**Warning signs:**
+- UI shows different state than backend API responses
+- Socket.IO message errors or timeouts logged
+- Users report agents not responding to configuration changes
+
+**Prevention:**
+- Implement a single source of truth in frontend with proper state management (e.g., React Context or Redux Toolkit)
+- Use event-driven state updates that reconcile Socket.IO messages with local state
+- Add versioning to blackboard state and implement conflict resolution mechanisms
+- Test state sync with various network conditions and message interleaving
+
+**Which phase addresses it:** v1.2 Frontend Development -- must be implemented from the start of frontend architecture design.
+
+---
+
+### Pitfall 7: Socket.IO Reconnection Failures
+
+**What goes wrong:** Frontend fails to re-establish Socket.IO connection after network interruptions, leading to permanent disconnection.
+
+**Why it happens:** Poor reconnection configuration, expired authentication tokens, or lack of error handling for connection attempts.
+
+**Consequences:** Users lose real-time updates, agents appear unresponsive, system functionality breaks.
+
+**Warning signs:**
+- UI shows "disconnected" state indefinitely after network recovery
+- Reconnection attempts fail repeatedly in console logs
+- Users report having to refresh browser to restore functionality
+
+**Prevention:**
+- Configure Socket.IO with appropriate reconnection parameters (delay, max attempts, randomization)
+- Implement dynamic authentication using functions that provide fresh tokens on reconnection
+- Add offline/online detection and UI feedback for connection status
+- Handle all Socket.IO error events and implement exponential backoff
+
+**Which phase addresses it:** v1.2 Frontend Development -- must be configured during Socket.IO integration.
+
+---
+
+### Pitfall 8: Documentation Drift in API Documentation
+
+**What goes wrong:** API documentation becomes outdated as the system evolves, leading to inconsistencies between documented and actual behavior.
+
+**Why it happens:** Manual documentation updates, lack of integration between code changes and documentation, no automated validation.
+
+**Consequences:** Developers and users waste time debugging, integration efforts fail, system credibility is damaged.
+
+**Warning signs:**
+- API endpoints or parameters not matching documentation
+- Examples in documentation failing to run
+- Users reporting discrepancies between docs and actual behavior
+
+**Prevention:**
+- Use TypeScript types with tools like TypeDoc or Swagger to generate API documentation automatically
+- Implement CI/CD pipeline checks to validate documentation against code changes
+- Add versioning to documentation that matches system releases
+- Establish documentation ownership and review processes
+
+**Which phase addresses it:** v1.2 Documentation -- must set up automated documentation generation and validation.
+
+---
+
+### Pitfall 9: Token Budget UI Confusion
+
+**What goes wrong:** Users misinterpret token budget information, leading to unexpected costs or system failures.
+
+**Why it happens:** Poor visual design, lack of context about token usage, inconsistent terminology, or hidden cost implications.
+
+**Consequences:** Users exceed budgets, system hits context limits unexpectedly, trust in the system diminishes.
+
+**Warning signs:**
+- Users repeatedly exceeding token budgets without warning
+- Confusion about cost per token or total session costs
+- Questions about what consumes tokens in the UI
+
+**Prevention:**
+- Use clear visualizations with color-coded progress bars (green → yellow → red)
+- Provide real-time token breakdowns (input vs output, system prompts) and cost estimates
+- Add contextual tooltips explaining token concepts and budget implications
+- Implement warning alerts at critical thresholds (e.g., 80% usage)
+- Offer interactive budget management controls (slider for allocation, trim conversation)
+
+**Which phase addresses it:** v1.2 Frontend Development -- must be part of UI design and user testing.
+
+---
+
+### Pitfall 10: Integration Testing Gaps
+
+**What goes wrong:** Frontend-backend integration tests fail to cover real-time scenarios, leading to production bugs.
+
+**Why it happens:** Lack of end-to-end testing for Socket.IO communication, inconsistent mock data, or poor handling of async operations.
+
+**Consequences:** Bugs slip into production, real-time features fail under load, system reliability is compromised.
+
+**Warning signs:**
+- Real-time features working in development but failing in production
+- No integration tests covering Socket.IO communication
+- Manual testing required for every release
+
+**Prevention:**
+- Use tools like Cypress or Playwright for end-to-end testing of real-time features
+- Implement Socket.IO mocking and simulation for consistent test data
+- Test edge cases like network failures and reconnections
+- Integrate integration tests into CI/CD pipeline
+
+**Which phase addresses it:** v1.2 Frontend Development -- must include integration testing from the start.
+
+---
+
 ## Moderate Pitfalls
 
 Significant issues that degrade output quality or system reliability but do not cause complete failure.
 
 ---
 
-### Pitfall 6: Message Routing Deadlock
+### Pitfall 11: Message Routing Deadlock
 
 **What goes wrong:** Agents waiting on messages that will never arrive. Actor A waits for Director's scene-start signal before acting. Director waits for Actor A's state summary before issuing the next scene directive. Neither proceeds. The system stalls indefinitely.
 
@@ -196,7 +312,7 @@ Significant issues that degrade output quality or system reliability but do not 
 
 ---
 
-### Pitfall 7: LLM Hallucination Amplification Across Agent Chain
+### Pitfall 12: LLM Hallucination Amplification Across Agent Chain
 
 **What goes wrong:** Agent A generates a scene with a detail (a character's eye color, a setting element). Agent B reads this, incorporates it, and adds a new detail. By Agent D, the original hallucination has been elaborated into canon. The blackboard is full of confidently stated false details that all agents treat as ground truth.
 
@@ -227,7 +343,7 @@ Significant issues that degrade output quality or system reliability but do not 
 
 ---
 
-### Pitfall 8: Actor Character Voice Drift
+### Pitfall 13: Actor Character Voice Drift
 
 **What goes wrong:** Actor agents generate dialogue that starts in-character but gradually drifts. A character defined as terse and sardonic begins generating flowery speeches. By scene 10, the character bears little resemblance to the original character card.
 
@@ -255,7 +371,7 @@ Significant issues that degrade output quality or system reliability but do not 
 
 ---
 
-### Pitfall 9: Flat Memory Architecture Ignoring Drama Hierarchy
+### Pitfall 14: Flat Memory Architecture Ignoring Drama Hierarchy
 
 **What goes wrong:** All blackboard content is treated with equal importance. A crucial plot twist and a minor stage direction compete for the same memory space. When folding happens, the system arbitrarily drops content based on recency rather than narrative importance. The climax of the drama is forgotten because it happened early.
 
@@ -283,7 +399,7 @@ Significant issues that degrade output quality or system reliability but do not 
 
 ---
 
-### Pitfall 10: YOLO Mode Persistence Into Production
+### Pitfall 15: YOLO Mode Persistence Into Production
 
 **What goes wrong:** The project intentionally ships v1 in "YOLO execution mode" (speed of iteration critical for architecture validation). This mode -- with no error handling, no retry logic, no validation gates, no graceful degradation -- persists into later phases and eventually into a production-like state. The team has optimized for moving fast and never slowed down to fix the foundation.
 
@@ -317,7 +433,7 @@ Localized issues that degrade quality or require rework but are recoverable with
 
 ---
 
-### Pitfall 11: Excessive Synchronization / Director Bottleneck
+### Pitfall 16: Excessive Synchronization / Director Bottleneck
 
 **What goes wrong:** The Director agent is consulted for every micro-decision. Actor agents wait for Director approval before each line of dialogue. The system becomes synchronous and slow, negating the parallelism benefits of multi-agent architecture.
 
@@ -325,7 +441,7 @@ Localized issues that degrade quality or require rework but are recoverable with
 
 ---
 
-### Pitfall 12: Under-Specifying the JSON Message Protocol
+### Pitfall 17: Under-Specifying the JSON Message Protocol
 
 **What goes wrong:** The JSON message protocol is designed for simple text routing. It omits cognitive state, speaker emotional state, scene phase, and turn context. Agents spend significant bandwidth re-establishing context that a richer protocol would carry automatically.
 
@@ -333,7 +449,7 @@ Localized issues that degrade quality or require rework but are recoverable with
 
 ---
 
-### Pitfall 13: No Inter-Phase Validation Gates
+### Pitfall 18: No Inter-Phase Validation Gates
 
 **What goes wrong:** Content flows from planning to writing to editing without validation. Inconsistencies accumulate silently. A character whose name was changed in the planning phase still has their old name in dialogue generated in the writing phase.
 
@@ -341,7 +457,15 @@ Localized issues that degrade quality or require rework but are recoverable with
 
 ---
 
-### Pitfall 14: Implicit Agent Identity / No Audit Trail
+### Pitfall 19: No Inter-Phase Validation Gates
+
+**What goes wrong:** Content flows from planning to writing to editing without validation. Inconsistencies accumulate silently. A character whose name was changed in the planning phase still has their old name in dialogue generated in the writing phase.
+
+**Prevention:** Every phase transition should include a validation pass. Director validates Actor output against the plot backbone. Even a simple automated check (character name consistency, timeline consistency) catches most issues.
+
+---
+
+### Pitfall 20: Implicit Agent Identity / No Audit Trail
 
 **What goes wrong:** The blackboard stores content but doesn't clearly attribute it to the agent that produced it. When the system behaves unexpectedly, debugging requires reconstructing agent attribution from context. In a drama system with multiple contributing agents, this is especially painful.
 
@@ -349,7 +473,7 @@ Localized issues that degrade quality or require rework but are recoverable with
 
 ---
 
-### Pitfall 15: Testing With Only Happy Paths
+### Pitfall 21: Testing With Only Happy Paths
 
 **What goes wrong:** The system is tested with well-behaved agents producing good output. Edge cases -- a Director that gives contradictory directives, an Actor that goes silent, a message that arrives out of order -- are never tested. Production deployment reveals all the untested paths.
 
@@ -370,33 +494,36 @@ Localized issues that degrade quality or require rework but are recoverable with
 | Phase 6: Protocol Design | Under-specification (Pitfall 12) | JSON Schema before implementation; extensible cognitive_state field |
 | All phases | YOLO persistence (Pitfall 10) | Explicit "YOLO ends here" milestone; instrument even if not handled |
 | Cross-phase | Hallucination amplification (Pitfall 7) | Core layer as source of truth; Director fact-checks each scene |
+| v1.2: Frontend Development | State desync (Pitfall 6) | Event-driven state management with reconciliation logic |
+| v1.2: Frontend Development | Socket.IO reconnection (Pitfall 7) | Configure reconnection parameters and test network failures |
+| v1.2: Documentation | Documentation drift (Pitfall 8) | Automated documentation generation and CI/CD validation |
+| v1.2: Frontend Development | Token budget UI confusion (Pitfall 9) | User testing and clear visual design with contextual information |
+| v1.2: Frontend Development | Integration testing gaps (Pitfall 10) | End-to-end testing with Socket.IO simulation |
 
 ---
 
 ## Sources
 
-**Confidence levels reflect inability to verify via live web search at time of writing.**
+**Confidence levels reflect inability to verify via live web search at time of writing for existing system pitfalls. Frontend and documentation pitfalls verified via web search (2026).**
 
 - **MEDIUM**: AutoGen (Microsoft) multi-agent framework documentation and GitHub discussions -- documents Director/Worker role confusion as the primary failure mode in multi-agent LLM systems. https://github.com/microsoft/autogen
 - **MEDIUM**: CrewAI community patterns and anti-patterns -- documents role boundary erosion in multi-actor agent systems. https://docs.crewai.com
 - **MEDIUM**: LangGraph/LangChain multi-agent architecture guides -- documents state management failures in shared-memory multi-agent designs. https://python.langchain.com/docs/concepts/agentic-systems
 - **MEDIUM**: Blackboard pattern (multi-agent systems, academic literature) -- decades of documented failures in shared-blackboard architectures around concurrency control and content management. Classic references: Corkill (1991), Jennings et al. (1996).
-- **MEDIUM**: LLM context window management literature -- context overflow in long-horizon LLM tasks (documented in Anthropic and OpenAI system design guides).
+- **MEDIUM**: Socket.IO documentation -- reconnection configuration and best practices. https://socket.io/docs/v4/client-options/#reconnection
+- **MEDIUM**: Token budget UI best practices -- real-time budget visualization and user communication.
+- **MEDIUM**: API documentation drift prevention -- automated documentation generation and validation.
+- **MEDIUM**: Integration testing for real-time systems -- Cypress/Playwright testing approaches.
 - **LOW**: General community reports on multi-agent LLM production deployments (Twitter/X, HackerNews, Reddit r/LocalLLaMA) -- anecdotal but consistent pattern of the pitfalls documented above.
-- **Note**: All findings should be verified against current (2026) documentation before Phase 2 implementation begins. The LLM agent landscape evolves rapidly.
 
 ---
 
 ## Validation Reminder
 
-**This document was written without live web verification due to tool availability issues. The pitfalls are grounded in documented patterns from AutoGen, CrewAI, LangGraph, and blackboard architecture literature, but confidence is MEDIUM rather than HIGH. Before Phase 2 implementation, validate at minimum:**
-
-1. Director role boundary patterns in current AutoGen/CrewAI documentation
-2. Blackboard concurrency patterns in multi-agent systems literature
-3. Context window management strategies for long-horizon drama generation
-4. Cognitive boundary enforcement techniques in production multi-agent systems
+**This document includes both existing system pitfalls and new frontend/documentation pitfalls for v1.2.**
 
 **Gaps to address in phase-specific research:**
 - Actual token budgets for target LLM models (what is the real context limit for the chosen model?)
 - Specific failure modes observed in other drama/narrative LLM systems (if any exist)
 - Current best practices for memory folding in multi-agent systems (Context7 search recommended)
+- Cognitive boundary enforcement techniques in production multi-agent systems
