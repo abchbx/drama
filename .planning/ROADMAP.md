@@ -89,7 +89,7 @@ Plans:
 - [x] 08-04a-PLAN.md — Scene start/stop controls and connection status indicator
 - [x] 08-04b-PLAN.md — Toast notifications and Socket.IO wiring
 - [x] 08-04c-PLAN.md — Scene state wiring and backend Socket.IO events
-- [ ] 08-04d-PLAN.md — Fix null-safe routerService access (gap closure)
+- [x] 08-04d-PLAN.md — Fix null-safe routerService access (gap closure)
 
 #### Phase 9: Session Configuration & Agent Dashboard
 **Goal**: User can configure session parameters and monitor agent status
