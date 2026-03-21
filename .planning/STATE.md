@@ -52,7 +52,7 @@ Roadmap defined. Phases 8-13 established with 23 requirements mapped.
 - v1.2 requirements defined: 23 requirements split into UI, Export, Documentation, Real-Time, and Configuration categories
 
 ### What's Next
-v1.2 Phase 9 in progress. Plan 09-03 complete. Agent dashboard with graph visualization and system health monitoring implemented.
+v1.2 Phase 9 in progress. Plan 09-05 complete. Config API routes added to close Gap 1.
 
 ### What's Blocked
 Nothing blocked. Ready to start planning.
@@ -129,6 +129,7 @@ Nothing blocked. Ready to start planning.
 | 2026-03-21 | Phase 9 | Plan 01 execution | 09-01 complete — LLM configuration form with provider/model selection |
 | 2026-03-21 | Phase 9 | Plan 02 execution | 09-02 complete — Session parameters form with validation |
 | 2026-03-21 | Phase 09 | Plan 03 execution | 09-03 complete — Agent dashboard with graph visualization and system health monitoring |
+| 2026-03-21 | Phase 09 | Plan 05 execution | 09-05 complete — Config API routes added (GET/PUT /config, /config/llm, /config/session), Gap 1 closed |
 
 ---
 *State last updated: 2026-03-21 after 09-03 plan execution*
