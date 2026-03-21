@@ -45,7 +45,7 @@ Requirements for frontend interface and comprehensive documentation.
 
 - [x] **CFG-01**: User can configure frontend API base URL via environment variables
 - [x] **CFG-02**: User can configure Socket.IO connection timeout and reconnection attempts
-- [ ] **CFG-03**: User can save and load session templates (pre-configured settings)
+- [x] **CFG-03**: User can save and load session templates (pre-configured settings)
 
 ## v2 Requirements
 
@@ -110,7 +110,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RT-04 | 9 | Pending |
 | CFG-01 | 8 | Complete |
 | CFG-02 | 8 | Complete |
-| CFG-03 | 9 | Pending |
+| CFG-03 | 9 | Complete |
 
 **Coverage:**
 - v1 requirements: 23 total
