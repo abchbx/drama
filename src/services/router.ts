@@ -29,7 +29,10 @@ interface DisconnectState {
 }
 
 export class RouterService {
-  private readonly io: SocketIOServer;
+  private readonly _io: SocketIOServer;
+  get io(): SocketIOServer {
+    return this._io;
+  }
   private readonly logger: pino.Logger;
   private readonly heartbeat: HeartbeatService;
   private readonly timeoutManager: TimeoutManager;
@@ -42,7 +45,7 @@ export class RouterService {
 
   constructor(httpServer: HttpServer, logger: pino.Logger, options: RouterServiceOptions) {
     this.logger = logger;
-    this.io = new SocketIOServer(httpServer, {
+    this._io = new SocketIOServer(httpServer, {
       cors: { origin: '*' },
     });
 
@@ -72,13 +75,13 @@ export class RouterService {
       },
     });
 
-    this.heartbeat.attach(this.io);
+    this.heartbeat.attach(this._io);
     this.heartbeat.start();
     this.registerSocketHandlers();
   }
 
   private registerSocketHandlers(): void {
-    this.io.on('connection', (socket) => {
+    this._io.on('connection', (socket) => {
       const agentId = this.readHandshakeValue(socket, 'agentId');
       const roleValue = this.readHandshakeValue(socket, 'role');
       const role: AgentRole = roleValue === 'director' ? 'director' : 'actor';
@@ -183,7 +186,7 @@ export class RouterService {
     if (buffered.length === 0) return;
 
     for (const message of buffered) {
-      this.io.to(`agent:${agentId}`).emit('routing:message', message);
+      this._io.to(`agent:${agentId}`).emit('routing:message', message);
     }
   }
 
@@ -207,7 +210,7 @@ export class RouterService {
 
   sendBroadcast(message: Omit<RoutingMessage, 'sequenceNum'>): RoutingMessage {
     const routed = { ...message, sequenceNum: this.nextSequence(message.from) };
-    this.io.to('actors').emit('routing:message', routed);
+    this._io.to('actors').emit('routing:message', routed);
     this.emit('message:received', routed);
     return routed;
   }
@@ -220,7 +223,7 @@ export class RouterService {
     };
 
     if (this.agents.has(recipientId)) {
-      this.io.to(`actor:${recipientId}`).emit('routing:message', routed);
+      this._io.to(`actor:${recipientId}`).emit('routing:message', routed);
     } else {
       this.messageBuffer.push(recipientId, routed);
     }
@@ -238,7 +241,7 @@ export class RouterService {
 
     for (const recipientId of recipientIds) {
       if (this.agents.has(recipientId)) {
-        this.io.to(`actor:${recipientId}`).emit('routing:message', routed);
+        this._io.to(`actor:${recipientId}`).emit('routing:message', routed);
       } else {
         this.messageBuffer.push(recipientId, routed);
       }
@@ -304,7 +307,7 @@ export class RouterService {
     this.disconnectStates.clear();
     this.timeoutManager.stopAll();
     this.heartbeat.stop();
-    this.io.close();
+    this._io.close();
     this.events.removeAllListeners();
   }
 }

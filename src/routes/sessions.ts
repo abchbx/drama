@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { SessionRegistry } from '../services/sessionRegistry.js';
+import { RouterService } from '../services/router.js';
 import { SessionStatus } from '../types/session.js';
 
 /**
@@ -90,6 +91,14 @@ sessionsRouter.post('/:id/scene/start', (req: Request, res: Response) => {
     }
 
     const session = registry.startScene(dramaId, `scene-${Date.now()}`);
+
+    // Emit Socket.IO events for scene state changes
+    const routerService = (req.app.locals as any).routerService as RouterService;
+    const io = routerService.io;
+    const sceneId = session.activeSceneId;
+    io.emit('scene_started', { dramaId, sceneId, status: session.status });
+    io.emit('session_state', { dramaId, status: session.status, activeSceneId: sceneId });
+
     res.json({
       status: session.status,
       sceneId: session.activeSceneId,
@@ -127,6 +136,15 @@ sessionsRouter.post('/:id/scene/stop', (req: Request, res: Response) => {
     }
 
     const session = registry.stopScene(dramaId, status);
+
+    // Emit Socket.IO events for scene state changes
+    const routerService = (req.app.locals as any).routerService as RouterService;
+    const io = routerService.io;
+    const finishedSceneId = session.lastResult?.sceneId;
+    const finalStatus = session.status;
+    io.emit('scene_stopped', { dramaId, sceneId: finishedSceneId, status: status });
+    io.emit('session_state', { dramaId, status: finalStatus, activeSceneId: null });
+
     res.json({ status: session.status });
   } catch (err: any) {
     if (err.message.includes('not found')) {

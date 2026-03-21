@@ -1,4 +1,5 @@
 import { useAppStore } from '../store/appStore.js';
+import { SceneControls } from './SceneControls.js';
 
 const statusColors: Record<string, string> = {
   created: '#6c7086',
@@ -52,6 +53,7 @@ export function SessionPanel() {
         >
           {statusLabels[session.status]}
         </span>
+        <SceneControls />
       </div>
 
       <div className="session-panel-content">
@@ -97,7 +99,7 @@ export function SessionPanel() {
             <dl>
               <div className="detail-item">
                 <dt>Scene ID</dt>
-                <dd>{session.currentSceneId || 'No scene started'}</dd>
+                <dd>{session.activeSceneId || 'No scene started'}</dd>
               </div>
             </dl>
           </div>
