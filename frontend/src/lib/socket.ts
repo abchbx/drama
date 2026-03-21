@@ -126,6 +126,16 @@ export class SocketService {
       this.socket.emit(event, data);
     }
   }
+
+  off(event: string, callback: GenericEventListener): void {
+    const eventListeners = this.listeners.get(event);
+    if (eventListeners) {
+      eventListeners.delete(callback);
+    }
+    if (this.socket) {
+      this.socket.off(event, callback);
+    }
+  }
 }
 
 export const socketService = new SocketService();
