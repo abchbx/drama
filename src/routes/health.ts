@@ -1,28 +1,37 @@
 import { Router } from 'express';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import type { RouterService } from '../services/router.js';
 
 export const healthRouter = Router();
 
 healthRouter.get('/', (req, res) => {
-  const dataDir = (req.app.locals.config as { BLACKBOARD_DATA_DIR?: string } | undefined)?.BLACKBOARD_DATA_DIR ?? './data';
-  const snapshotPath = path.join(dataDir, 'blackboard.json');
-  const snapshotExists = fs.existsSync(snapshotPath);
-  const routerService = req.app.locals.routerService as unknown;
+  const start = Date.now();
+  const routerService = req.app.locals.routerService as RouterService | undefined;
+
+  // Get Socket.IO client count
+  let socketClients = 0;
+  if (routerService?.io) {
+    socketClients = routerService.io.sockets.sockets.size;
+  }
+
+  // Get system resources (CPU, memory - disk is not applicable for runtime)
+  const cpuUsage = process.cpuUsage();
+  const cpuPercent = ((cpuUsage.user + cpuUsage.system) / 1000000) * 100;
+  const memoryUsage = process.memoryUsage();
+  const memoryPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
 
   res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    snapshotLoaded: snapshotExists,
-    services: {
-      blackboard: 'connected',
-      router: routerService ? 'connected' : 'disconnected',
-      capability: 'connected',
-      memory: 'connected',
+    api: {
+      status: 'healthy' as const,
+      responseTime: Date.now() - start,
     },
-    config: {
-      llmProvider: (req.app.locals.config as { LLM_PROVIDER?: string; LOG_LEVEL?: string } | undefined)?.LLM_PROVIDER,
-      logLevel: (req.app.locals.config as { LLM_PROVIDER?: string; LOG_LEVEL?: string } | undefined)?.LOG_LEVEL,
+    socketIo: {
+      status: routerService ? 'connected' as const : 'disconnected' as const,
+      clients: socketClients,
+    },
+    resources: {
+      cpu: Math.round(cpuPercent * 100) / 100,
+      memory: Math.round(memoryPercent * 100) / 100,
+      disk: 0, // Not applicable for runtime
     },
   });
 });
