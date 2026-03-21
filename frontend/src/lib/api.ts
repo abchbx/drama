@@ -8,6 +8,8 @@ import type {
   LLMConfig,
   SessionParams,
   SessionTemplate,
+  HealthData,
+  SystemMetrics,
 } from './types.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -132,6 +134,14 @@ export class ApiClient {
     return fetchWithErrorHandling(`/templates/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async getHealth(): Promise<ApiResponse<HealthData>> {
+    return fetchWithErrorHandling('/health');
+  }
+
+  async getSystemMetrics(): Promise<ApiResponse<SystemMetrics[]>> {
+    return fetchWithErrorHandling('/metrics');
   }
 }
 

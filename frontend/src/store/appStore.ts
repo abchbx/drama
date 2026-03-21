@@ -8,7 +8,6 @@ import {
   saveLocalTemplate,
   deleteLocalTemplate,
   updateLastUsed,
-  generateId,
 } from '../utils/templateStorage.js';
 
 type TabType = 'sessions' | 'llm-config' | 'session-params' | 'dashboard' | 'templates';
