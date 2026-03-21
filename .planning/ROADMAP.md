@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 — Foundation** — Phases 1-4 (shipped 2026-03-19)
 - ✅ **v1.1 — Routing, Memory & Integration** — Phases 5-7 (shipped 2026-03-20)
-- 📋 **v1.2 — Next Milestone** — To be defined
+- 📋 **v1.2 — Frontend & Documentation** — Phases 8-13 (in progress)
 
 ---
 
@@ -57,17 +57,107 @@
 
 ---
 
-## Next Milestone: v1.2 — Planning
+## v1.2 — Frontend & Documentation (Current)
 
-**Current focus:** Defining requirements and roadmap for next version.
+### Phase Summary Checklist
 
-**Options for next phase:**
-1. User-in-the-loop integration
-2. Visual rendering/animation
-3. Performance optimization
-4. Additional LLM provider support
-5. Persistent character memory
+- [ ] **Phase 8: Frontend Foundation** - Project setup, Socket.IO integration, and basic session management UI
+- [ ] **Phase 9: Session Configuration & Agent Dashboard** - LLM provider settings, session parameters, and agent status dashboard
+- [ ] **Phase 10: Real-Time Visualization** - Message stream, communication graph, and memory state visualization
+- [ ] **Phase 11: Script Generation & Export** - Export functionality for JSON, Markdown, and PDF formats
+- [ ] **Phase 12: Documentation Site** - User guide, API reference, and architecture documentation
+- [ ] **Phase 13: Polish & Integration** - Configuration, testing, and final integration
+
+### Phase Details
+
+#### Phase 8: Frontend Foundation
+**Goal**: User can access a basic web interface that connects to the drama system backend
+**Depends on**: Phase 7 (v1.1 completion)
+**Requirements**: UI-01, UI-08, RT-01, CFG-01, CFG-02
+**Success Criteria** (what must be TRUE):
+  1. User can access the frontend web application via browser
+  2. User can create a new drama session from the UI
+  3. Frontend automatically reconnects if Socket.IO connection drops
+  4. User can start and stop drama scenes from the interface
+  5. API base URL and Socket.IO settings are configurable via environment variables
+**Plans**: TBD
+
+#### Phase 9: Session Configuration & Agent Dashboard
+**Goal**: User can configure session parameters and monitor agent status
+**Depends on**: Phase 8
+**Requirements**: UI-02, UI-03, UI-07, UI-09, RT-02, RT-04, CFG-03
+**Success Criteria** (what must be TRUE):
+  1. User can configure scene duration, agent count, and other session parameters
+  2. User can select LLM provider (OpenAI, Anthropic, Mock) and enter API keys
+  3. User can view dashboard showing connected agents, their roles, and connection quality
+  4. Agent dashboard updates in real-time when agents connect/disconnect
+  5. User can save and load session templates for quick setup
+  6. User can view system health status and connection information
+**Plans**: TBD
+
+#### Phase 10: Real-Time Visualization
+**Goal**: User can visualize agent communication and system state in real-time
+**Depends on**: Phase 9
+**Requirements**: UI-04, UI-05, UI-06, RT-03
+**Success Criteria** (what must be TRUE):
+  1. User can view real-time message stream showing all agent communication
+  2. User can visualize agent communication patterns as a real-time graph
+  3. User can inspect four-layer memory state and token budget usage
+  4. Message stream updates automatically as new agent messages arrive
+**Plans**: TBD
+
+#### Phase 11: Script Generation & Export
+**Goal**: User can export generated scripts in multiple formats
+**Depends on**: Phase 10
+**Requirements**: EXP-01, EXP-02, EXP-03, EXP-04
+**Success Criteria** (what must be TRUE):
+  1. User can export generated scripts as JSON file
+  2. User can export generated scripts as formatted Markdown file
+  3. User can export generated scripts as PDF file
+  4. Exported files download directly to user's browser
+**Plans**: TBD
+
+#### Phase 12: Documentation Site
+**Goal**: User can access comprehensive documentation for the system
+**Depends on**: Phase 11
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04, DOC-05
+**Success Criteria** (what must be TRUE):
+  1. User can access getting started guide with step-by-step instructions
+  2. User can access comprehensive API reference with OpenAPI 3.1 specification
+  3. User can access detailed user guide with usage examples
+  4. User can access architecture documentation with component diagrams
+  5. Documentation site supports dark/light theme and responsive design
+**Plans**: TBD
+
+#### Phase 13: Polish & Integration
+**Goal**: All features work together seamlessly and are ready for release
+**Depends on**: Phase 12
+**Requirements**: (integration and polish)
+**Success Criteria** (what must be TRUE):
+  1. All v1.2 features work together in end-to-end workflow
+  2. Frontend maintains stable connection through scene completions
+  3. Documentation accurately reflects implemented features
+  4. All export formats produce valid, readable output
+  5. User can complete full workflow from session creation to script export
+**Plans**: TBD
+
+### Progress Table
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 8. Frontend Foundation | 0/0 | Not started | - |
+| 9. Session Configuration & Agent Dashboard | 0/0 | Not started | - |
+| 10. Real-Time Visualization | 0/0 | Not started | - |
+| 11. Script Generation & Export | 0/0 | Not started | - |
+| 12. Documentation Site | 0/0 | Not started | - |
+| 13. Polish & Integration | 0/0 | Not started | - |
+
+### Coverage
+
+**Total v1.2 requirements:** 23
+**Mapped to phases:** 23
+**Unmapped:** 0 ✓
 
 ---
 
-*Roadmap last updated: 2026-03-21 after v1.1 milestone completion*
+*Roadmap last updated: 2026-03-21 with v1.2 phase definitions*

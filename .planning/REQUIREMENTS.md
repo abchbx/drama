@@ -86,37 +86,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| UI-07 | TBD | Pending |
-| UI-08 | TBD | Pending |
-| UI-09 | TBD | Pending |
-| EXP-01 | TBD | Pending |
-| EXP-02 | TBD | Pending |
-| EXP-03 | TBD | Pending |
-| EXP-04 | TBD | Pending |
-| DOC-01 | TBD | Pending |
-| DOC-02 | TBD | Pending |
-| DOC-03 | TBD | Pending |
-| DOC-04 | TBD | Pending |
-| DOC-05 | TBD | Pending |
-| RT-01 | TBD | Pending |
-| RT-02 | TBD | Pending |
-| RT-03 | TBD | Pending |
-| RT-04 | TBD | Pending |
-| CFG-01 | TBD | Pending |
-| CFG-02 | TBD | Pending |
-| CFG-03 | TBD | Pending |
+| UI-01 | 8 | Pending |
+| UI-02 | 9 | Pending |
+| UI-03 | 9 | Pending |
+| UI-04 | 10 | Pending |
+| UI-05 | 10 | Pending |
+| UI-06 | 10 | Pending |
+| UI-07 | 9 | Pending |
+| UI-08 | 8 | Pending |
+| UI-09 | 9 | Pending |
+| EXP-01 | 11 | Pending |
+| EXP-02 | 11 | Pending |
+| EXP-03 | 11 | Pending |
+| EXP-04 | 11 | Pending |
+| DOC-01 | 12 | Pending |
+| DOC-02 | 12 | Pending |
+| DOC-03 | 12 | Pending |
+| DOC-04 | 12 | Pending |
+| DOC-05 | 12 | Pending |
+| RT-01 | 8 | Pending |
+| RT-02 | 9 | Pending |
+| RT-03 | 10 | Pending |
+| RT-04 | 9 | Pending |
+| CFG-01 | 8 | Pending |
+| CFG-02 | 8 | Pending |
+| CFG-03 | 9 | Pending |
 
 **Coverage:**
 - v1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 after roadmap creation*

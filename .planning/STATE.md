@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Frontend & Documentation
-status: not_started
+status: planning
 last_updated: "2026-03-21T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -24,15 +24,15 @@ See: .planning/PROJECT.md (updated 2026-03-21 after v1.1 milestone)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Defining requirements for v1.2 — Frontend & Documentation
+**Current focus:** Roadmap defined for v1.2 — Frontend & Documentation
 
 ---
 
 ## Milestone Status
 
-**Current milestone:** v1.2 — Frontend & Documentation ○ NOT STARTED
+**Current milestone:** v1.2 — Frontend & Documentation 📋 PLANNING
 
-Just started. Defining requirements and roadmap.
+Roadmap defined. Phases 8-13 established with 23 requirements mapped.
 
 **Legend:** ○ Pending | ◆ In Progress | ✓ Complete | ⚠️ Blocked
 
@@ -49,12 +49,13 @@ Just started. Defining requirements and roadmap.
 - Phase 6 complete: MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass
 - Phase 7 complete: DramaSession orchestrator, LLM providers (OpenAI + Anthropic), structured logging, protocol validation, chaos tests, 104 tests pass
 - v1.1 complete: Routing, Memory & Integration milestone archived
+- v1.2 requirements defined: 23 requirements split into UI, Export, Documentation, Real-Time, and Configuration categories
 
 ### What's Next
-v1.2 milestone started. Defining requirements for frontend interface and documentation.
+v1.2 roadmap established. Ready to plan Phase 8: Frontend Foundation.
 
 ### What's Blocked
-Nothing blocked. Ready to define requirements.
+Nothing blocked. Ready to start planning.
 
 ---
 
@@ -79,6 +80,8 @@ Nothing blocked. Ready to define requirements.
 | Director reads all four layers | Full context for arbitration and fact-checking; Actor reads only core+scenario | — Resolved (Phase 4) |
 | Hard semantic-layer assertion in Director constructor | Fail-fast if capability misconfigured; no silent security bypass | — Resolved (Phase 4) |
 | Budget pruning writes summary to scenario (not delete) | Rollback mechanism preserves context for downstream consumers | — Resolved (Phase 4) |
+| React + TypeScript + Vite for frontend | Modern, fast, type-safe frontend stack | — Resolved (research) |
+| Docusaurus for documentation | Static site generator optimized for technical documentation | — Resolved (research) |
 
 ---
 
@@ -86,8 +89,9 @@ Nothing blocked. Ready to define requirements.
 
 | Question | Impact | Resolution Path |
 |----------|--------|-----------------|
-| Which frontend framework to use? | Affects UI architecture | Decision during Phase 8 |
-| What should be in the MVP vs full frontend? | Affects scope | Define during requirements phase |
+| Which React state management to use? | Affects UI architecture | Decision during Phase 8 |
+| What charting library for real-time visualization? | Affects communication graph performance | Decision during Phase 10 |
+| Which PDF generation library to use? | Affects export quality | Decision during Phase 11 |
 
 ---
 
@@ -114,7 +118,10 @@ Nothing blocked. Ready to define requirements.
 | 2026-03-20 | Phase 7 | Plan 07 execution | 07-integration-and-chaos-testing complete — DramaSession, LLM providers, protocol validation, chaos tests, 104 tests pass |
 | 2026-03-21 | v1.1 | Milestone complete | v1.1 archived to .planning/milestones/, git tag v1.1 created |
 | 2026-03-21 | v1.2 | Milestone initialized | v1.2 milestone started — Frontend & Documentation |
+| 2026-03-21 | v1.2 | Research completed | RESEARCH.md, SUMMARY.md, ARCHITECTURE.md, PITFALLS.md committed |
+| 2026-03-21 | v1.2 | Requirements defined | REQUIREMENTS.md committed with 23 v1.2 requirements |
+| 2026-03-21 | v1.2 | Roadmap created | ROADMAP.md updated with 6 phases (8-13), 23 requirements mapped, 0 gaps |
 
 ---
 
-*State last updated: 2026-03-21 after v1.2 milestone initialization*
+*State last updated: 2026-03-21 after v1.2 roadmap creation*
