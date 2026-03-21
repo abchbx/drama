@@ -116,12 +116,12 @@ function AgentGraphInner() {
 
   // Create nodes from agents
   useEffect(() => {
-    const newNodes: Node<AgentNodeData>[] = agents.map((agent, index) => ({
+    const newNodes: Node<AgentNodeData>[] = agents.map((agent, i) => ({
       id: agent.id,
       type: 'agentNode',
       position: {
-        x: 200 + (index % 3) * 250,
-        y: 100 + Math.floor(index / 3) * 200
+        x: 200 + (i % 3) * 250,
+        y: 100 + Math.floor(i / 3) * 200
       },
       data: { agent },
     }));
