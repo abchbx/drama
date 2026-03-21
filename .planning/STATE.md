@@ -1,20 +1,20 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Routing, Memory & Integration
-status: complete
-last_updated: "2026-03-20T14:30:00.000Z"
+milestone: v1.2
+milestone_name: Frontend & Documentation
+status: not_started
+last_updated: "2026-03-21T00:00:00.000Z"
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 8
-  completed_plans: 8
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # State: Multi-Agent Drama System
 
 **Project:** Multi-Agent Drama System
-**Updated:** 2026-03-20
+**Updated:** 2026-03-21
 
 ---
 
@@ -24,25 +24,15 @@ See: .planning/PROJECT.md (updated 2026-03-21 after v1.1 milestone)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Planning next milestone — v1.2
+**Current focus:** Defining requirements for v1.2 — Frontend & Documentation
 
 ---
 
 ## Milestone Status
 
-**Current milestone:** v1.1 — Routing, Memory & Integration ✅ COMPLETE
+**Current milestone:** v1.2 — Frontend & Documentation ○ NOT STARTED
 
-This milestone completed Phases 5–7: Socket.IO routing hub, memory folding engine, and integration + chaos testing. All 104 tests pass.
-
-| Phase | Name | Status | Plans | Progress |
-|-------|------|--------|-------|----------|
-| 1 | Shared Blackboard Service | ✓ Complete | 2/2 done | 100% |
-| 2 | Cognitive Boundary Control | ✓ Complete | 1/1 done | 100% |
-| 3 | Actor Agents | ✓ Complete | 1/1 done | 100% |
-| 4 | Director Agent | ✓ Complete | 1/1 done | 100% |
-| 5 | Message Routing Hub | ✓ Complete | 1/1 done | 100% |
-| 6 | Memory Management Engine | ✓ Complete | 1/1 done | 100% |
-| 7 | Integration + Chaos Testing | ✓ Complete | 1/1 done | 100% |
+Just started. Defining requirements and roadmap.
 
 **Legend:** ○ Pending | ◆ In Progress | ✓ Complete | ⚠️ Blocked
 
@@ -58,12 +48,13 @@ This milestone completed Phases 5–7: Socket.IO routing hub, memory folding eng
 - Phase 5 complete: Socket.IO routing hub with heartbeat/timeout/message buffering, 65 tests pass
 - Phase 6 complete: MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass
 - Phase 7 complete: DramaSession orchestrator, LLM providers (OpenAI + Anthropic), structured logging, protocol validation, chaos tests, 104 tests pass
+- v1.1 complete: Routing, Memory & Integration milestone archived
 
 ### What's Next
-v1.1 milestone complete. Awaiting v1.2 planning.
+v1.2 milestone started. Defining requirements for frontend interface and documentation.
 
 ### What's Blocked
-Nothing blocked. All v1.1 phases are complete.
+Nothing blocked. Ready to define requirements.
 
 ---
 
@@ -95,9 +86,8 @@ Nothing blocked. All v1.1 phases are complete.
 
 | Question | Impact | Resolution Path |
 |----------|--------|-----------------|
-| Which LLM models for Director vs. Actors? | Affects PROTO-03 (LLM abstraction) | Decision during Phase 1 — build abstraction early |
-| What token budget thresholds (2K core, 8K scenario)? | Affects MEM-01–05 | Empirical measurement during Phase 6 |
-| What constitutes a "complete" drama session for TEST-01? | Affects test scope | Define acceptance criteria before Phase 7 |
+| Which frontend framework to use? | Affects UI architecture | Decision during Phase 8 |
+| What should be in the MVP vs full frontend? | Affects scope | Define during requirements phase |
 
 ---
 
@@ -123,7 +113,8 @@ Nothing blocked. All v1.1 phases are complete.
 | 2026-03-20 | Phase 6 | Plan 06 execution | 06-memory-management-engine complete — MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass |
 | 2026-03-20 | Phase 7 | Plan 07 execution | 07-integration-and-chaos-testing complete — DramaSession, LLM providers, protocol validation, chaos tests, 104 tests pass |
 | 2026-03-21 | v1.1 | Milestone complete | v1.1 archived to .planning/milestones/, git tag v1.1 created |
+| 2026-03-21 | v1.2 | Milestone initialized | v1.2 milestone started — Frontend & Documentation |
 
 ---
 
-*State last updated: 2026-03-21 after v1.1 milestone archival*
+*State last updated: 2026-03-21 after v1.2 milestone initialization*

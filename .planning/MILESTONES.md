@@ -50,6 +50,23 @@ Phases 5–7 complete. Added real-time routing, memory management, and integrati
 
 ---
 
-## Next Milestone: v1.2 — Planning
+## v1.2 — Frontend & Documentation ○
+
+**Status:** Not started
+
+**Started:** 2026-03-21
+
+Goal: Develop a frontend interface for the Multi-Agent Drama System and write comprehensive user documentation to make the system accessible to non-technical users.
+
+**Target features:**
+- Interactive web interface for managing drama sessions
+- Real-time visualization of agent communication and blackboard state
+- Session configuration and LLM provider settings
+- Script generation and export capabilities
+- Comprehensive user guide and API documentation
+
+---
+
+## Next Milestone: v1.3 — Planning
 
 **Status:** Not started

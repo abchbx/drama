@@ -8,21 +8,17 @@ A shared blackboard-driven decentralized multi-agent system for collaborative dr
 
 Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-## Current State: v1.1 — Routing, Memory & Integration ✅ SHIPPED
+## Current Milestone: v1.2 — Frontend & Documentation ✅ PLANNING
 
-**Version:** v1.1
-**Shipped:** 2026-03-20
+**Version:** v1.2
+**Goal:** Develop a frontend interface for the Multi-Agent Drama System and write comprehensive user documentation to make the system accessible to non-technical users.
 
-The system now delivers:
-- **Socket.IO real-time messaging** with broadcast, peer-to-peer, and multicast capabilities
-- **Four-layer memory management** with automated folding, token budget enforcement, and core preservation
-- **Comprehensive integration testing** with 104 tests covering E2E scenarios and chaos conditions
-- **LLM provider abstraction** with OpenAI and Anthropic adapters behind a unified interface
-- **Formalized communication protocol** using Zod schemas, .env configuration, and structured logging
-
-**Tech stack:** Node.js 22 LTS + TypeScript 5.5, Socket.IO, Zod, tiktoken, pino, Express.js
-**Lines of code:** 4,340 TypeScript
-**Tests:** 104 passing
+**Target features:**
+- Interactive web interface for managing drama sessions
+- Real-time visualization of agent communication and blackboard state
+- Session configuration and LLM provider settings
+- Script generation and export capabilities
+- Comprehensive user guide and API documentation
 
 ## Requirements
 
@@ -38,7 +34,11 @@ The system now delivers:
 
 ### Active
 
-(Next milestone requirements to be defined)
+- [ ] Frontend interface: interactive web UI for managing drama sessions
+- [ ] Real-time visualization: display agent communication and blackboard state in real-time
+- [ ] Session configuration: UI for configuring LLM providers, session parameters, and agent settings
+- [ ] Script generation: export generated scripts in various formats (JSON, Markdown, PDF)
+- [ ] Documentation: comprehensive user guide and API documentation
 
 ### Out of Scope
 
