@@ -1,0 +1,65 @@
+.scene-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.scene-controls__button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.scene-controls__button--start {
+  background-color: #10b981; /* green-500 */
+  color: white;
+}
+
+.scene-controls__button--start:hover:not(:disabled) {
+  background-color: #059669; /* green-600 */
+}
+
+.scene-controls__button--start:disabled {
+  background-color: #d1fae5; /* green-100 */
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.scene-controls__button--stop {
+  background-color: #ef4444; /* red-500 */
+  color: white;
+}
+
+.scene-controls__button--stop:hover:not(:disabled) {
+  background-color: #dc2626; /* red-600 */
+}
+
+.scene-controls__button--stop:disabled {
+  background-color: #fee2e2; /* red-100 */
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
