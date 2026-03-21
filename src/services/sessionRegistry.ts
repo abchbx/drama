@@ -47,10 +47,11 @@ export class SessionRegistry {
     name: string;
     sceneDurationMinutes: number;
     agentCount: number;
+    dramaId?: string;
   }): Session {
     const now = new Date();
     const session: Session = {
-      dramaId: crypto.randomUUID(),
+      dramaId: input.dramaId ?? crypto.randomUUID(),
       name: input.name,
       sceneDurationMinutes: input.sceneDurationMinutes,
       agentCount: input.agentCount,
