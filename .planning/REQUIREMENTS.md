@@ -9,7 +9,7 @@ Requirements for frontend interface and comprehensive documentation.
 
 ### Frontend Interface
 
-- [ ] **UI-01**: User can create new drama session via interactive web UI
+- [x] **UI-01**: User can create new drama session via interactive web UI
 - [ ] **UI-02**: User can configure session parameters (scene duration, agent count, LLM provider)
 - [ ] **UI-03**: User can select LLM provider (OpenAI, Anthropic, Mock) and configure API keys
 - [ ] **UI-04**: User can view real-time message stream of agent communication
@@ -86,7 +86,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UI-01 | 8 | Pending |
+| UI-01 | 8 | Complete |
 | UI-02 | 9 | Pending |
 | UI-03 | 9 | Pending |
 | UI-04 | 10 | Pending |
