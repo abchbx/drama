@@ -102,7 +102,13 @@ Plans:
   4. Agent dashboard updates in real-time when agents connect/disconnect
   5. User can save and load session templates for quick setup
   6. User can view system health status and connection information
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Tab navigation system and configuration UI layout
+- [ ] 09-02-PLAN.md — LLM configuration and session parameters form
+- [ ] 09-03-PLAN.md — Agent dashboard and system health monitoring
+- [ ] 09-04-PLAN.md — Session templates management
 
 #### Phase 10: Real-Time Visualization
 **Goal**: User can visualize agent communication and system state in real-time
@@ -155,7 +161,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 8. Frontend Foundation | 7/8 | In Progress|  |
-| 9. Session Configuration & Agent Dashboard | 0/0 | Not started | - |
+| 9. Session Configuration & Agent Dashboard | 0/4 | Not started | - |
 | 10. Real-Time Visualization | 0/0 | Not started | - |
 | 11. Script Generation & Export | 0/0 | Not started | - |
 | 12. Documentation Site | 0/0 | Not started | - |
