@@ -78,6 +78,26 @@ export class RouterService {
     this.heartbeat.attach(this._io);
     this.heartbeat.start();
     this.registerSocketHandlers();
+
+    // Periodically emit agent_updated to frontend dashboard
+    setInterval(() => {
+      this.emitAgentUpdated();
+    }, options.heartbeatIntervalMs);
+  }
+
+  private emitAgentUpdated(): void {
+    const agents = Array.from(this.agents.values()).map((agent) => ({
+      agentId: agent.agentId,
+      role: agent.role,
+      socketId: agent.socketId,
+      connectedAt: agent.connectedAt,
+      lastPong: agent.lastPong,
+    }));
+
+    this._io.emit('agent_updated', {
+      agents,
+      timestamp: Date.now(),
+    });
   }
 
   private registerSocketHandlers(): void {
@@ -147,6 +167,15 @@ export class RouterService {
 
     this.heartbeat.registerAgent(agentId, socket.id);
     this.emit('agent:connected', { agentId, role, socketId: socket.id });
+
+    // Emit to frontend dashboard
+    this._io.emit('agent_connected', {
+      agentId,
+      role,
+      socketId: socket.id,
+      timestamp: Date.now(),
+    });
+
     this.replayBufferedMessages(agentId);
   }
 
@@ -178,6 +207,14 @@ export class RouterService {
       role: agent.role,
       socketId,
       graceful: false,
+    });
+
+    // Emit to frontend dashboard
+    this._io.emit('agent_disconnected', {
+      agentId,
+      role: agent.role,
+      socketId,
+      timestamp: Date.now(),
     });
   }
 
