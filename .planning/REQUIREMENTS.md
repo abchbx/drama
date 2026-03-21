@@ -10,14 +10,14 @@ Requirements for frontend interface and comprehensive documentation.
 ### Frontend Interface
 
 - [x] **UI-01**: User can create new drama session via interactive web UI
-- [ ] **UI-02**: User can configure session parameters (scene duration, agent count, LLM provider)
-- [ ] **UI-03**: User can select LLM provider (OpenAI, Anthropic, Mock) and configure API keys
+- [x] **UI-02**: User can configure session parameters (scene duration, agent count, LLM provider)
+- [x] **UI-03**: User can select LLM provider (OpenAI, Anthropic, Mock) and configure API keys
 - [ ] **UI-04**: User can view real-time message stream of agent communication
 - [ ] **UI-05**: User can visualize agent communication patterns as real-time graph
 - [ ] **UI-06**: User can view four-layer memory state and token budget usage
-- [ ] **UI-07**: User can view agent status dashboard (connected agents, roles, connection quality)
-- [ ] **UI-08**: User can start and stop drama scenes from UI
-- [ ] **UI-09**: User can view system health status and connection information
+- [x] **UI-07**: User can view agent status dashboard (connected agents, roles, connection quality)
+- [x] **UI-08**: User can start and stop drama scenes from UI
+- [x] **UI-09**: User can view system health status and connection information
 
 ### Script Generation & Export
 
@@ -36,15 +36,15 @@ Requirements for frontend interface and comprehensive documentation.
 
 ### Real-Time Features
 
-- [ ] **RT-01**: Frontend automatically reconnects to Socket.IO server on disconnection
+- [x] **RT-01**: Frontend automatically reconnects to Socket.IO server on disconnection
 - [ ] **RT-02**: UI updates in real-time when agents connect/disconnect
 - [ ] **RT-03**: Message stream updates in real-time with agent communication
 - [ ] **RT-04**: Agent status dashboard updates in real-time with connection changes
 
 ### Configuration
 
-- [ ] **CFG-01**: User can configure frontend API base URL via environment variables
-- [ ] **CFG-02**: User can configure Socket.IO connection timeout and reconnection attempts
+- [x] **CFG-01**: User can configure frontend API base URL via environment variables
+- [x] **CFG-02**: User can configure Socket.IO connection timeout and reconnection attempts
 - [ ] **CFG-03**: User can save and load session templates (pre-configured settings)
 
 ## v2 Requirements
@@ -87,14 +87,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | UI-01 | 8 | Complete |
-| UI-02 | 9 | Pending |
-| UI-03 | 9 | Pending |
+| UI-02 | 9 | Complete |
+| UI-03 | 9 | Complete |
 | UI-04 | 10 | Pending |
 | UI-05 | 10 | Pending |
 | UI-06 | 10 | Pending |
-| UI-07 | 9 | Pending |
-| UI-08 | 8 | Pending |
-| UI-09 | 9 | Pending |
+| UI-07 | 9 | Complete |
+| UI-08 | 8 | Complete |
+| UI-09 | 9 | Complete |
 | EXP-01 | 11 | Pending |
 | EXP-02 | 11 | Pending |
 | EXP-03 | 11 | Pending |
@@ -104,12 +104,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOC-03 | 12 | Pending |
 | DOC-04 | 12 | Pending |
 | DOC-05 | 12 | Pending |
-| RT-01 | 8 | Pending |
+| RT-01 | 8 | Complete |
 | RT-02 | 9 | Pending |
 | RT-03 | 10 | Pending |
 | RT-04 | 9 | Pending |
-| CFG-01 | 8 | Pending |
-| CFG-02 | 8 | Pending |
+| CFG-01 | 8 | Complete |
+| CFG-02 | 8 | Complete |
 | CFG-03 | 9 | Pending |
 
 **Coverage:**
