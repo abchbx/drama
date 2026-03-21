@@ -102,13 +102,16 @@ Plans:
   4. Agent dashboard updates in real-time when agents connect/disconnect
   5. User can save and load session templates for quick setup
   6. User can view system health status and connection information
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [x] 09-01-PLAN.md — Tab navigation system and configuration UI layout
 - [x] 09-02-PLAN.md — LLM configuration and session parameters form
 - [x] 09-03-PLAN.md — Agent dashboard and system health monitoring
-- [ ] 09-04-PLAN.md — Session templates management
+- [x] 09-04-PLAN.md — Session templates management
+- [ ] 09-05-PLAN.md — Backend Config API (gap closure: missing /api/config routes)
+- [ ] 09-06-PLAN.md — Backend Health endpoint fix + Socket.IO events (gap closure)
+- [ ] 09-07-PLAN.md — Backend Templates API (gap closure: shared templates)
 
 #### Phase 10: Real-Time Visualization
 **Goal**: User can visualize agent communication and system state in real-time
