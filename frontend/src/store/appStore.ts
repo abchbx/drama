@@ -4,6 +4,8 @@ import { apiClient } from '../lib/api.js';
 import { socketService } from '../lib/socket.js';
 import { toastService } from '../lib/toast.js';
 
+type TabType = 'sessions' | 'llm-config' | 'session-params' | 'dashboard' | 'templates';
+
 interface AppState {
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
   lastError: string | null;
@@ -12,12 +14,14 @@ interface AppState {
   creatingSession: boolean;
   startingScene: boolean;
   stoppingScene: boolean;
+  activeTab: TabType;
   setConnectionStatus: (status: AppState['connectionStatus'], error?: string | null) => void;
   fetchSessions: () => Promise<void>;
   selectSession: (session: SessionMetadata | null) => void;
   createSession: (name: string, sceneDurationMinutes: number, agentCount: number) => Promise<void>;
   startScene: (location: string, description: string, tone: string, actorIds: string[]) => Promise<void>;
   stopScene: () => Promise<void>;
+  setActiveTab: (tab: TabType) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -28,6 +32,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   creatingSession: false,
   startingScene: false,
   stoppingScene: false,
+  activeTab: 'sessions',
+  setActiveTab: (tab: TabType) => set({ activeTab: tab }),
 
   setConnectionStatus: (status, error = null) => {
     set({ connectionStatus: status, lastError: error });
