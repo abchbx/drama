@@ -20,11 +20,11 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-19 after v1.1 initialization)
+See: .planning/PROJECT.md (updated 2026-03-21 after v1.1 milestone)
 
 **Core value:** Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-**Current focus:** Defining v1.1 requirements — Phases 5–7 (Routing, Memory & Integration)
+**Current focus:** Planning next milestone — v1.2
 
 ---
 
@@ -122,7 +122,8 @@ Nothing blocked. All v1.1 phases are complete.
 | 2026-03-20 | Phase 5 | Plan 05 execution | 05-message-routing-hub complete — RouterService, heartbeat, timeout manager, buffering, build passes, 65 tests pass |
 | 2026-03-20 | Phase 6 | Plan 06 execution | 06-memory-management-engine complete — MemoryManagerService, semantic/procedural folding, explicit promotion, no-core-eviction, 79 tests pass |
 | 2026-03-20 | Phase 7 | Plan 07 execution | 07-integration-and-chaos-testing complete — DramaSession, LLM providers, protocol validation, chaos tests, 104 tests pass |
+| 2026-03-21 | v1.1 | Milestone complete | v1.1 archived to .planning/milestones/, git tag v1.1 created |
 
 ---
 
-*State last updated: 2026-03-20 after v1.1 milestone completion - all 7 phases complete, 104 tests pass*
+*State last updated: 2026-03-21 after v1.1 milestone archival*
