@@ -80,14 +80,16 @@
   3. Frontend automatically reconnects if Socket.IO connection drops
   4. User can start and stop drama scenes from the interface
   5. API base URL and Socket.IO settings are configurable via environment variables
-**Plans**: 5 plans
+**Plans**: 8 plans
 
 Plans:
-- [x] 08-01-PLAN.md — Backend session registry and REST API for session management ✓
+- [x] 08-01-PLAN.md — Backend session registry and REST API for session management
 - [x] 08-02-PLAN.md — Frontend React + Vite app bootstrap with API and Socket.IO clients
 - [x] 08-03-PLAN.md — Session list and creation form UI components
 - [x] 08-04a-PLAN.md — Scene start/stop controls and connection status indicator
-- [ ] 08-04b-PLAN.md — Toast notifications, Socket.IO wiring, and human verification
+- [x] 08-04b-PLAN.md — Toast notifications and Socket.IO wiring
+- [x] 08-04c-PLAN.md — Scene state wiring and backend Socket.IO events
+- [ ] 08-04d-PLAN.md — Fix null-safe routerService access (gap closure)
 
 #### Phase 9: Session Configuration & Agent Dashboard
 **Goal**: User can configure session parameters and monitor agent status
@@ -152,7 +154,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. Frontend Foundation | 4/5 | In Progress|  |
+| 8. Frontend Foundation | 7/8 | In Progress|  |
 | 9. Session Configuration & Agent Dashboard | 0/0 | Not started | - |
 | 10. Real-Time Visualization | 0/0 | Not started | - |
 | 11. Script Generation & Export | 0/0 | Not started | - |
