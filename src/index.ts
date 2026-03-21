@@ -48,6 +48,7 @@ setBlackboardCapabilityService(capabilityService);
 // 7. Create httpServer + app, wire services
 const app = createApp({
   logger,
+  config,
   blackboard: blackboardService,
   capabilityService,
   routerService: null as any, // Will be initialized after httpServer
@@ -109,23 +110,6 @@ app.post('/session', async (req, res) => {
     logger.error({ err }, 'Failed to create drama session');
     res.status(500).json({ error: 'Failed to create session' });
   }
-});
-
-// GET /health - enhanced health check with all services
-app.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    services: {
-      blackboard: 'connected',
-      router: routerService ? 'connected' : 'disconnected',
-      capability: 'connected',
-      memory: 'connected',
-    },
-    config: {
-      llmProvider: config.LLM_PROVIDER,
-      logLevel: config.LOG_LEVEL,
-    },
-  });
 });
 
 // ---------------------------------------------------------------------------

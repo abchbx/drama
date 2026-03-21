@@ -2,18 +2,27 @@ import { Router } from 'express';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import 'dotenv/config';
-
-const DATA_DIR = process.env.BLACKBOARD_DATA_DIR ?? './data';
-
 export const healthRouter = Router();
 
 healthRouter.get('/', (req, res) => {
-  const snapshotPath = path.join(DATA_DIR, 'blackboard.json');
+  const dataDir = (req.app.locals.config as { BLACKBOARD_DATA_DIR?: string } | undefined)?.BLACKBOARD_DATA_DIR ?? './data';
+  const snapshotPath = path.join(dataDir, 'blackboard.json');
   const snapshotExists = fs.existsSync(snapshotPath);
+  const routerService = req.app.locals.routerService as unknown;
+
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     snapshotLoaded: snapshotExists,
+    services: {
+      blackboard: 'connected',
+      router: routerService ? 'connected' : 'disconnected',
+      capability: 'connected',
+      memory: 'connected',
+    },
+    config: {
+      llmProvider: (req.app.locals.config as { LLM_PROVIDER?: string; LOG_LEVEL?: string } | undefined)?.LLM_PROVIDER,
+      logLevel: (req.app.locals.config as { LLM_PROVIDER?: string; LOG_LEVEL?: string } | undefined)?.LOG_LEVEL,
+    },
   });
 });
