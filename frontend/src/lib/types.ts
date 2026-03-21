@@ -39,8 +39,82 @@ export interface StartSceneInput {
   actorIds: string[];
 }
 
+export type LLMProvider = 'openai' | 'anthropic' | 'mock';
+
+export interface LLMConfig {
+  provider: LLMProvider;
+  apiKey?: string;
+  model?: string;
+  temperature?: number;
+}
+
+export interface SessionParams {
+  sceneDurationMinutes: number;
+  agentCount: number;
+  maxTokens?: number;
+  maxTurns?: number;
+  heartbeatInterval?: number;
+  timeoutSeconds?: number;
+}
+
+export interface AppConfig {
+  llmConfig: LLMConfig;
+  sessionParams: SessionParams;
+}
+
+export interface SessionTemplate {
+  id: string;
+  name: string;
+  description: string;
+  config: {
+    agentCount: number;
+    sceneDurationMinutes: number;
+    maxTokens?: number;
+    maxTurns?: number;
+    heartbeatInterval?: number;
+    timeoutSeconds?: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+  lastUsed?: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+// Agent types
+export interface Agent {
+  id: string;
+  name: string;
+  role: string;
+  status: 'connected' | 'disconnected' | 'idle' | 'active' | 'error';
+  latency: number;
+  lastHeartbeat?: string;
+}
+
+// Health types
+export interface HealthData {
+  api: {
+    status: 'healthy' | 'unhealthy' | 'degraded';
+    responseTime: number;
+  };
+  socketIo: {
+    status: 'connected' | 'disconnected' | 'error';
+    clients: number;
+  };
+  resources: {
+    cpu: number;
+    memory: number;
+    disk: number;
+  };
+}
+
+export interface SystemMetrics {
+  cpu: number;
+  memory: number;
+  disk: number;
+  timestamp: string;
 }
