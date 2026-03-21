@@ -2,43 +2,27 @@
 
 ## What This Is
 
-A shared blackboard-driven decentralized multi-agent system for collaborative drama creation. Multiple AI agents — a Director and a cluster of Actors — collaborate to write and perform dramatic scripts, with a shared blackboard service managing global state to prevent LLM context drift and enforce cognitive boundaries between agents.
+A shared blackboard-driven decentralized multi-agent system for collaborative drama creation. Multiple AI agents — a Director and a cluster of Actors — collaborate to write and perform dramatic scripts, with a shared blackboard service managing global state to prevent LLM context drift and enforce cognitive boundaries between agents. Now includes real-time Socket.IO routing, automated memory folding, and comprehensive integration testing.
 
 ## Core Value
 
 Multiple AI agents can collaboratively create dramatic narratives without losing context, conflicting on state, or overstepping their assigned roles.
 
-## Current Milestone: v1.1 — Routing, Memory & Integration
+## Current State: v1.1 — Routing, Memory & Integration ✅ SHIPPED
 
-**Goal:** Complete the remaining Phases 5–7: Socket.IO real-time routing, memory folding engine, and end-to-end integration testing.
+**Version:** v1.1
+**Shipped:** 2026-03-20
 
-**Target features:**
-- Message Routing Hub (Phase 5) — Socket.IO broadcast/p2p/multicast, heartbeat, timeout fallbacks
-- Memory Management Engine (Phase 6) — four-layer token counting, automated folding, core preservation
-- Integration + Chaos Testing (Phase 7) — E2E drama session, adversarial robustness, LLM provider abstraction
-- Cross-cutting: Dynamic Communication Protocol (PROTO-01–05) — formalized Zod schemas, .env config, agent logging
+The system now delivers:
+- **Socket.IO real-time messaging** with broadcast, peer-to-peer, and multicast capabilities
+- **Four-layer memory management** with automated folding, token budget enforcement, and core preservation
+- **Comprehensive integration testing** with 104 tests covering E2E scenarios and chaos conditions
+- **LLM provider abstraction** with OpenAI and Anthropic adapters behind a unified interface
+- **Formalized communication protocol** using Zod schemas, .env configuration, and structured logging
 
-**Validated from v1.0:**
-- ✓ Shared Blackboard Service — REST API, four-layer model, optimistic locking, audit log, JSON snapshots
-- ✓ Cognitive Boundary Control — hard write-layer enforcement, namespace isolation
-- ✓ Actor Agents — dialogue generation, scoped reads, hallucination flags, voice consistency
-- ✓ Director Agent — plot backbone planning, arbitration, fact-checking, role contract
-
-## Current Milestone: v1.1 — Routing, Memory & Integration
-
-**Goal:** Complete Phases 5–7: Socket.IO real-time routing hub, memory folding engine, and end-to-end integration testing.
-
-**Target features:**
-- Phase 5: Message Routing Hub — Socket.IO broadcast/p2p/multicast, heartbeat, timeout fallbacks
-- Phase 6: Memory Management Engine — four-layer token counting, automated folding, core preservation
-- Phase 7: Integration + Chaos Testing — E2E drama session, adversarial robustness, LLM provider abstraction
-- Cross-cutting: Dynamic Communication Protocol (PROTO-01–05) — formalized Zod schemas, .env config, agent logging
-
-**Validated from v1.0:**
-- ✓ Shared Blackboard Service — REST API, four-layer model, optimistic locking, audit log, JSON snapshots
-- ✓ Cognitive Boundary Control — hard write-layer enforcement, namespace isolation
-- ✓ Actor Agents — dialogue generation, scoped reads, hallucination flags, voice consistency
-- ✓ Director Agent — plot backbone planning, arbitration, fact-checking, role contract
+**Tech stack:** Node.js 22 LTS + TypeScript 5.5, Socket.IO, Zod, tiktoken, pino, Express.js
+**Lines of code:** 4,340 TypeScript
+**Tests:** 104 passing
 
 ## Requirements
 
@@ -48,12 +32,13 @@ Multiple AI agents can collaboratively create dramatic narratives without losing
 - [x] Actor Agents: play specific roles, generate dialogue based on character settings — v1.0
 - [x] Shared Blackboard Service: central memory hub storing plot backbone and character state snapshots — v1.0
 - [x] Three-Layer Cognitive Boundary Control: input limits, capability closure, decision authority isolation — v1.0
+- [x] Message Routing Hub: dynamic message distribution with broadcast, peer-to-peer, and multicast modes — v1.1
+- [x] Memory Management Engine: four-layer memory (core, scenario, semantic, procedural) with fold/unfold mechanisms — v1.1
+- [x] Dynamic Communication Protocol: standardized JSON messages with speaker identification and real-time cognitive updates — v1.1
 
 ### Active
 
-- [ ] Message Routing Hub: dynamic message distribution with broadcast, peer-to-peer, and multicast modes
-- [ ] Memory Management Engine: four-layer memory (core, scenario, semantic, procedural) with fold/unfold mechanisms
-- [ ] Dynamic Communication Protocol: standardized JSON messages with speaker identification and real-time cognitive updates
+(Next milestone requirements to be defined)
 
 ### Out of Scope
 
@@ -85,9 +70,9 @@ The system solves two core problems in multi-agent drama creation:
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Shared blackboard as central state store | Avoids full-prompt re-injection, solves context drift | ✓ Good (Phase 1) |
-| JSON message protocol for all inter-agent communication | Standardized, extensible, easy to route | — Pending (Phase 5) |
-| Four-layer memory architecture | Simulates human cognition, enables token-efficient context management | — Pending (Phase 6) |
-| YOLO execution mode for v1 | Speed of iteration critical for architecture validation | — Pending (Phase 7) |
+| JSON message protocol for all inter-agent communication | Standardized, extensible, easy to route | ✓ Good (v1.1) |
+| Four-layer memory architecture | Simulates human cognition, enables token-efficient context management | ✓ Good (v1.1) |
+| YOLO execution mode for v1 | Speed of iteration critical for architecture validation | ✓ Completed (v1.1) |
 | Node.js 22 LTS + TypeScript 5.5 | Async I/O for concurrent agents; npm ecosystem; type safety | ✓ Good (Phase 1) |
 | Socket.IO for message routing | Built-in heartbeat prevents deadlocks; rooms map to routing modes | ✓ Good (Phase 5) |
 | Zod for JSON validation | Runtime schema enforcement; TypeScript inference | ✓ Good (Phase 3) |
@@ -95,6 +80,13 @@ The system solves two core problems in multi-agent drama creation:
 | pino v9 + pino-http | Structured JSON logging with agent attribution | ✓ Good (Phase 1) |
 | LLM Provider abstract interface | Swappable OpenAI/Anthropic adapters — no agent code changes | ✓ Good (Phase 3) |
 | HS256 JWT for agent tokens | Service-internal symmetric tokens; no asymmetric key management | ✓ Good (Phase 2) |
+| Semantic layer: 8K token budget threshold | Empirical measurement during Phase 6 | ✓ Good (Phase 6) |
+| Core layer: 2K token budget, no eviction | Hard guarantee that core layer persists | ✓ Good (Phase 6) |
+| 60% threshold triggers token count alert | Logged, not blocking | ✓ Good (Phase 6) |
+| Promotion writes directly to core | Bypasses normal write path | ✓ Good (Phase 6) |
+| Summary written to scenario during fold | Not core | ✓ Good (Phase 4/6) |
+| MockLlmProvider used for all tests | No real API calls | ✓ Good (Phase 7) |
+| DramaSession chaos hooks | Allow injection at any point in lifecycle | ✓ Good (Phase 7) |
 
 ---
-*Last updated: 2026-03-19 after v1.1 milestone initialization — Routing, Memory & Integration*
+*Last updated: 2026-03-21 after v1.1 milestone — Routing, Memory & Integration*
