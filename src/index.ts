@@ -10,6 +10,7 @@ import { RouterService } from './services/router.js';
 import { MemoryManagerService } from './services/memoryManager.js';
 import { createLlmProvider } from './services/llm.js';
 import { DramaSession } from './session.js';
+import { SessionRegistry } from './services/sessionRegistry.js';
 import { config } from './config.js';
 import { setAuditLog as setBlackboardAuditLog } from './routes/blackboard.js';
 import { setAuditLog as setAuditRouterAuditLog } from './routes/audit.js';
@@ -45,6 +46,9 @@ const capabilityService = createCapabilityService();
 setAgentsCapabilityService(capabilityService);
 setBlackboardCapabilityService(capabilityService);
 
+// 6.5. Session registry (in-memory storage for sessions)
+const sessionRegistry = new SessionRegistry();
+
 // 7. Create httpServer + app, wire services
 const app = createApp({
   logger,
@@ -52,6 +56,7 @@ const app = createApp({
   blackboard: blackboardService,
   capabilityService,
   routerService: null as any, // Will be initialized after httpServer
+  sessionRegistry,
 });
 
 const httpServer = createServer(app);
@@ -93,7 +98,10 @@ const memoryManager = new MemoryManagerService({
 // POST /session - create a new drama session
 app.post('/session', async (req, res) => {
   try {
-    const session = new DramaSession({
+    const { name, sceneDurationMinutes, agentCount } = req.body || {};
+
+    // Create a new drama session
+    const dramaSession = new DramaSession({
       config: {
         sceneTimeoutMs: config.SCENE_TIMEOUT_MS,
         actorTimeoutMs: config.ACTOR_TIMEOUT_MS,
@@ -105,7 +113,18 @@ app.post('/session', async (req, res) => {
       capabilityService,
       logger,
     });
-    res.json({ dramaId: session.dramaId, status: 'created' });
+
+    // Also store in session registry if metadata provided
+    if (name && sceneDurationMinutes !== undefined && agentCount !== undefined) {
+      sessionRegistry.create({
+        name,
+        sceneDurationMinutes,
+        agentCount,
+        dramaId: dramaSession.dramaId, // Link to the same dramaId
+      });
+    }
+
+    res.json({ dramaId: dramaSession.dramaId, status: 'created' });
   } catch (err) {
     logger.error({ err }, 'Failed to create drama session');
     res.status(500).json({ error: 'Failed to create session' });

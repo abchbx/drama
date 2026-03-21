@@ -4,11 +4,13 @@ import { blackboardRouter } from './routes/blackboard.js';
 import { auditRouter } from './routes/audit.js';
 import { healthRouter } from './routes/health.js';
 import { agentsRouter } from './routes/agents.js';
+import { sessionsRouter } from './routes/sessions.js';
 import type { BlackboardService } from './services/blackboard.js';
 import type { CapabilityService } from './services/capability.js';
 import type { RouterService } from './services/router.js';
 import type { DramaSession } from './session.js';
 import type { Config } from './config.js';
+import type { SessionRegistry } from './services/sessionRegistry.js';
 
 export interface AppServices {
   logger: pino.Logger;
@@ -16,6 +18,7 @@ export interface AppServices {
   blackboard: BlackboardService;
   capabilityService: CapabilityService;
   routerService: RouterService;
+  sessionRegistry?: SessionRegistry;
   dramaSession?: DramaSession;
 }
 
@@ -44,6 +47,7 @@ export function createApp(services: AppServices) {
   app.use('/blackboard', blackboardRouter);
   app.use('/blackboard/agents', agentsRouter);
   app.use('/health', healthRouter);
+  app.use('/sessions', sessionsRouter);
 
   // Expose services via app.locals
   app.locals.logger = services.logger;
@@ -51,6 +55,9 @@ export function createApp(services: AppServices) {
   app.locals.blackboard = services.blackboard;
   app.locals.capabilityService = services.capabilityService;
   app.locals.routerService = services.routerService;
+  if (services.sessionRegistry) {
+    app.locals.sessionRegistry = services.sessionRegistry;
+  }
 
   return app;
 }
