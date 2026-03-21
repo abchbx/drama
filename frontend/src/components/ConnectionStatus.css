@@ -1,0 +1,75 @@
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.connection-status__indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.connection-status__label {
+  white-space: nowrap;
+}
+
+/* Connected state - green */
+.connection-status--green {
+  background-color: #d1fae5; /* green-100 */
+  color: #065f46; /* green-800 */
+}
+
+.connection-status--green .connection-status__indicator {
+  background-color: #10b981; /* green-500 */
+}
+
+/* Reconnecting state - yellow with pulse */
+.connection-status--yellow {
+  background-color: #fef3c7; /* amber-100 */
+  color: #92400e; /* amber-800 */
+}
+
+.connection-status--yellow .connection-status__indicator {
+  background-color: #f59e0b; /* amber-500 */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Connecting state - same as reconnecting */
+.connection-status--yellow.connecting .connection-status__indicator {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Disconnected state - red */
+.connection-status--red {
+  background-color: #fee2e2; /* red-100 */
+  color: #991b1b; /* red-800 */
+}
+
+.connection-status--red .connection-status__indicator {
+  background-color: #ef4444; /* red-500 */
+}
+
+/* Position in top-right corner */
+.connection-status {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
