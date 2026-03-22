@@ -7,6 +7,7 @@ const tabs = [
   { id: 'dashboard' as const, label: 'Dashboard' },
   { id: 'templates' as const, label: 'Templates' },
   { id: 'visualization' as const, label: 'Visualization' },
+  { id: 'export' as const, label: 'Export' },
 ];
 
 export function TabNavigation() {
