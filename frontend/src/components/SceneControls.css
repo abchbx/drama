@@ -28,6 +28,11 @@
   background-color: #059669; /* green-600 */
 }
 
+.scene-controls__button--start:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4);
+}
+
 .scene-controls__button--start:disabled {
   background-color: #d1fae5; /* green-100 */
   color: #9ca3af;
@@ -41,6 +46,11 @@
 
 .scene-controls__button--stop:hover:not(:disabled) {
   background-color: #dc2626; /* red-600 */
+}
+
+.scene-controls__button--stop:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4);
 }
 
 .scene-controls__button--stop:disabled {

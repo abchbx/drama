@@ -50,11 +50,13 @@
   color: #cdd6f4;
   font-size: 16px;
   box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #89b4fa;
+  box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.2);
 }
 
 .form-group input:disabled {
@@ -83,11 +85,16 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .submit-button:hover:not(:disabled) {
   background: #b4befe;
+}
+
+.submit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.3);
 }
 
 .submit-button:disabled {
