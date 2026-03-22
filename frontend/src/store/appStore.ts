@@ -282,7 +282,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   exportScript: async () => {
     const state = useAppStore.getState();
-    const { selectedExportSessionId, selectedExportFormat } = state;
+    const { selectedExportSessionId, selectedExportFormat, sessions } = state;
 
     if (!selectedExportSessionId) {
       set({ exportError: 'Please select a session to export' });
@@ -292,22 +292,29 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ exporting: true, exportError: null });
 
     try {
-      const result = await apiClient.exportSession(selectedExportSessionId, selectedExportFormat);
-
-      if (result.success && result.data) {
-        const session = state.sessions.find(s => s.dramaId === selectedExportSessionId);
-        const filename = session
-          ? `${session.name.toLowerCase().replace(/\s+/g, '-')}-script.${selectedExportFormat}`
-          : `script.${selectedExportFormat}`;
-
-        const mimeType = selectedExportFormat === 'json' ? 'application/json' : 'text/markdown';
-        apiClient.downloadExportedFile(result.data, filename, mimeType);
-
-        toastService.success('Script exported successfully');
-      } else {
-        set({ exportError: result.error || 'Export failed' });
-        toastService.error('Export failed: ' + (result.error || 'Unknown error'));
+      const session = sessions.find(s => s.dramaId === selectedExportSessionId);
+      if (!session) {
+        throw new Error('Session not found');
       }
+
+      const filename = `${session.name.toLowerCase().replace(/\s+/g, '-')}-script.${selectedExportFormat}`;
+
+      if (selectedExportFormat === 'pdf') {
+        // PDF export: fetch Markdown, convert to PDF
+        await apiClient.exportSessionAsPDF(selectedExportSessionId, session.name);
+      } else {
+        // JSON or Markdown: download directly from backend
+        const result = await apiClient.exportSession(selectedExportSessionId, selectedExportFormat);
+
+        if (result.success && result.data) {
+          const mimeType = selectedExportFormat === 'json' ? 'application/json' : 'text/markdown';
+          apiClient.downloadExportedFile(result.data, filename, mimeType);
+        } else {
+          throw new Error(result.error || 'Export failed');
+        }
+      }
+
+      toastService.success('Script exported successfully');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       set({ exportError: errorMessage });
