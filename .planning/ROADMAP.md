@@ -64,7 +64,7 @@
 - [ ] **Phase 8: Frontend Foundation** - Project setup, Socket.IO integration, and basic session management UI
 - [ ] **Phase 9: Session Configuration & Agent Dashboard** - LLM provider settings, session parameters, and agent status dashboard
 - [x] **Phase 10: Real-Time Visualization** - Message stream, communication graph, and memory state visualization (completed 2026-03-22)
-- [ ] **Phase 11: Script Generation & Export** - Export functionality for JSON, Markdown, and PDF formats
+- [x] **Phase 11: Script Generation & Export** - Export functionality for JSON, Markdown, and PDF formats (completed 2026-03-22)
 - [ ] **Phase 12: Documentation Site** - User guide, API reference, and architecture documentation
 - [ ] **Phase 13: Polish & Integration** - Configuration, testing, and final integration
 
@@ -174,7 +174,7 @@ Plans:
 | 8. Frontend Foundation | 7/7 | Complete| 2026-03-21 |
 | 9. Session Configuration & Agent Dashboard | 7/7 | Complete| 2026-03-21 |
 | 10. Real-Time Visualization | 6/6 | Complete    | 2026-03-22 |
-| 11. Script Generation & Export | 0/0 | Not started | - |
+| 11. Script Generation & Export | 1/3 | Complete    | 2026-03-22 |
 | 12. Documentation Site | 0/0 | Not started | - |
 | 13. Polish & Integration | 0/0 | Not started | - |
 
