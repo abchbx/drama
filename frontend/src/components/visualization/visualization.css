@@ -30,6 +30,8 @@
   font-size: var(--font-size-sm);
   font-weight: 500;
   transition: all var(--transition-fast);
+  min-height: 36px; /* Touch target minimum */
+  min-width: 80px;
 }
 
 .control-button:hover {
@@ -39,7 +41,19 @@
 }
 
 .control-button:active {
-  transform: translateY(0);
+  background: var(--color-accent-blue-active);
+  transform: translateY(0) scale(0.98);
+}
+
+.control-button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.control-button:focus-visible {
+  outline: 2px solid var(--color-accent-blue);
+  outline-offset: 2px;
 }
 
 .control-button.pause {

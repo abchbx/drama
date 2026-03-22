@@ -134,8 +134,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
+  min-height: 44px; /* Touch target minimum (Apple HIG) */
+  position: relative;
+  overflow: hidden;
 }
 
+/* Press feedback (scale within bounds - no layout shift) */
 .submit-button:hover:not(:disabled) {
   background: var(--color-accent-blue-hover);
   transform: translateY(-1px);
@@ -144,12 +148,15 @@
 
 .submit-button:active:not(:disabled) {
   background: var(--color-accent-blue-active);
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
 }
 
+/* Disabled state with semantic styling */
 .submit-button:disabled {
-  opacity: 0.5;
+  opacity: 0.38; /* MD standard */
   cursor: not-allowed;
+  transform: none;
 }
 
 .submit-button:focus-visible {
@@ -157,11 +164,12 @@
   outline-offset: 2px;
 }
 
+/* Loading spinner with smooth animation */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
 .spin {
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
