@@ -72,6 +72,7 @@ const routerService = new RouterService(httpServer, logger, {
 });
 
 app.locals.routerService = routerService;
+app.locals.blackboardService = blackboardService;
 
 // 9. Memory manager (initialized with blackboard + LLM provider for folding)
 //    Budgets are configured via LAYER_BUDGETS in types/blackboard.ts
