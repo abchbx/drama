@@ -8,6 +8,7 @@ import SessionParamsTab from './components/config/SessionParamsTab.js';
 import { AgentDashboardTab } from './components/dashboard/AgentDashboardTab.js';
 import { TemplatesTab } from './components/templates/TemplatesTab.js';
 import { VisualizationTab } from './components/visualization/VisualizationTab.js';
+import { ExportTab } from './components/ExportTab.js';
 import { ConnectionStatus } from './components/ConnectionStatus.js';
 import { ToastContainer } from './components/Toast.js';
 import { socketService } from './lib/socket.js';
@@ -38,6 +39,8 @@ export default function App() {
         return <TemplatesTab />;
       case 'visualization':
         return <VisualizationTab />;
+      case 'export':
+        return <ExportTab />;
       default:
         return <SessionPanel />;
     }
