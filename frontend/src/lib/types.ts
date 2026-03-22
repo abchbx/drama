@@ -150,3 +150,52 @@ export interface MemoryState {
   semantic: MemoryLayerState;
   procedural: MemoryLayerState;
 }
+
+/**
+ * Export format options
+ */
+export type ExportFormat = 'json' | 'markdown';
+
+/**
+ * Exported script data structure
+ */
+export interface ExportedScript {
+  session: {
+    dramaId: string;
+    name: string;
+    createdAt: string;
+    sceneDurationMinutes: number;
+    agentCount: number;
+  };
+  config: {
+    sceneDurationMinutes: number;
+    agentCount: number;
+  };
+  characters: Array<{
+    agentId: string;
+    characterCard: string;
+  }>;
+  backbone: Array<{
+    id: string;
+    timestamp: string;
+    content: string;
+  }>;
+  scenes: Array<{
+    sceneId: string;
+    location: string;
+    description: string;
+    timestamp: string;
+    beats: string[];
+    conflicts: string[];
+  }>;
+}
+
+/**
+ * Export state in app store
+ */
+export interface ExportState {
+  selectedSessionId: string | null;
+  selectedFormat: ExportFormat;
+  exporting: boolean;
+  exportError: string | null;
+}
