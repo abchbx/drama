@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Frontend & Documentation
 current_phase: 13
-status: planning
-last_updated: "2026-03-22T11:30:08.568Z"
+status: completed
+last_updated: "2026-03-22T12:08:17.215Z"
 last_activity: 2026-03-22
 progress:
   total_phases: 6
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.2 — Frontend & Documentation
 **Current phase:** 13
-**Status:** Ready to plan
+**Status:** v1.2 milestone complete
 
 **Last activity:** 2026-03-22
 
@@ -39,6 +39,12 @@ See: .planning/PROJECT.md
 - 2026-03-22: Completed plan 11-01 - Backend Export API Endpoint
 - 2026-03-22: Completed plan 11-02 - Frontend Export Tab (JSON & Markdown)
 - 2026-03-22: Completed plan 11-03 - PDF Export Functionality
+
+### Pending Todos
+
+- [ ] 2026-03-22: 启动项目验收 (2026-03-22-start-project-uat.md)
+
+---
 
 ### Quick Tasks Completed
 
