@@ -44,6 +44,7 @@ export type LLMProvider = 'openai' | 'anthropic' | 'mock';
 export interface LLMConfig {
   provider: LLMProvider;
   apiKey?: string;
+  baseURL?: string;
   model?: string;
   temperature?: number;
 }
