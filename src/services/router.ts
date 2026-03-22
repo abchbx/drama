@@ -249,6 +249,7 @@ export class RouterService {
     const routed = { ...message, sequenceNum: this.nextSequence(message.from) };
     this._io.to('actors').emit('routing:message', routed);
     this.emit('message:received', routed);
+    this._io.emit('message:received', routed); // Socket.IO broadcast to all clients
     return routed;
   }
 
@@ -266,6 +267,7 @@ export class RouterService {
     }
 
     this.emit('message:received', routed);
+    this._io.emit('message:received', routed); // Socket.IO broadcast to all clients
     return routed;
   }
 
@@ -285,12 +287,14 @@ export class RouterService {
     }
 
     this.emit('message:received', routed);
+    this._io.emit('message:received', routed); // Socket.IO broadcast to all clients
     return routed;
   }
 
   routeMessage(message: RoutingMessage): void {
     if (message.to.length === 0) {
       this.emit('message:received', message);
+      this._io.emit('message:received', message); // Socket.IO broadcast to all clients
       return;
     }
 
