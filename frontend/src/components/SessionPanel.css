@@ -20,7 +20,7 @@
 
 .no-selection h2 {
   margin: 0 0 8px 0;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
 }
 
@@ -39,7 +39,7 @@
 
 .session-panel-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #cdd6f4;
 }
@@ -47,7 +47,7 @@
 .status-indicator {
   padding: 6px 12px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   color: #1e1e2e;
@@ -113,7 +113,7 @@
 }
 
 .detail-item dt {
-  font-size: 12px;
+  font-size: 14px;
   color: #a6adc8;
   font-weight: 500;
   flex-shrink: 0;
@@ -122,7 +122,7 @@
 
 .detail-item dd {
   margin: 0;
-  font-size: 13px;
+  font-size: 16px;
   color: #cdd6f4;
   text-align: right;
   word-break: break-word;
@@ -132,7 +132,7 @@
   margin: 0;
   padding-left: 16px;
   color: #cdd6f4;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .beats-list li {
@@ -141,6 +141,6 @@
 
 .no-result {
   color: #6c7086;
-  font-size: 13px;
+  font-size: 16px;
   font-style: italic;
 }
