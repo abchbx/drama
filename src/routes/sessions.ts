@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { SessionRegistry } from '../services/sessionRegistry.js';
 import { RouterService } from '../services/router.js';
 import { SessionStatus } from '../types/session.js';
+import { ExportService, ExportFormat } from '../services/exportService.js';
 
 /**
  * Create sessions router for browser-facing API
@@ -156,5 +157,58 @@ sessionsRouter.post('/:id/scene/stop', (req: Request, res: Response) => {
       return res.status(409).json({ error: 'Cannot stop scene: session is not running' });
     }
     res.status(500).json({ error: 'Failed to stop scene' });
+  }
+});
+
+/**
+ * GET /sessions/:id/export?format=json|markdown
+ * Exports a completed session in the specified format
+ */
+sessionsRouter.get('/:id/export', (req: Request, res: Response) => {
+  try {
+    const registry = (req.app.locals as any).sessionRegistry as SessionRegistry;
+    const blackboardService = (req.app.locals as any).blackboardService as any;
+
+    if (!blackboardService) {
+      return res.status(500).json({ error: 'Blackboard service not available' });
+    }
+
+    const { id } = req.params;
+    const dramaId = Array.isArray(id) ? id[0] : id;
+    const formatParam = req.query.format as string || 'json';
+
+    if (!dramaId) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
+
+    // Validate format
+    const format = formatParam === 'markdown' ? ExportFormat.MARKDOWN : ExportFormat.JSON;
+
+    // Check if session exists
+    const session = registry.get(dramaId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Create export service and export
+    const exportService = new ExportService(registry, blackboardService);
+    const result = exportService.exportSession(dramaId, format);
+
+    result
+      .then((exportData) => {
+        // Set appropriate content type
+        const contentType = format === ExportFormat.JSON
+          ? 'application/json'
+          : 'text/markdown';
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${exportData.filename}"`);
+        res.send(exportData.content);
+      })
+      .catch((err: any) => {
+        res.status(400).json({ error: err.message || 'Export failed' });
+      });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Export failed: ' + (err.message || 'Unknown error') });
   }
 });
