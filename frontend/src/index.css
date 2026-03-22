@@ -4,6 +4,21 @@
   box-sizing: border-box;
 }
 
+/* CSS Variables */
+:root {
+  --card-bg: #313244;
+  --border-color: #45475a;
+  --primary-color: #89b4fa;
+  --primary-hover: #74a8f9;
+  --success-color: #a6e3a1;
+  --warning-color: #f9e2af;
+  --text-primary: #cdd6f4;
+  --text-muted: #6c7086;
+  --bg-secondary: #1e1e2e;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
 html, body, #root {
   height: 100%;
   width: 100%;

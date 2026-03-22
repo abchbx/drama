@@ -87,7 +87,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchSessions: async () => {
     const response = await apiClient.getSessions();
     if (response.success && response.data) {
-      set({ sessions: response.data });
+      // 后端返回 { sessions: [...] }，需要提取数组
+      const sessions = Array.isArray(response.data) ? response.data : (response.data as any).sessions || [];
+      set({ sessions });
     }
   },
 
