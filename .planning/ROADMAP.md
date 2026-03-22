@@ -65,7 +65,7 @@
 - [ ] **Phase 9: Session Configuration & Agent Dashboard** - LLM provider settings, session parameters, and agent status dashboard
 - [x] **Phase 10: Real-Time Visualization** - Message stream, communication graph, and memory state visualization (completed 2026-03-22)
 - [x] **Phase 11: Script Generation & Export** - Export functionality for JSON, Markdown, and PDF formats (completed 2026-03-22)
-- [ ] **Phase 12: Documentation Site** - User guide, API reference, and architecture documentation
+- [x] **Phase 12: Documentation Site** - User guide, API reference, and architecture documentation (completed 2026-03-22)
 - [ ] **Phase 13: Polish & Integration** - Configuration, testing, and final integration
 
 ### Phase Details
@@ -156,11 +156,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — VitePress setup and getting started guide
-- [ ] 12-02-PLAN.md — API reference documentation
-- [ ] 12-03-PLAN.md — User guide with examples
-- [ ] 12-04-PLAN.md — Architecture documentation with Mermaid diagrams
-- [ ] 12-05-PLAN.md — Build and verify production site
+- [x] 12-01-PLAN.md — VitePress setup and getting started guide
+- [x] 12-02-PLAN.md — API reference documentation
+- [x] 12-03-PLAN.md — User guide with examples
+- [x] 12-04-PLAN.md — Architecture documentation with Mermaid diagrams
+- [x] 12-05-PLAN.md — Build and verify production site
 
 #### Phase 13: Polish & Integration
 **Goal**: All features work together seamlessly and are ready for release
@@ -182,7 +182,7 @@ Plans:
 | 9. Session Configuration & Agent Dashboard | 7/7 | Complete| 2026-03-21 |
 | 10. Real-Time Visualization | 6/6 | Complete    | 2026-03-22 |
 | 11. Script Generation & Export | 1/3 | Complete    | 2026-03-22 |
-| 12. Documentation Site | 5/5 | Planned    | - |
+| 12. Documentation Site | 5/5 | Complete    | 2026-03-22 |
 | 13. Polish & Integration | 0/0 | Not started | - |
 
 ### Coverage
