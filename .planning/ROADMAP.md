@@ -129,8 +129,8 @@ Plans:
 - [x] 10-02-PLAN.md — Visualization tab and timeline-style message stream
 - [x] 10-03-PLAN.md — Communication graph and memory state visualization
 - [x] 10-04-PLAN.md — Memory state and token progress visualization
-- [ ] 10-05-PLAN.md — Communication Graph React Flow implementation (gap closure)
-- [ ] 10-06-PLAN.md — Backend Memory API endpoint (gap closure)
+- [x] 10-05-PLAN.md — Communication Graph React Flow implementation (gap closure)
+- [x] 10-06-PLAN.md — Backend Memory API endpoint (gap closure)
 
 #### Phase 11: Script Generation & Export
 **Goal**: User can export generated scripts in multiple formats
@@ -173,7 +173,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 8. Frontend Foundation | 7/8 | In Progress|  |
 | 9. Session Configuration & Agent Dashboard | 5/7 | In Progress|  |
-| 10. Real-Time Visualization | 4/6 | Gap Closure| 2026-03-22 |
+| 10. Real-Time Visualization | 5/6 | Gap Closure| 2026-03-22 |
 | 11. Script Generation & Export | 0/0 | Not started | - |
 | 12. Documentation Site | 0/0 | Not started | - |
 | 13. Polish & Integration | 0/0 | Not started | - |
