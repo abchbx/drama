@@ -58,6 +58,48 @@ export interface UpdateSessionInput {
 }
 
 /**
+ * Export format options
+ */
+export enum ExportFormat {
+  JSON = 'json',
+  MARKDOWN = 'markdown',
+}
+
+/**
+ * Exported script structure for JSON format
+ */
+export interface ExportedScript {
+  session: {
+    dramaId: string;
+    name: string;
+    createdAt: string;
+    sceneDurationMinutes: number;
+    agentCount: number;
+  };
+  config: {
+    sceneDurationMinutes: number;
+    agentCount: number;
+  };
+  characters: Array<{
+    agentId: string;
+    characterCard: string;
+  }>;
+  backbone: Array<{
+    id: string;
+    timestamp: string;
+    content: string;
+  }>;
+  scenes: Array<{
+    sceneId: string;
+    location: string;
+    description: string;
+    timestamp: string;
+    beats: string[];
+    conflicts: string[];
+  }>;
+}
+
+/**
  * Response for session list endpoint
  */
 export interface SessionListResponse {
