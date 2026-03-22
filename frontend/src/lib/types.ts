@@ -118,3 +118,35 @@ export interface SystemMetrics {
   disk: number;
   timestamp: string;
 }
+
+// Routing message types
+export type MessageType = 'scene_start' | 'scene_end' | 'your_turn' | 'dialogue' | 'reaction' | 'heartbeat' | 'fallback' | 'actor_unavailable' | 'actor_reconnected';
+export type ScenePhase = 'setup' | 'rising' | 'climax' | 'falling' | 'resolution';
+
+export interface RoutingMessage {
+  id: string;
+  type: MessageType;
+  from: string;
+  to: string[];
+  payload: Record<string, unknown>;
+  scenePhase?: ScenePhase;
+  cognitiveState?: {
+    tokensUsed: number;
+  };
+  timestamp: number;
+  sequenceNum: number;
+}
+
+// Memory state types
+export interface MemoryLayerState {
+  tokensUsed: number;
+  budget: number;
+  content?: unknown;
+}
+
+export interface MemoryState {
+  core: MemoryLayerState;
+  scenario: MemoryLayerState;
+  semantic: MemoryLayerState;
+  procedural: MemoryLayerState;
+}

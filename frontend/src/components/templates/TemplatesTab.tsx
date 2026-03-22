@@ -9,9 +9,9 @@ import { generateId } from '../../utils/templateStorage.js';
 import type { SessionTemplate } from '../../lib/types.js';
 
 interface CreateTemplateFormProps {
-  onSubmit: (template: Omit<SessionTemplate, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (template: Omit<SessionTemplate, 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
-  initialData?: Partial<SessionTemplate>;
+  initialData?: Partial<SessionTemplate> | null;
 }
 
 function CreateTemplateForm({ onSubmit, onCancel, initialData }: CreateTemplateFormProps) {

@@ -10,7 +10,7 @@ import {
   updateLastUsed,
 } from '../utils/templateStorage.js';
 
-type TabType = 'sessions' | 'llm-config' | 'session-params' | 'dashboard' | 'templates';
+type TabType = 'sessions' | 'llm-config' | 'session-params' | 'dashboard' | 'templates' | 'visualization';
 
 interface AppState {
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';

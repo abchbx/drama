@@ -7,6 +7,7 @@ import LLMConfigTab from './components/config/LLMConfigTab.js';
 import SessionParamsTab from './components/config/SessionParamsTab.js';
 import { AgentDashboardTab } from './components/dashboard/AgentDashboardTab.js';
 import { TemplatesTab } from './components/templates/TemplatesTab.js';
+import { VisualizationTab } from './components/visualization/VisualizationTab.js';
 import { ConnectionStatus } from './components/ConnectionStatus.js';
 import { ToastContainer } from './components/Toast.js';
 import { socketService } from './lib/socket.js';
@@ -35,6 +36,8 @@ export default function App() {
         return <AgentDashboardTab />;
       case 'templates':
         return <TemplatesTab />;
+      case 'visualization':
+        return <VisualizationTab />;
       default:
         return <SessionPanel />;
     }

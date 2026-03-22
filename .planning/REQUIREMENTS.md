@@ -13,7 +13,7 @@ Requirements for frontend interface and comprehensive documentation.
 - [x] **UI-02**: User can configure session parameters (scene duration, agent count, LLM provider)
 - [x] **UI-03**: User can select LLM provider (OpenAI, Anthropic, Mock) and configure API keys
 - [ ] **UI-04**: User can view real-time message stream of agent communication
-- [ ] **UI-05**: User can visualize agent communication patterns as real-time graph
+- [x] **UI-05**: User can visualize agent communication patterns as real-time graph
 - [ ] **UI-06**: User can view four-layer memory state and token budget usage
 - [x] **UI-07**: User can view agent status dashboard (connected agents, roles, connection quality)
 - [x] **UI-08**: User can start and stop drama scenes from UI
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-02 | 9 | Complete |
 | UI-03 | 9 | Complete |
 | UI-04 | 10 | Pending |
-| UI-05 | 10 | Pending |
+| UI-05 | 10 | Complete |
 | UI-06 | 10 | Pending |
 | UI-07 | 9 | Complete |
 | UI-08 | 8 | Complete |

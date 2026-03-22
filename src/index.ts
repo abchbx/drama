@@ -135,7 +135,7 @@ app.post('/session', async (req, res) => {
 // Start server
 // ---------------------------------------------------------------------------
 
-httpServer.listen(config.PORT, () => {
+httpServer.listen(config.PORT, '0.0.0.0', () => {
   logger.info({
     port: config.PORT,
     socketPort: config.SOCKET_PORT,

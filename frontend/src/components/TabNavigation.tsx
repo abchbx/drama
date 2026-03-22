@@ -6,6 +6,7 @@ const tabs = [
   { id: 'session-params' as const, label: 'Session Params' },
   { id: 'dashboard' as const, label: 'Dashboard' },
   { id: 'templates' as const, label: 'Templates' },
+  { id: 'visualization' as const, label: 'Visualization' },
 ];
 
 export function TabNavigation() {
