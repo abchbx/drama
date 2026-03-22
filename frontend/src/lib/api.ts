@@ -143,6 +143,34 @@ export class ApiClient {
   async getSystemMetrics(): Promise<ApiResponse<SystemMetrics[]>> {
     return fetchWithErrorHandling('/metrics');
   }
+
+  /**
+   * Export session data as text (JSON or Markdown)
+   */
+  async exportSession(
+    dramaId: string,
+    format: 'json' | 'markdown'
+  ): Promise<ApiResponse<string>> {
+    return fetchWithErrorHandling<string>(
+      `/sessions/${dramaId}/export?format=${format}`
+    );
+  }
+
+  /**
+   * Download exported file to browser
+   * Uses Blob + anchor click pattern (from templateStorage.ts)
+   */
+  downloadExportedFile(content: string, filename: string, mimeType: string): void {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 }
 
 export const apiClient = new ApiClient();
