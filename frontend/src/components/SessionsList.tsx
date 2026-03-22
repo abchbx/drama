@@ -1,14 +1,43 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../store/appStore.js';
+import './SessionsList.css';
 
-const statusColors: Record<string, string> = {
-  created: 'bg-gray-400',
-  idle: 'bg-gray-400',
-  running: 'bg-green-500',
-  stopping: 'bg-yellow-500',
-  completed: 'bg-blue-500',
-  interrupted: 'bg-orange-500',
-  failed: 'bg-red-500',
+const statusConfig: Record<string, { color: string; bg: string; icon: string }> = {
+  created: {
+    color: 'var(--color-text-tertiary)',
+    bg: 'var(--color-bg-tertiary)',
+    icon: '○'
+  },
+  idle: {
+    color: 'var(--color-text-tertiary)',
+    bg: 'var(--color-bg-tertiary)',
+    icon: '○'
+  },
+  running: {
+    color: 'var(--color-status-success)',
+    bg: 'rgba(48, 209, 88, 0.15)',
+    icon: '●'
+  },
+  stopping: {
+    color: 'var(--color-status-warning)',
+    bg: 'rgba(255, 214, 10, 0.15)',
+    icon: '●'
+  },
+  completed: {
+    color: 'var(--color-accent-blue)',
+    bg: 'rgba(10, 132, 255, 0.15)',
+    icon: '✓'
+  },
+  interrupted: {
+    color: 'var(--color-accent-orange)',
+    bg: 'rgba(255, 159, 10, 0.15)',
+    icon: '✕'
+  },
+  failed: {
+    color: 'var(--color-status-error)',
+    bg: 'rgba(255, 69, 58, 0.15)',
+    icon: '✕'
+  },
 };
 
 const statusLabels: Record<string, string> = {
@@ -23,7 +52,18 @@ const statusLabels: Record<string, string> = {
 
 function formatTimestamp(isoString: string): string {
   const date = new Date(isoString);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+
+  if (hours < 1) {
+    const minutes = Math.floor(diff / (1000 * 60));
+    return minutes < 1 ? 'Just now' : `${minutes}m ago`;
+  } else if (hours < 24) {
+    return `${hours}h ago`;
+  } else {
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
 }
 
 export function SessionsList() {
@@ -36,31 +76,50 @@ export function SessionsList() {
   return (
     <div className="sessions-list">
       <div className="sessions-list-header">
-        <h2>Sessions</h2>
-        <span className="session-count">{sessions.length}</span>
+        <h3>Sessions</h3>
+        <span className="session-count badge">{sessions.length}</span>
       </div>
 
       {sessions.length === 0 ? (
         <div className="sessions-empty">
-          <p>No sessions yet - create one!</p>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="empty-icon">
+            <path d="M24 8v32M8 24h32" stroke="var(--color-border-default)" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <p className="empty-text">No sessions yet</p>
+          <p className="empty-hint">Create your first session above</p>
         </div>
       ) : (
         <ul className="sessions-items">
-          {sessions.map((session) => (
-            <li
-              key={session.dramaId}
-              className={`session-item ${selectedSession?.dramaId === session.dramaId ? 'selected' : ''}`}
-              onClick={() => selectSession(session)}
-            >
-              <div className="session-info">
-                <span className="session-name">{session.name}</span>
-                <span className="session-timestamp">{formatTimestamp(session.createdAt)}</span>
-              </div>
-              <span className={`status-badge ${statusColors[session.status]} ${session.status === 'running' ? 'pulse' : ''}`}>
-                {statusLabels[session.status]}
-              </span>
-            </li>
-          ))}
+          {sessions.map((session) => {
+            const config = statusConfig[session.status];
+            return (
+              <li
+                key={session.dramaId}
+                className={`session-item ${selectedSession?.dramaId === session.dramaId ? 'selected' : ''}`}
+                onClick={() => selectSession(session)}
+              >
+                <div className="session-left">
+                  <div className="session-status">
+                    <span className={`status-dot ${session.status === 'running' ? 'pulse' : ''}`}>
+                      {config.icon}
+                    </span>
+                  </div>
+                  <div className="session-info">
+                    <span className="session-name">{session.name}</span>
+                    <span className="session-meta">
+                      {formatTimestamp(session.createdAt)}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className="status-label"
+                  style={{ color: config.color }}
+                >
+                  {statusLabels[session.status]}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { useAppStore } from '../store/appStore.js';
+import './CreateSessionForm.css';
 
 interface FormErrors {
   name?: string;
@@ -68,7 +69,12 @@ export function CreateSessionForm() {
 
   return (
     <div className="create-session-form">
-      <h3>Create Session</h3>
+      <div className="form-header">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        <span>New Session</span>
+      </div>
 
       {successMessage && (
         <div className="success-message">{successMessage}</div>
@@ -80,48 +86,66 @@ export function CreateSessionForm() {
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="session-name">Session Name</label>
+          <label htmlFor="session-name">Name</label>
           <input
             id="session-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Enter session name"
+            placeholder="My drama session..."
             disabled={creatingSession}
+            autoComplete="off"
           />
           {errors.name && <span className="field-error">{errors.name}</span>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="scene-duration">Scene Duration (minutes)</label>
-          <input
-            id="scene-duration"
-            type="number"
-            min={sessionSchema.sceneDurationMinutes.min}
-            max={sessionSchema.sceneDurationMinutes.max}
-            value={sceneDurationMinutes}
-            onChange={(e) => setSceneDurationMinutes(parseInt(e.target.value) || 0)}
-            disabled={creatingSession}
-          />
-          {errors.sceneDurationMinutes && <span className="field-error">{errors.sceneDurationMinutes}</span>}
+        <div className="form-row">
+          <div className="form-group form-group-compact">
+            <label htmlFor="scene-duration">Duration</label>
+            <input
+              id="scene-duration"
+              type="number"
+              min={sessionSchema.sceneDurationMinutes.min}
+              max={sessionSchema.sceneDurationMinutes.max}
+              value={sceneDurationMinutes}
+              onChange={(e) => setSceneDurationMinutes(parseInt(e.target.value) || 0)}
+              disabled={creatingSession}
+            />
+            <span className="input-suffix">min</span>
+          </div>
+
+          <div className="form-group form-group-compact">
+            <label htmlFor="agent-count">Agents</label>
+            <input
+              id="agent-count"
+              type="number"
+              min={sessionSchema.agentCount.min}
+              max={sessionSchema.agentCount.max}
+              value={agentCount}
+              onChange={(e) => setAgentCount(parseInt(e.target.value) || 0)}
+              disabled={creatingSession}
+            />
+            <span className="input-suffix">pcs</span>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="agent-count">Agent Count</label>
-          <input
-            id="agent-count"
-            type="number"
-            min={sessionSchema.agentCount.min}
-            max={sessionSchema.agentCount.max}
-            value={agentCount}
-            onChange={(e) => setAgentCount(parseInt(e.target.value) || 0)}
-            disabled={creatingSession}
-          />
-          {errors.agentCount && <span className="field-error">{errors.agentCount}</span>}
-        </div>
-
-        <button type="submit" className="submit-button" disabled={creatingSession}>
-          {creatingSession ? 'Creating...' : 'Create Session'}
+        <button type="submit" className="submit-button btn btn-primary" disabled={creatingSession}>
+          {creatingSession ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="spin">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3"/>
+                <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Creating...
+            </>
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Create Session
+            </>
+          )}
         </button>
       </form>
     </div>

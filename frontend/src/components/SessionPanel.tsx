@@ -1,5 +1,6 @@
 import { useAppStore } from '../store/appStore.js';
 import { SceneControls } from './SceneControls.js';
+import './SessionPanel.css';
 
 const statusColors: Record<string, string> = {
   created: '#6c7086',

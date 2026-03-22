@@ -1,61 +1,73 @@
 .scene-controls {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-sm);
   align-items: center;
 }
 
 .scene-controls__button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  min-width: 140px;
+  transition: all var(--transition-fast);
+  min-width: 120px;
   justify-content: center;
 }
 
 .scene-controls__button--start {
-  background-color: #10b981; /* green-500 */
+  background-color: var(--color-status-success);
   color: white;
 }
 
 .scene-controls__button--start:hover:not(:disabled) {
-  background-color: #059669; /* green-600 */
+  background-color: #248a3d;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
-.scene-controls__button--start:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4);
+.scene-controls__button--start:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.scene-controls__button--start:focus-visible {
+  outline: 2px solid var(--color-status-success);
+  outline-offset: 2px;
 }
 
 .scene-controls__button--start:disabled {
-  background-color: #d1fae5; /* green-100 */
-  color: #9ca3af;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-quaternary);
   cursor: not-allowed;
 }
 
 .scene-controls__button--stop {
-  background-color: #ef4444; /* red-500 */
+  background-color: var(--color-status-error);
   color: white;
 }
 
 .scene-controls__button--stop:hover:not(:disabled) {
-  background-color: #dc2626; /* red-600 */
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
-.scene-controls__button--stop:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4);
+.scene-controls__button--stop:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.scene-controls__button--stop:focus-visible {
+  outline: 2px solid var(--color-status-error);
+  outline-offset: 2px;
 }
 
 .scene-controls__button--stop:disabled {
-  background-color: #fee2e2; /* red-100 */
-  color: #9ca3af;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-quaternary);
   cursor: not-allowed;
 }
 
@@ -73,3 +85,4 @@
     transform: rotate(360deg);
   }
 }
+

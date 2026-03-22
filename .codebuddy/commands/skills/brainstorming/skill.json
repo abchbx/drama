@@ -1,0 +1,15 @@
+{
+  "id": "brainstorming",
+  "name": "brainstorming",
+  "description": "\"Turn vague ideas into a validated design/spec through structured brainstorming. Use before any creative work (new features, UI/components, behavior changes, refactors) and whenever a user asks to brainstorm, define requirements, propose approaches, or write a design doc.\"",
+  "tags": [],
+  "targets": [
+    "claude-code"
+  ],
+  "enabledTargets": [
+    "claude-code"
+  ],
+  "githubUrl": "",
+  "skillPath": "",
+  "installedAt": 1772071263541
+}

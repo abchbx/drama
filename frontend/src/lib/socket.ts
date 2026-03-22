@@ -13,7 +13,7 @@ type ConnectionStatusListener = (status: ConnectionStatus, error?: string) => vo
 type GenericEventListener = (data: unknown) => void;
 
 const SOCKET_CONFIG_DEFAULTS: SocketConfig = {
-  url: import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001',
+  url: import.meta.env.VITE_SOCKET_URL || window.location.origin,
   reconnectionAttempts: Number(import.meta.env.VITE_SOCKET_RECONNECTION_ATTEMPTS) || 5,
   reconnectionDelay: Number(import.meta.env.VITE_SOCKET_RECONNECTION_DELAY_MS) || 1000,
   timeout: Number(import.meta.env.VITE_SOCKET_TIMEOUT_MS) || 5000,
@@ -39,8 +39,11 @@ export class SocketService {
 
   connect(): void {
     if (this.socket?.connected) {
+      console.log('[SocketService] Already connected, skipping');
       return;
     }
+
+    console.log('[SocketService] Connecting to:', this.config.url);
 
     this.emitConnectionState('connecting');
 
@@ -53,30 +56,37 @@ export class SocketService {
     });
 
     this.socket.on('connect', () => {
+      console.log('[SocketService] Connected successfully');
       this.emitConnectionState('connected');
     });
 
-    this.socket.on('disconnect', () => {
+    this.socket.on('disconnect', (reason: string) => {
+      console.log('[SocketService] Disconnected:', reason);
       this.emitConnectionState('disconnected');
     });
 
     this.socket.on('connect_error', (error: Error) => {
+      console.error('[SocketService] Connect error:', error);
       this.emitConnectionState('disconnected', error.message);
     });
 
     this.socket.on('reconnect_attempt', () => {
+      console.log('[SocketService] Reconnecting...');
       this.emitConnectionState('reconnecting');
     });
 
-    this.socket.on('reconnect', () => {
+    this.socket.on('reconnect', (attemptNumber: number) => {
+      console.log('[SocketService] Reconnected after', attemptNumber, 'attempts');
       this.emitConnectionState('connected');
     });
 
     this.socket.on('reconnect_error', (error: Error) => {
+      console.error('[SocketService] Reconnect error:', error);
       this.emitConnectionState('reconnecting', error.message);
     });
 
     this.socket.on('reconnect_failed', () => {
+      console.error('[SocketService] Reconnection failed');
       this.emitConnectionState('disconnected', 'Reconnection attempts exhausted');
     });
   }

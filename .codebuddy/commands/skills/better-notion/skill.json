@@ -1,0 +1,15 @@
+{
+  "id": "better-notion",
+  "name": "better-notion",
+  "description": "Full CRUD for Notion pages, databases, and blocks. Create, read, update, delete, search, and query.",
+  "tags": [],
+  "targets": [
+    "claude-code"
+  ],
+  "enabledTargets": [
+    "claude-code"
+  ],
+  "githubUrl": "",
+  "skillPath": "",
+  "installedAt": 1772071193004
+}

@@ -2,8 +2,8 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { SessionRegistry } from '../services/sessionRegistry.js';
 import { RouterService } from '../services/router.js';
-import { SessionStatus } from '../types/session.js';
-import { ExportService, ExportFormat } from '../services/exportService.js';
+import { SessionStatus, ExportFormat } from '../types/session.js';
+import { ExportService } from '../services/exportService.js';
 
 /**
  * Create sessions router for browser-facing API
