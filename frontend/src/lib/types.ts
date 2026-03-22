@@ -154,7 +154,7 @@ export interface MemoryState {
 /**
  * Export format options
  */
-export type ExportFormat = 'json' | 'markdown';
+export type ExportFormat = 'json' | 'markdown' | 'pdf';
 
 /**
  * Exported script data structure

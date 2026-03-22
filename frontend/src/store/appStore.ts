@@ -29,7 +29,7 @@ interface AppState {
   loadingTemplates: boolean;
   savingTemplate: boolean;
   selectedExportSessionId: string | null;
-  selectedExportFormat: 'json' | 'markdown';
+  selectedExportFormat: 'json' | 'markdown' | 'pdf';
   exporting: boolean;
   exportError: string | null;
   setConnectionStatus: (status: AppState['connectionStatus'], error?: string | null) => void;
@@ -49,7 +49,7 @@ interface AppState {
   deleteTemplate: (id: string) => void;
   useTemplate: (template: SessionTemplate) => Promise<void>;
   setSelectedExportSessionId: (id: string | null) => void;
-  setSelectedExportFormat: (format: 'json' | 'markdown') => void;
+  setSelectedExportFormat: (format: 'json' | 'markdown' | 'pdf') => void;
   exportScript: () => Promise<void>;
   clearExportError: () => void;
 }
