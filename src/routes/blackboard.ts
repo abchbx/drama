@@ -114,6 +114,24 @@ const writeEntrySchema = z.object({
 
 export const blackboardRouter = Router({ mergeParams: true });
 
+// GET /blackboard/memory — unauthenticated endpoint for frontend visualization
+blackboardRouter.get('/memory', (req, res) => {
+  const blackboard = req.app.locals.blackboard as BlackboardService;
+
+  const layers = ['core', 'scenario', 'semantic', 'procedural'] as const;
+  const memoryState = layers.reduce((acc, layer) => {
+    const layerData = blackboard.readLayer(layer);
+    acc[layer] = {
+      tokensUsed: layerData.tokenCount,
+      budget: layerData.tokenBudget,
+      entryCount: layerData.entries.length,
+    };
+    return acc;
+  }, {} as Record<typeof layers[number], { tokensUsed: number; budget: number; entryCount: number }>);
+
+  return res.status(200).json(memoryState);
+});
+
 // GET /blackboard/layers/:layer/entries
 blackboardRouter.get('/layers/:layer/entries', (req, res) => {
   const layer = req.params.layer as BlackboardLayer;
