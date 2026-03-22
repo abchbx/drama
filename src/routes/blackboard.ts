@@ -201,6 +201,16 @@ blackboardRouter.post('/layers/:layer/entries', async (req, res) => {
       snapshotService.markDirty();
     }
 
+    // Emit memory:updated Socket.IO event
+    const routerService = (req.app.locals as { routerService?: import('../services/router.js').RouterService }).routerService;
+    if (routerService) {
+      routerService.io.emit('memory:updated', {
+        dramaId: 'default',
+        layer,
+        timestamp: Date.now(),
+      });
+    }
+
     return res.status(201).json(result);
   } catch (err) {
     if (err instanceof BoundaryViolationError) {
@@ -271,6 +281,16 @@ blackboardRouter.delete('/layers/:layer/entries/:id', (req, res) => {
 
     if (snapshotService) {
       snapshotService.markDirty();
+    }
+
+    // Emit memory:updated Socket.IO event
+    const routerService = (req.app.locals as { routerService?: import('../services/router.js').RouterService }).routerService;
+    if (routerService) {
+      routerService.io.emit('memory:updated', {
+        dramaId: 'default',
+        layer,
+        timestamp: Date.now(),
+      });
     }
 
     return res.status(204).send();
