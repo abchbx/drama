@@ -10,7 +10,7 @@ import {
   updateLastUsed,
 } from '../utils/templateStorage.js';
 
-type TabType = 'sessions' | 'llm-config' | 'session-params' | 'dashboard' | 'templates' | 'visualization';
+type TabType = 'sessions' | 'llm-config' | 'session-params' | 'dashboard' | 'templates' | 'visualization' | 'export';
 
 interface AppState {
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
@@ -28,6 +28,10 @@ interface AppState {
   selectedTemplate: SessionTemplate | null;
   loadingTemplates: boolean;
   savingTemplate: boolean;
+  selectedExportSessionId: string | null;
+  selectedExportFormat: 'json' | 'markdown';
+  exporting: boolean;
+  exportError: string | null;
   setConnectionStatus: (status: AppState['connectionStatus'], error?: string | null) => void;
   fetchSessions: () => Promise<void>;
   selectSession: (session: SessionMetadata | null) => void;
@@ -44,6 +48,10 @@ interface AppState {
   saveTemplate: (template: Omit<SessionTemplate, 'createdAt' | 'updatedAt'>) => void;
   deleteTemplate: (id: string) => void;
   useTemplate: (template: SessionTemplate) => Promise<void>;
+  setSelectedExportSessionId: (id: string | null) => void;
+  setSelectedExportFormat: (format: 'json' | 'markdown') => void;
+  exportScript: () => Promise<void>;
+  clearExportError: () => void;
 }
 
 const defaultConfig: AppConfig = {
@@ -78,6 +86,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedTemplate: null,
   loadingTemplates: false,
   savingTemplate: false,
+  selectedExportSessionId: null,
+  selectedExportFormat: 'json',
+  exporting: false,
+  exportError: null,
   setActiveTab: (tab: TabType) => set({ activeTab: tab }),
 
   setConnectionStatus: (status, error = null) => {
@@ -264,6 +276,48 @@ export const useAppStore = create<AppState>((set, get) => ({
     setActiveTab('sessions');
     toastService.show('Session created from template', 'success');
   },
+
+  setSelectedExportSessionId: (id) => set({ selectedExportSessionId: id }),
+  setSelectedExportFormat: (format) => set({ selectedExportFormat: format }),
+
+  exportScript: async () => {
+    const state = useAppStore.getState();
+    const { selectedExportSessionId, selectedExportFormat } = state;
+
+    if (!selectedExportSessionId) {
+      set({ exportError: 'Please select a session to export' });
+      return;
+    }
+
+    set({ exporting: true, exportError: null });
+
+    try {
+      const result = await apiClient.exportSession(selectedExportSessionId, selectedExportFormat);
+
+      if (result.success && result.data) {
+        const session = state.sessions.find(s => s.dramaId === selectedExportSessionId);
+        const filename = session
+          ? `${session.name.toLowerCase().replace(/\s+/g, '-')}-script.${selectedExportFormat}`
+          : `script.${selectedExportFormat}`;
+
+        const mimeType = selectedExportFormat === 'json' ? 'application/json' : 'text/markdown';
+        apiClient.downloadExportedFile(result.data, filename, mimeType);
+
+        toastService.success('Script exported successfully');
+      } else {
+        set({ exportError: result.error || 'Export failed' });
+        toastService.error('Export failed: ' + (result.error || 'Unknown error'));
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      set({ exportError: errorMessage });
+      toastService.error('Export failed: ' + errorMessage);
+    } finally {
+      set({ exporting: false });
+    }
+  },
+
+  clearExportError: () => set({ exportError: null }),
 }));
 
 // Track previous connection status to detect transitions
