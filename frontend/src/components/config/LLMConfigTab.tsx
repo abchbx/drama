@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAppStore } from '../../store/appStore';
 import type { LLMProvider } from '../../lib/types';
+import './LLMConfigTab.css';
 
 const llmConfigSchema = z.object({
   provider: z.enum(['openai', 'anthropic', 'mock'] as const),

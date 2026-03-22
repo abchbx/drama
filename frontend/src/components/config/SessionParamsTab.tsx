@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAppStore } from '../../store/appStore';
+import './SessionParamsTab.css';
 
 const sessionParamsSchema = z.object({
   sceneDurationMinutes: z.number().min(1).max(60),
