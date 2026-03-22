@@ -71,6 +71,16 @@ export function ExportTab() {
                 />
                 <span>Markdown</span>
               </label>
+              <label className="format-radio">
+                <input
+                  type="radio"
+                  value="pdf"
+                  checked={selectedExportFormat === 'pdf'}
+                  onChange={() => setSelectedExportFormat('pdf')}
+                  disabled={exporting}
+                />
+                <span>PDF</span>
+              </label>
             </div>
           </div>
 
