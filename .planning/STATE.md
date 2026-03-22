@@ -24,7 +24,7 @@ See: .planning/PROJECT.md
 **Current phase:** 12
 **Status:** Ready to plan
 
-**Last activity:** 2026-03-22 - Completed quick task 260322-dv3: 请重新设计前端界面，用 ui-ux-spec-genome 移植，用 ui-ux-pro-max 实现
+**Last activity:** 2026-03-22 - Completed quick task 260322-elt: LLM Config页面增加OpenAI兼容接口支持，可填入baseURL
 
 ## Session Log
 
@@ -41,7 +41,8 @@ See: .planning/PROJECT.md
 
 ### Quick Tasks Completed
 
-| # | Description | Date | Commit | Status | Directory |
-|---|-------------|------|--------|--------|-----------|
-| 260322-dv3 | 请重新设计前端界面，用 ui-ux-spec-genome 移植，用 ui-ux-pro-max 实现 | 2026-03-22 | 776c991 | Verified | [260322-dv3-ui-ux-spec-genome-ui-ux-pro-max](./quick/260322-dv3-ui-ux-spec-genome-ui-ux-pro-max/) |
-| 260322-bkd | Redesign phase 8 UI based on ui-review feedback, focus on visual appeal | 2026-03-22 | 0e33be4 | Verified | [260322-bkd-redesign-phase-8-ui-based-on-ui-review-f](./quick/260322-bkd-redesign-phase-8-ui-based-on-ui-review-f/) |
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260322-dv3 | 请重新设计前端界面，用 ui-ux-spec-genome 移植，用 ui-ux-pro-max 实现 | 2026-03-22 | 776c991 | [260322-dv3-ui-ux-spec-genome-ui-ux-pro-max](./quick/260322-dv3-ui-ux-spec-genome-ui-ux-pro-max/) |
+| 260322-bkd | Redesign phase 8 UI based on ui-review feedback, focus on visual appeal | 2026-03-22 | 0e33be4 | [260322-bkd-redesign-phase-8-ui-based-on-ui-review-f](./quick/260322-bkd-redesign-phase-8-ui-based-on-ui-review-f/) |
+| 260322-elt | LLM Config页面增加OpenAI兼容接口支持，可填入baseURL | 2026-03-22 | d769631 | [260322-elt-llm-config-openai-baseurl](./quick/260322-elt-llm-config-openai-baseurl/) |
