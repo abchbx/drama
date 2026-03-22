@@ -9,6 +9,7 @@ import './LLMConfigTab.css';
 const llmConfigSchema = z.object({
   provider: z.enum(['openai', 'anthropic', 'mock'] as const),
   apiKey: z.string().optional(),
+  baseURL: z.string().optional(),
   model: z.string().min(1, 'Model is required'),
   temperature: z.number().min(0).max(2),
 });
@@ -120,19 +121,38 @@ const LLMConfigTab: React.FC = () => {
           </div>
 
           {watchedProvider !== 'mock' && (
-            <div className="form-section">
-              <label htmlFor="apiKey">API Key</label>
-              <input
-                type="password"
-                id="apiKey"
-                placeholder={`Enter ${watchedProvider} API key`}
-                {...register('apiKey')}
-                className={errors.apiKey ? 'input-error' : ''}
-              />
-              {errors.apiKey && (
-                <div className="error">{errors.apiKey.message}</div>
-              )}
-            </div>
+            <>
+              <div className="form-section">
+                <label htmlFor="apiKey">API Key</label>
+                <input
+                  type="password"
+                  id="apiKey"
+                  placeholder={`Enter ${watchedProvider} API key`}
+                  {...register('apiKey')}
+                  className={errors.apiKey ? 'input-error' : ''}
+                />
+                {errors.apiKey && (
+                  <div className="error">{errors.apiKey.message}</div>
+                )}
+              </div>
+
+              <div className="form-section">
+                <label htmlFor="baseURL">Custom API URL (Optional)</label>
+                <input
+                  type="url"
+                  id="baseURL"
+                  placeholder="https://api.openai.com/v1"
+                  {...register('baseURL')}
+                  className={errors.baseURL ? 'input-error' : ''}
+                />
+                {errors.baseURL && (
+                  <div className="error">{errors.baseURL.message}</div>
+                )}
+                <p className="hint">
+                  Custom API endpoint URL for OpenAI-compatible services. Leave empty to use the default provider URL.
+                </p>
+              </div>
+            </>
           )}
 
           <div className="form-section">
