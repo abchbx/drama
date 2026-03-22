@@ -12,6 +12,8 @@ import type {
   SystemMetrics,
 } from './types.js';
 
+import { pdfExporter } from './pdfExporter.js';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 function extractErrorMessage(error: unknown): string {
@@ -170,6 +172,23 @@ export class ApiClient {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Export script as PDF using html2pdf.js
+   * Fetches Markdown from backend, converts to PDF, downloads
+   */
+  async exportSessionAsPDF(dramaId: string, sessionName: string): Promise<void> {
+    // First fetch Markdown from backend
+    const result = await this.exportSession(dramaId, 'markdown');
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Failed to fetch script for PDF export');
+    }
+
+    // Convert Markdown to PDF and download
+    const filename = `${sessionName.toLowerCase().replace(/\s+/g, '-')}-script.pdf`;
+    await pdfExporter.exportMarkdownAsPDF(result.data, filename);
   }
 }
 
