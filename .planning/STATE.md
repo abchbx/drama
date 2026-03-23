@@ -25,10 +25,11 @@ See: .planning/PROJECT.md
 **Current phase:** 13
 **Status:** v1.2 milestone complete
 
-**Last activity:** 2026-03-22
+**Last activity:** 2026-03-23 - Completed quick task 260323-hpu: Fix frontend interaction logic
 
 ## Session Log
 
+- 2026-03-23: Completed quick task 260323-hpu - Fix frontend interaction logic: Start Scene params, Visualization filters, MemoryState content, Agent mock data
 - 2026-03-22: Completed quick task 260322-bkd - Redesign phase 8 UI based on ui-review feedback, focus on visual appeal
 - 2026-03-22: Completed plan 10-01 - Socket.IO real-time broadcast events
 - 2026-03-22: Completed plan 10-03 - Communication graph visualization
@@ -53,3 +54,9 @@ See: .planning/PROJECT.md
 | 260322-dv3 | 请重新设计前端界面，用 ui-ux-spec-genome 移植，用 ui-ux-pro-max 实现 | 2026-03-22 | 776c991 | [260322-dv3-ui-ux-spec-genome-ui-ux-pro-max](./quick/260322-dv3-ui-ux-spec-genome-ui-ux-pro-max/) |
 | 260322-bkd | Redesign phase 8 UI based on ui-review feedback, focus on visual appeal | 2026-03-22 | 0e33be4 | [260322-bkd-redesign-phase-8-ui-based-on-ui-review-f](./quick/260322-bkd-redesign-phase-8-ui-based-on-ui-review-f/) |
 | 260322-elt | LLM Config页面增加OpenAI兼容接口支持，可填入baseURL | 2026-03-22 | d769631 | [260322-elt-llm-config-openai-baseurl](./quick/260322-elt-llm-config-openai-baseurl/) |
+| 260322-viz | 修复实时可视化面板：布局拥挤和按钮功能失效问题 | 2026-03-22 | - | [260322-viz-fix-visualization-panel](./quick/260322-viz-fix-visualization-panel/) |
+| 260322-sce | 修复 Start/Stop Scene 按钮无法点击问题（移除 WebSocket 依赖） | 2026-03-22 | - | [260322-sce-fix-scene-buttons](./quick/260322-sce-fix-scene-buttons/) |
+| 260322-stp | 修复 Stop Scene API 缺少 status 参数问题 | 2026-03-22 | - | [260322-stp-fix-stop-scene-api](./quick/260322-stp-fix-stop-scene-api/) |
+| 260322-ws | 增强 WebSocket 调试信息 | 2026-03-22 | - | [260322-ws-enhance-websocket-debug](./quick/260322-ws-enhance-websocket-debug/) |
+| 260322-dbc | 修复 WebSocket 连接被后端断开问题（支持 Dashboard 客户端） | 2026-03-22 | - | [260322-dbc-fix-websocket-dashboard-client](./quick/260322-dbc-fix-websocket-dashboard-client/) |
+| 260323-hpu | 修复前端交互逻辑：Start Scene参数、Visualization过滤器、MemoryState内容、Agent mock数据 | 2026-03-23 | - | [260323-hpu-create-session-start-scene-visualization](./quick/260323-hpu-create-session-start-scene-visualization/) |

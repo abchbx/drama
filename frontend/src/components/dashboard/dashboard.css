@@ -1,9 +1,12 @@
 /* Agent Dashboard Tab Styles - Apple Light Theme */
 .agent-dashboard-tab {
-  padding: var(--spacing-xl);
-  height: 100%;
+  flex: 1;
+  min-height: 100%;
+  padding: var(--spacing-2xl);
   overflow-y: auto;
   animation: fadeIn var(--transition-base);
+  display: flex;
+  flex-direction: column;
 }
 
 .agent-dashboard-tab .tab-header {
@@ -190,6 +193,21 @@
   gap: var(--spacing-md);
 }
 
+.agents-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-tertiary);
+}
+
+.agents-empty p {
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.agents-empty-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-quaternary);
+}
+
 .agent-card {
   background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
@@ -270,6 +288,9 @@
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .agent-graph-flow {

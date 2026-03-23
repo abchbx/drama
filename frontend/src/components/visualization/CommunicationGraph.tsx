@@ -16,8 +16,11 @@ import { socketService } from '../../lib/socket';
 import type { RoutingMessage } from '../../lib/types';
 import './visualization.css';
 
+import type { VisualizationFilters } from './VisualizationControls';
+
 interface CommunicationGraphProps {
   isPaused: boolean;
+  filters: VisualizationFilters;
 }
 
 interface MessageNodeData {
@@ -83,7 +86,7 @@ function getMessageText(payload: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
-function CommunicationGraphInner({ isPaused }: CommunicationGraphProps) {
+function CommunicationGraphInner({ isPaused, filters }: CommunicationGraphProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<MessageNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -101,11 +104,38 @@ function CommunicationGraphInner({ isPaused }: CommunicationGraphProps) {
   }, []);
 
   // Process incoming message and update graph
+  // Apply filters to nodes
+  useEffect(() => {
+    const allAgents = Array.from(agentInfoRef.current.values());
+    const filteredIds = new Set<string>();
+
+    allAgents.forEach((info) => {
+      if (info.role === 'Director' && !filters.showDirector) return;
+      if (info.role !== 'Director' && !filters.showActors) return;
+      filteredIds.add(info.name);
+    });
+
+    setNodes((nds) =>
+      nds.filter((node) => filteredIds.has(node.id))
+    );
+
+    setEdges((eds) =>
+      eds.filter((e) => filteredIds.has(e.source) && filteredIds.has(e.target))
+    );
+  }, [filters, setNodes, setEdges]);
+
   const handleMessageReceived = useCallback((data: unknown) => {
     if (isPaused) return;
 
     const message = data as RoutingMessage;
     const { from, to, payload } = message;
+
+    // Skip dialogue-type messages if filter is off
+    if (!filters.showDialogues && ['dialogue', 'reaction'].includes(message.type)) return;
+    // Skip director messages if filter is off
+    if (!filters.showDirector && getRole(payload) === 'Director') return;
+    // Skip actor messages if filter is off
+    if (!filters.showActors && getRole(payload) !== 'Director') return;
 
     // Get or create sender node
     const senderRole = getRole(payload);
@@ -182,7 +212,6 @@ function CommunicationGraphInner({ isPaused }: CommunicationGraphProps) {
       setEdges((eds) => {
         const existingEdge = eds.find((e) => e.id === edgeId);
         if (existingEdge) {
-          // Update edge to show as recent (animated)
           return eds.map((e) =>
             e.id === edgeId
               ? {
@@ -192,7 +221,6 @@ function CommunicationGraphInner({ isPaused }: CommunicationGraphProps) {
               : e
           );
         }
-        // Create new edge
         return [
           ...eds,
           {
@@ -206,7 +234,7 @@ function CommunicationGraphInner({ isPaused }: CommunicationGraphProps) {
         ];
       });
     });
-  }, [isPaused, getNodePosition, setNodes, setEdges]);
+  }, [isPaused, filters, getNodePosition, setNodes, setEdges]);
 
   // Listen to Socket.IO messages
   useEffect(() => {
@@ -253,10 +281,10 @@ function CommunicationGraphInner({ isPaused }: CommunicationGraphProps) {
   );
 }
 
-export function CommunicationGraph({ isPaused }: CommunicationGraphProps) {
+export function CommunicationGraph({ isPaused, filters }: CommunicationGraphProps) {
   return (
     <ReactFlowProvider>
-      <CommunicationGraphInner isPaused={isPaused} />
+      <CommunicationGraphInner isPaused={isPaused} filters={filters} />
     </ReactFlowProvider>
   );
 }

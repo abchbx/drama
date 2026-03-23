@@ -80,39 +80,11 @@ const nodeTypes = {
   agentNode: AgentNode,
 };
 
-// Initial mock data
-const initialAgents: Agent[] = [
-  {
-    id: 'director-1',
-    name: 'Director',
-    role: 'Director',
-    status: 'connected',
-    latency: 45,
-    lastHeartbeat: new Date().toISOString(),
-  },
-  {
-    id: 'actor-1',
-    name: 'Romeo',
-    role: 'Actor',
-    status: 'active',
-    latency: 62,
-    lastHeartbeat: new Date().toISOString(),
-  },
-  {
-    id: 'actor-2',
-    name: 'Juliet',
-    role: 'Actor',
-    status: 'idle',
-    latency: 58,
-    lastHeartbeat: new Date().toISOString(),
-  },
-];
-
 function AgentGraphInner() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [agents, setAgents] = useState<Agent[]>(initialAgents);
+  const [agents, setAgents] = useState<Agent[]>([]);
 
   // Create nodes from agents
   useEffect(() => {
@@ -146,16 +118,32 @@ function AgentGraphInner() {
     setEdges(newEdges);
   }, [agents, setEdges]);
 
-  // Handle agent connections/disconnections via Socket.IO
+  // Handle agent events via Socket.IO
   useEffect(() => {
+    // agent_updated emits batch data with all connected agents
+    const handleAgentUpdated = (data: unknown) => {
+      const payload = data as { agents?: Array<{ agentId: string; role: string; socketId: string; lastPong: number }> };
+      if (payload.agents && Array.isArray(payload.agents)) {
+        const mapped: Agent[] = payload.agents.map(a => ({
+          id: a.agentId,
+          name: a.agentId.replace(/^(actor|director)-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          role: a.role,
+          status: 'connected' as const,
+          latency: 0,
+          lastHeartbeat: new Date(a.lastPong).toISOString(),
+        }));
+        setAgents(mapped);
+      }
+    };
+
     const handleAgentConnected = (data: unknown) => {
       const agent = data as Agent;
       setAgents(prev => {
         const existing = prev.find(a => a.id === agent.id);
         if (existing) {
-          return prev.map(a => a.id === agent.id ? agent : a);
+          return prev.map(a => a.id === agent.id ? { ...a, ...agent, status: 'connected' } : a);
         }
-        return [...prev, agent];
+        return [...prev, { ...agent, status: 'connected' }];
       });
     };
 
@@ -168,21 +156,14 @@ function AgentGraphInner() {
       );
     };
 
-    const handleAgentUpdated = (data: unknown) => {
-      const agent = data as Agent;
-      setAgents(prev =>
-        prev.map(a => a.id === agent.id ? { ...a, ...agent } : a)
-      );
-    };
-
+    socketService.on('agent_updated', handleAgentUpdated);
     socketService.on('agent_connected', handleAgentConnected);
     socketService.on('agent_disconnected', handleAgentDisconnected);
-    socketService.on('agent_updated', handleAgentUpdated);
 
     return () => {
+      socketService.off('agent_updated', handleAgentUpdated);
       socketService.off('agent_connected', handleAgentConnected);
       socketService.off('agent_disconnected', handleAgentDisconnected);
-      socketService.off('agent_updated', handleAgentUpdated);
     };
   }, []);
 

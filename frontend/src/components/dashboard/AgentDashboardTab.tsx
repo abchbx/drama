@@ -27,43 +27,35 @@ function getStatusBadgeClass(status: string): string {
 }
 
 export function AgentDashboardTab() {
-  const [agents, setAgents] = useState<Agent[]>([
-    {
-      id: 'director-1',
-      name: 'Director',
-      role: 'Director',
-      status: 'connected',
-      latency: 45,
-      lastHeartbeat: new Date().toISOString(),
-    },
-    {
-      id: 'actor-1',
-      name: 'Romeo',
-      role: 'Actor',
-      status: 'active',
-      latency: 62,
-      lastHeartbeat: new Date().toISOString(),
-    },
-    {
-      id: 'actor-2',
-      name: 'Juliet',
-      role: 'Actor',
-      status: 'idle',
-      latency: 58,
-      lastHeartbeat: new Date().toISOString(),
-    },
-  ]);
+  const [agents, setAgents] = useState<Agent[]>([]);
 
   // Handle agent events via Socket.IO
   useEffect(() => {
+    // agent_updated emits batch data with all connected agents
+    const handleAgentUpdated = (data: unknown) => {
+      const payload = data as { agents?: Array<{ agentId: string; role: string; socketId: string; lastPong: number }> };
+      if (payload.agents && Array.isArray(payload.agents)) {
+        // Replace entire agent list with server-side truth
+        const mapped: Agent[] = payload.agents.map(a => ({
+          id: a.agentId,
+          name: a.agentId.replace(/^(actor|director)-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          role: a.role,
+          status: 'connected' as const,
+          latency: 0,
+          lastHeartbeat: new Date(a.lastPong).toISOString(),
+        }));
+        setAgents(mapped);
+      }
+    };
+
     const handleAgentConnected = (data: unknown) => {
       const agent = data as Agent;
       setAgents(prev => {
         const existing = prev.find(a => a.id === agent.id);
         if (existing) {
-          return prev.map(a => a.id === agent.id ? agent : a);
+          return prev.map(a => a.id === agent.id ? { ...a, ...agent, status: 'connected' } : a);
         }
-        return [...prev, agent];
+        return [...prev, { ...agent, status: 'connected' }];
       });
     };
 
@@ -76,21 +68,14 @@ export function AgentDashboardTab() {
       );
     };
 
-    const handleAgentUpdated = (data: unknown) => {
-      const agent = data as Agent;
-      setAgents(prev =>
-        prev.map(a => a.id === agent.id ? { ...a, ...agent } : a)
-      );
-    };
-
+    socketService.on('agent_updated', handleAgentUpdated);
     socketService.on('agent_connected', handleAgentConnected);
     socketService.on('agent_disconnected', handleAgentDisconnected);
-    socketService.on('agent_updated', handleAgentUpdated);
 
     return () => {
+      socketService.off('agent_updated', handleAgentUpdated);
       socketService.off('agent_connected', handleAgentConnected);
       socketService.off('agent_disconnected', handleAgentDisconnected);
-      socketService.off('agent_updated', handleAgentUpdated);
     };
   }, []);
 
@@ -110,8 +95,14 @@ export function AgentDashboardTab() {
         {/* Agents List Section */}
         <section className="agents-section">
           <div className="agents-panel">
-            <h3>Active Agents ({agents.length})</h3>
-            <div className="agent-grid">
+            <h3>Connected Agents ({agents.length})</h3>
+            {agents.length === 0 ? (
+              <div className="agents-empty">
+                <p>No agents connected</p>
+                <p className="agents-empty-hint">Agents will appear here when they connect via Socket.IO</p>
+              </div>
+            ) : (
+              <div className="agent-grid">
               {agents.map((agent) => (
                 <div key={agent.id} className="agent-card">
                   <div className="agent-header">
@@ -139,7 +130,8 @@ export function AgentDashboardTab() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         </section>
 
