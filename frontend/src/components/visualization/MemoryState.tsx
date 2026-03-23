@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { socketService } from '../../lib/socket';
-import { TokenProgress } from './TokenProgress';
 import type { MemoryState as MemoryStateType } from '../../lib/types';
-import './visualization.css';
+import './MemoryState.css';
 
 interface MemoryStateProps {
   isPaused: boolean;
@@ -92,6 +91,14 @@ export function MemoryState({ isPaused }: MemoryStateProps) {
 
   const layers = Object.entries(memoryState);
 
+  // Calculate token usage percentage and level
+  const getTokenLevel = (used: number, budget: number): 'low' | 'medium' | 'high' => {
+    const percentage = (used / budget) * 100;
+    if (percentage < 50) return 'low';
+    if (percentage < 80) return 'medium';
+    return 'high';
+  };
+
   return (
     <div className="memory-state">
       <div className="memory-layers">
@@ -99,9 +106,11 @@ export function MemoryState({ isPaused }: MemoryStateProps) {
           const entries = layerEntries[layer] || [];
           const entryCount = (state as any).entryCount ?? entries.length;
           const hasContent = entries.length > 0;
+          const tokenPercentage = Math.min(100, Math.round((state.tokensUsed / state.budget) * 100));
+          const tokenLevel = getTokenLevel(state.tokensUsed, state.budget);
 
           return (
-            <div key={layer} className="memory-layer">
+            <div key={layer} className="memory-layer" data-layer={layer}>
               <div className="layer-header">
                 <h4 className="layer-title">{layerLabels[layer] || layer}</h4>
                 <span className="layer-stats">
@@ -109,11 +118,23 @@ export function MemoryState({ isPaused }: MemoryStateProps) {
                 </span>
               </div>
               <p className="layer-description">{layerDescriptions[layer]}</p>
-              <TokenProgress
-                layer={layerLabels[layer] || layer}
-                tokensUsed={state.tokensUsed}
-                budget={state.budget}
-              />
+
+              {/* Inline Token Progress */}
+              <div className="token-progress">
+                <div className="token-progress-header">
+                  <span className="token-progress-label">Token Usage</span>
+                  <span className="token-progress-value">
+                    {state.tokensUsed.toLocaleString()} / {state.budget.toLocaleString()}
+                  </span>
+                </div>
+                <div className="token-progress-bar">
+                  <div
+                    className={`token-progress-fill ${tokenLevel}`}
+                    style={{ width: `${tokenPercentage}%` }}
+                  />
+                </div>
+              </div>
+
               <div className="layer-content">
                 {hasContent ? (
                   <ul className="layer-entries">

@@ -270,6 +270,27 @@
   color: var(--color-accent-violet);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.memory-state-section h3::before {
+  content: '◈';
+  font-size: var(--font-size-md);
+  opacity: 0.8;
+}
+
+.message-stream-section h3::before {
+  content: '◉';
+  font-size: var(--font-size-md);
+  opacity: 0.8;
+}
+
+.communication-graph-section h3::before {
+  content: '◎';
+  font-size: var(--font-size-md);
+  opacity: 0.8;
 }
 
 /* Message Stream Styles */

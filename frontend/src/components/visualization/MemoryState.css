@@ -1,0 +1,312 @@
+/* Memory State - Modern Glassmorphism Design */
+.memory-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--spacing-md);
+}
+
+.memory-layers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow-y: auto;
+  padding-right: var(--spacing-xs);
+}
+
+/* Individual Memory Layer Card */
+.memory-layer {
+  background: var(--glass-bg-hover);
+  backdrop-filter: blur(var(--blur-md));
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.memory-layer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient-primary);
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+
+.memory-layer:hover {
+  border-color: var(--glass-border-strong);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.memory-layer:hover::before {
+  opacity: 1;
+}
+
+/* Layer Header */
+.layer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.layer-title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  letter-spacing: -0.01em;
+}
+
+.layer-title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+.layer-stats {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-accent-violet);
+  background: rgba(139, 92, 246, 0.15);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Layer Description */
+.layer-description {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--spacing-md) 0;
+  line-height: 1.5;
+  padding-left: var(--spacing-md);
+  border-left: 2px solid var(--glass-border);
+}
+
+/* Token Progress */
+.token-progress {
+  margin-bottom: var(--spacing-md);
+}
+
+.token-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+}
+
+.token-progress-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.token-progress-value {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-family: var(--font-family-mono);
+}
+
+.token-progress-bar {
+  height: 6px;
+  background: var(--glass-bg);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.token-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+  position: relative;
+  overflow: hidden;
+}
+
+.token-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+.token-progress-fill.low {
+  background: var(--gradient-success);
+}
+
+.token-progress-fill.medium {
+  background: var(--gradient-warning);
+}
+
+.token-progress-fill.high {
+  background: var(--gradient-danger);
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Layer Content */
+.layer-content {
+  margin-top: var(--spacing-md);
+}
+
+/* Empty State */
+.layer-empty {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-quaternary);
+  text-align: center;
+  padding: var(--spacing-lg);
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--glass-border);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Layer Entries List */
+.layer-entries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.layer-entry {
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--glass-border);
+  transition: all var(--transition-fast);
+}
+
+.layer-entry:hover {
+  background: var(--glass-bg-active);
+  border-color: var(--glass-border-strong);
+  transform: translateX(2px);
+}
+
+.entry-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+}
+
+.entry-agent {
+  color: var(--color-accent-violet);
+  font-weight: 600;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.entry-time {
+  color: var(--color-text-quaternary);
+  font-family: var(--font-family-mono);
+}
+
+.entry-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Layer-specific accent colors */
+.memory-layer[data-layer="core"]::before {
+  background: linear-gradient(180deg, #ef4444 0%, #f87171 100%);
+}
+
+.memory-layer[data-layer="scenario"]::before {
+  background: linear-gradient(180deg, #3b82f6 0%, #60a5fa 100%);
+}
+
+.memory-layer[data-layer="semantic"]::before {
+  background: linear-gradient(180deg, #8b5cf6 0%, #a78bfa 100%);
+}
+
+.memory-layer[data-layer="procedural"]::before {
+  background: linear-gradient(180deg, #10b981 0%, #34d399 100%);
+}
+
+.memory-layer[data-layer="core"] .layer-title::before {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.memory-layer[data-layer="scenario"] .layer-title::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.memory-layer[data-layer="semantic"] .layer-title::before {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+.memory-layer[data-layer="procedural"] .layer-title::before {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* Scrollbar for memory layers */
+.memory-layers::-webkit-scrollbar {
+  width: 4px;
+}
+
+.memory-layers::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.memory-layers::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: var(--radius-full);
+}
+
+.memory-layers::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-border-strong);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .memory-layer {
+    padding: var(--spacing-md);
+  }
+
+  .layer-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+
+  .layer-title {
+    font-size: var(--font-size-sm);
+  }
+}

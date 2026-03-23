@@ -57,6 +57,7 @@
 - ✅ `frontend/src/components/dashboard/dashboard.css`
 - ✅ `frontend/src/components/templates/TemplatesTab.css`
 - ✅ `frontend/src/components/visualization/visualization.css`
+- ✅ `frontend/src/components/visualization/MemoryState.css` - Memory State 面板专用样式
 
 ### 设计亮点
 
@@ -66,6 +67,14 @@
 4. **悬浮动效** - 卡片hover时上浮+发光
 5. **精致排版** - 更大的字号层次，渐变标题
 6. **暗色主题** - 现代深色背景配紫罗兰强调色
+
+### Memory State 面板优化
+
+- **层级色彩标识**: Core(红)、Scenario(蓝)、Semantic(紫)、Procedural(绿)
+- **Token进度条**: 动态光泽动画，低/中/高用量颜色区分
+- **卡片化Entries**: 带悬停动效的独立条目卡片
+- **精致空状态**: 虚线边框+斜体提示文字
+- **左侧渐变条**: 每个层级有独特颜色的视觉标识条
 
 ### 响应式保持
 所有组件保持原有的响应式设计，在移动端和桌面端均有良好表现。
