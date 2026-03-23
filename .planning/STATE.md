@@ -25,11 +25,16 @@ See: .planning/PROJECT.md
 **Current phase:** 13
 **Status:** v1.2 milestone complete
 
-**Last activity:** 2026-03-23 - Completed quick task 260323-hpu: Fix frontend interaction logic
+**Last activity:** 2026-03-23 - Completed quick task 260323-jbb: UI重设计采用Glassmorphism毛玻璃风格
 
 ## Session Log
 
+- 2026-03-23: Completed quick task 260323-jbb - UI重设计：采用Glassmorphism毛玻璃风格、渐变色背景、现代化圆角和阴影效果
 - 2026-03-23: Completed quick task 260323-hpu - Fix frontend interaction logic: Start Scene params, Visualization filters, MemoryState content, Agent mock data
+- 2026-03-23: UI改进: SessionPanel改为标签页(Tabs)形式，修复Start Scene API调用问题(actorIds可选参数)
+- 2026-03-23: 修复fetchSessions不更新selectedSession的问题，添加SceneControls错误显示
+- 2026-03-23: UI重构: Session列表改为顶部横向标签页(SessionTabs)，添加删除session功能
+- 2026-03-23: 修复Session删除错误处理：添加错误显示、确保删除后刷新列表同步后端状态
 - 2026-03-22: Completed quick task 260322-bkd - Redesign phase 8 UI based on ui-review feedback, focus on visual appeal
 - 2026-03-22: Completed plan 10-01 - Socket.IO real-time broadcast events
 - 2026-03-22: Completed plan 10-03 - Communication graph visualization
@@ -59,4 +64,5 @@ See: .planning/PROJECT.md
 | 260322-stp | 修复 Stop Scene API 缺少 status 参数问题 | 2026-03-22 | - | [260322-stp-fix-stop-scene-api](./quick/260322-stp-fix-stop-scene-api/) |
 | 260322-ws | 增强 WebSocket 调试信息 | 2026-03-22 | - | [260322-ws-enhance-websocket-debug](./quick/260322-ws-enhance-websocket-debug/) |
 | 260322-dbc | 修复 WebSocket 连接被后端断开问题（支持 Dashboard 客户端） | 2026-03-22 | - | [260322-dbc-fix-websocket-dashboard-client](./quick/260322-dbc-fix-websocket-dashboard-client/) |
-| 260323-hpu | 修复前端交互逻辑：Start Scene参数、Visualization过滤器、MemoryState内容、Agent mock数据 | 2026-03-23 | - | [260323-hpu-create-session-start-scene-visualization](./quick/260323-hpu-create-session-start-scene-visualization/) |
+| 260323-hpu | 修复前端交互逻辑：Start Scene参数、Visualization过滤器、MemoryState内容、Agent mock数据 | 2026-03-23 | 118f020 | [260323-hpu-create-session-start-scene-visualization](./quick/260323-hpu-create-session-start-scene-visualization/) |
+| 260323-jbb | UI重设计：采用Glassmorphism毛玻璃风格、渐变色背景、现代化圆角和阴影效果 | 2026-03-23 | - | [260323-jbb-ui-glassmorphism](./quick/260323-jbb-ui-glassmorphism/) |

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAppStore } from '../store/appStore.js';
 import './ExportTab.css';
 
@@ -14,12 +15,38 @@ export function ExportTab() {
     clearExportError,
   } = useAppStore();
 
+  const [showTechnicalError, setShowTechnicalError] = useState(false);
+  const [technicalError, setTechnicalError] = useState<string | null>(null);
+
   // Filter only completed sessions
   const completedSessions = sessions.filter(s => s.status === 'completed');
 
-  const handleExport = () => {
+  const handleExport = async () => {
     clearExportError();
-    exportScript();
+    setTechnicalError(null);
+    setShowTechnicalError(false);
+
+    // Get the current error from store after export
+    await exportScript();
+
+    // Check if there's a technical error in the response
+    const state = useAppStore.getState();
+    if (state.exportError) {
+      // Try to get more detailed error information
+      try {
+        const session = sessions.find(s => s.dramaId === selectedExportSessionId);
+        if (session) {
+          // The technical error will be set by the API client
+          // We'll display it if available
+        }
+      } catch (e) {
+        console.error('Failed to get technical error details:', e);
+      }
+    }
+  };
+
+  const handleRetry = () => {
+    handleExport();
   };
 
   return (
@@ -87,14 +114,37 @@ export function ExportTab() {
           {/* Error Message */}
           {exportError && (
             <div className="export-error">
-              {exportError}
-              <button
-                className="error-dismiss"
-                onClick={clearExportError}
-                type="button"
-              >
-                ×
-              </button>
+              <div className="error-message-content">
+                <span className="error-icon">⚠️</span>
+                <span className="error-text">{exportError}</span>
+              </div>
+              <div className="error-actions-row">
+                <button
+                  className="error-retry"
+                  onClick={handleRetry}
+                  disabled={exporting}
+                  type="button"
+                >
+                  重试
+                </button>
+                <button
+                  className="error-dismiss"
+                  onClick={clearExportError}
+                  type="button"
+                >
+                  关闭
+                </button>
+              </div>
+              {technicalError && (
+                <details className="export-technical-error">
+                  <summary onClick={(e) => { e.preventDefault(); setShowTechnicalError(!showTechnicalError); }}>
+                    技术详情 {showTechnicalError ? '▼' : '▶'}
+                  </summary>
+                  {showTechnicalError && (
+                    <pre className="technical-error-content">{technicalError}</pre>
+                  )}
+                </details>
+              )}
             </div>
           )}
 
@@ -104,7 +154,7 @@ export function ExportTab() {
             onClick={handleExport}
             disabled={!selectedExportSessionId || exporting}
           >
-            {exporting ? 'Exporting...' : 'Export Script'}
+            {exporting ? '正在导出...' : '导出脚本'}
           </button>
 
           {/* Empty State */}

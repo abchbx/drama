@@ -36,8 +36,9 @@ interface AppState {
   fetchSessions: () => Promise<void>;
   selectSession: (session: SessionMetadata | null) => void;
   createSession: (name: string, sceneDurationMinutes: number, agentCount: number) => Promise<void>;
-  startScene: (location: string, description: string, tone: string, actorIds: string[]) => Promise<void>;
-  stopScene: () => Promise<void>;
+  deleteSession: (dramaId: string) => Promise<void>;
+  startScene: (location: string, description: string, tone: string, actorIds?: string[]) => Promise<void>;
+  stopScene: (status?: 'completed' | 'interrupted' | 'timeout') => Promise<void>;
   setActiveTab: (tab: TabType) => void;
   fetchConfig: () => Promise<void>;
   updateConfig: (config: Partial<AppConfig>) => Promise<void>;
@@ -71,7 +72,7 @@ const defaultConfig: AppConfig = {
 };
 
 export const useAppStore = create<AppState>((set, get) => ({
-  connectionStatus: socketService.getStatus(),
+  connectionStatus: 'connecting',
   lastError: null,
   sessions: [],
   selectedSession: null,
@@ -93,6 +94,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setActiveTab: (tab: TabType) => set({ activeTab: tab }),
 
   setConnectionStatus: (status, error = null) => {
+    console.log('[AppStore] Setting connection status:', status, error);
     set({ connectionStatus: status, lastError: error });
   },
 
@@ -101,6 +103,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (response.success && response.data) {
       // 后端返回 { sessions: [...] }，需要提取数组
       const sessions = Array.isArray(response.data) ? response.data : (response.data as any).sessions || [];
+      
+      // 同步更新 selectedSession，保持选中状态的数据最新
+      const { selectedSession } = get();
+      if (selectedSession) {
+        const updatedSelected = sessions.find((s: SessionMetadata) => s.dramaId === selectedSession.dramaId);
+        if (updatedSelected) {
+          set({ sessions, selectedSession: updatedSelected });
+          return;
+        }
+      }
       set({ sessions });
     }
   },
@@ -124,22 +136,55 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().fetchSessions();
   },
 
-  startScene: async (location, description, tone, actorIds) => {
-    const { selectedSession, connectionStatus } = get();
+  deleteSession: async (dramaId: string) => {
+    set({ lastError: null });
 
-    if (!selectedSession || connectionStatus !== 'connected') {
-      set({ lastError: 'No session selected or not connected' });
+    const response = await apiClient.deleteSession(dramaId);
+
+    // If session not found on backend, treat as success (already deleted)
+    if (!response.success && response.technicalError?.includes('404')) {
+      console.log('[deleteSession] Session already deleted on backend');
+    } else if (!response.success) {
+      set({ lastError: response.error || 'Failed to delete session' });
+      toastService.error(response.error || 'Failed to delete session');
+      return;
+    }
+
+    // If the deleted session was selected, clear it
+    const { selectedSession } = get();
+    if (selectedSession?.dramaId === dramaId) {
+      set({ selectedSession: null });
+    }
+
+    // Always refresh sessions list to sync with backend
+    await get().fetchSessions();
+    
+    if (response.success) {
+      toastService.show('Session deleted', 'success');
+    }
+  },
+
+  startScene: async (location, description, tone, actorIds) => {
+    const { selectedSession } = get();
+
+    if (!selectedSession) {
+      set({ lastError: 'No session selected' });
       return;
     }
 
     set({ startingScene: true, lastError: null });
 
-    const response = await apiClient.startScene(selectedSession.dramaId, {
+    // Build scene config - only include actorIds if provided
+    const sceneConfig: { location: string; description: string; tone: string; actorIds?: string[] } = {
       location,
       description,
       tone,
-      actorIds,
-    });
+    };
+    if (actorIds && actorIds.length > 0) {
+      sceneConfig.actorIds = actorIds;
+    }
+
+    const response = await apiClient.startScene(selectedSession.dramaId, sceneConfig);
 
     set({ startingScene: false });
 
@@ -151,17 +196,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().fetchSessions();
   },
 
-  stopScene: async () => {
-    const { selectedSession, connectionStatus } = get();
+  stopScene: async (status: 'completed' | 'interrupted' | 'timeout' = 'completed') => {
+    const { selectedSession } = get();
 
-    if (!selectedSession || connectionStatus !== 'connected') {
-      set({ lastError: 'No session selected or not connected' });
+    if (!selectedSession) {
+      set({ lastError: 'No session selected' });
       return;
     }
 
     set({ stoppingScene: true, lastError: null });
 
-    const response = await apiClient.stopScene(selectedSession.dramaId);
+    const response = await apiClient.stopScene(selectedSession.dramaId, status);
 
     set({ stoppingScene: false });
 

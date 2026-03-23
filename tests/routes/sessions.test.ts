@@ -10,12 +10,37 @@ describe('sessions routes', () => {
     // Import dynamically to avoid issues
     const { SessionRegistry } = await import('../../src/services/sessionRegistry.js');
     const { sessionsRouter } = await import('../../src/routes/sessions.js');
+    const { BlackboardService } = await import('../../src/services/blackboard.js');
+    const { RouterService } = await import('../../src/services/router.js');
+    const { createServer } = await import('http');
 
     registry = new SessionRegistry();
+    
+    // Create minimal mock services
+    const blackboard = new BlackboardService(null);
+    const httpServer = createServer();
+    const { pino } = await import('pino');
+    const logger = pino({ level: 'silent' });
+    const router = new RouterService(httpServer, logger, {
+      port: 0,
+      heartbeatIntervalMs: 5000,
+      actorTimeoutMs: 30000,
+      actorRetryTimeoutMs: 10000,
+      gracePeriodMs: 10000,
+      sceneTimeoutMs: 60000,
+    });
+
     app = express();
     app.use(express.json());
     // Mount the router with the registry in app.locals
     (app as any).locals.sessionRegistry = registry;
+    (app as any).locals.blackboardService = blackboard;
+    (app as any).locals.routerService = router;
+    (app as any).locals.config = {
+      SCENE_TIMEOUT_MS: 60000,
+      ACTOR_TIMEOUT_MS: 30000,
+      LOG_LEVEL: 'silent',
+    };
     app.use('/sessions', sessionsRouter);
   });
 

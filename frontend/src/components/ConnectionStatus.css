@@ -3,21 +3,23 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: 99px;
+  border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
-  font-weight: 500;
+  font-weight: 600;
   transition: all var(--transition-fast);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   color: var(--color-text-secondary);
+  backdrop-filter: blur(var(--blur-md));
 }
 
 .connection-status__indicator {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  transition: background-color var(--transition-base);
+  transition: all var(--transition-base);
   flex-shrink: 0;
+  box-shadow: 0 0 10px currentColor;
 }
 
 .connection-status__label {
@@ -25,15 +27,16 @@
   color: var(--color-text-secondary);
 }
 
-/* Connected state - green */
+/* Connected state - green with glow */
 .connection-status--green {
-  background: rgba(48, 209, 88, 0.1);
-  border-color: rgba(48, 209, 88, 0.2);
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
   color: var(--color-status-success);
 }
 
 .connection-status--green .connection-status__indicator {
   background-color: var(--color-status-success);
+  box-shadow: 0 0 12px var(--color-status-success);
 }
 
 .connection-status--green .connection-status__label {
@@ -42,43 +45,47 @@
 
 /* Reconnecting state - yellow with pulse */
 .connection-status--yellow {
-  background: rgba(255, 214, 10, 0.1);
-  border-color: rgba(255, 214, 10, 0.2);
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
   color: var(--color-status-warning);
 }
 
 .connection-status--yellow .connection-status__indicator {
   background-color: var(--color-status-warning);
-  animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px var(--color-status-warning);
+  animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
 .connection-status--yellow .connection-status__label {
   color: var(--color-status-warning);
 }
 
-@keyframes pulse {
+@keyframes pulse-glow {
   0%, 100% {
     opacity: 1;
+    box-shadow: 0 0 12px var(--color-status-warning);
   }
   50% {
     opacity: 0.5;
+    box-shadow: 0 0 20px var(--color-status-warning);
   }
 }
 
 /* Connecting state - same as reconnecting */
 .connection-status--yellow.connecting .connection-status__indicator {
-  animation: pulse 1s ease-in-out infinite;
+  animation: pulse-glow 1s ease-in-out infinite;
 }
 
 /* Disconnected state - red */
 .connection-status--red {
-  background: rgba(255, 69, 58, 0.1);
-  border-color: rgba(255, 69, 58, 0.2);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
   color: var(--color-status-error);
 }
 
 .connection-status--red .connection-status__indicator {
   background-color: var(--color-status-error);
+  box-shadow: 0 0 12px var(--color-status-error);
 }
 
 .connection-status--red .connection-status__label {
@@ -88,9 +95,8 @@
 /* Position in top-right corner */
 .connection-status {
   position: fixed;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
+  top: var(--spacing-lg);
+  right: var(--spacing-2xl);
   z-index: var(--z-fixed);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
-

@@ -69,47 +69,47 @@ describe('SessionRegistry', () => {
   });
 
   describe('startScene', () => {
-    it('should transition CREATED -> RUNNING', () => {
+    it('should transition CREATED -> RUNNING', async () => {
       const session = registry.create({
         name: 'Test Session',
         sceneDurationMinutes: 10,
         agentCount: 3,
       });
 
-      const result = registry.startScene(session.dramaId, 'scene-1');
+      const result = await registry.startScene(session.dramaId, 'scene-1');
 
       expect(result.status).toBe(SessionStatus.RUNNING);
       expect(result.activeSceneId).toBe('scene-1');
     });
 
-    it('should not allow starting if already running', () => {
+    it('should not allow starting if already running', async () => {
       const session = registry.create({
         name: 'Test Session',
         sceneDurationMinutes: 10,
         agentCount: 3,
       });
 
-      registry.startScene(session.dramaId, 'scene-1');
+      await registry.startScene(session.dramaId, 'scene-1');
 
-      expect(() => registry.startScene(session.dramaId, 'scene-2'))
-        .toThrow('Cannot start scene: session is already running');
+      await expect(registry.startScene(session.dramaId, 'scene-2'))
+        .rejects.toThrow('Cannot start scene: session is already running');
     });
 
-    it('should throw NotFoundError for non-existent session', () => {
-      expect(() => registry.startScene('non-existent', 'scene-1'))
-        .toThrow('Session not found');
+    it('should throw NotFoundError for non-existent session', async () => {
+      await expect(registry.startScene('non-existent', 'scene-1'))
+        .rejects.toThrow('Session not found');
     });
   });
 
   describe('stopScene', () => {
-    it('should transition RUNNING -> COMPLETED', () => {
+    it('should transition RUNNING -> COMPLETED', async () => {
       const session = registry.create({
         name: 'Test Session',
         sceneDurationMinutes: 10,
         agentCount: 3,
       });
 
-      registry.startScene(session.dramaId, 'scene-1');
+      await registry.startScene(session.dramaId, 'scene-1');
       const result = registry.stopScene(session.dramaId, 'completed');
 
       expect(result.status).toBe(SessionStatus.COMPLETED);
@@ -119,14 +119,14 @@ describe('SessionRegistry', () => {
       expect(result.lastResult!.status).toBe('completed');
     });
 
-    it('should transition RUNNING -> INTERRUPTED', () => {
+    it('should transition RUNNING -> INTERRUPTED', async () => {
       const session = registry.create({
         name: 'Test Session',
         sceneDurationMinutes: 10,
         agentCount: 3,
       });
 
-      registry.startScene(session.dramaId, 'scene-1');
+      await registry.startScene(session.dramaId, 'scene-1');
       const result = registry.stopScene(session.dramaId, 'interrupted');
 
       expect(result.status).toBe(SessionStatus.INTERRUPTED);

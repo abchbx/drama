@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import type pino from 'pino';
 import { blackboardRouter } from './routes/blackboard.js';
 import { auditRouter } from './routes/audit.js';
@@ -26,6 +27,13 @@ export interface AppServices {
 
 export function createApp(services: AppServices) {
   const app = express();
+
+  // Enable CORS for all origins (frontend development and CloudStudio deployment)
+  app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Agent-ID'],
+  }));
 
   app.use(express.json({ limit: '1mb' }));
 

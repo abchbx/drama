@@ -1,4 +1,4 @@
-/* Agent Dashboard Tab Styles - Apple Light Theme */
+/* Agent Dashboard Tab Styles - Modern Glassmorphism */
 .agent-dashboard-tab {
   flex: 1;
   min-height: 100%;
@@ -10,14 +10,17 @@
 }
 
 .agent-dashboard-tab .tab-header {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
 }
 
 .agent-dashboard-tab .tab-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
   margin-bottom: var(--spacing-xs);
-  color: var(--color-text-primary);
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   letter-spacing: -0.02em;
 }
 
@@ -29,14 +32,14 @@
 .dashboard-layout {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-xl);
 }
 
-/* Fade-in animation for smooth page transitions */
+/* Fade-in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -44,22 +47,30 @@
   }
 }
 
-/* Health Section */
+/* Health Section - Glassmorphism */
 .health-section {
   width: 100%;
 }
 
 .system-health {
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+}
+
+.system-health:hover {
+  border-color: var(--glass-border-strong);
+  box-shadow: var(--shadow-lg);
 }
 
 .system-health h3 {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
   color: var(--color-text-primary);
 }
 
@@ -67,7 +78,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
 .system-health .health-header h3 {
@@ -81,28 +92,36 @@
 
 .system-health .health-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-lg);
 }
 
 .system-health .health-card {
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--glass-bg-hover);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+  transition: all var(--transition-fast);
+}
+
+.system-health .health-card:hover {
+  border-color: var(--glass-border-strong);
+  transform: translateY(-2px);
 }
 
 .system-health .health-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
 }
 
 .system-health .health-card-header h4 {
   font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .system-health .health-details {
@@ -114,7 +133,7 @@
 .system-health .health-detail {
   display: flex;
   justify-content: space-between;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
 }
 
 .system-health .detail-label {
@@ -123,49 +142,57 @@
 
 .system-health .detail-value {
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .system-health .loading,
 .system-health .error {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   text-align: center;
   color: var(--color-text-tertiary);
 }
 
 .system-health .error {
-  color: var(--color-accent-red);
+  color: var(--color-status-error);
 }
 
-/* Status Badge */
+/* Status Badge - Modern with glow */
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 99px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
-  font-weight: 500;
+  font-weight: 600;
   text-transform: capitalize;
+  backdrop-filter: blur(var(--blur-sm));
 }
 
 .status-badge.status-green {
-  background: rgba(48, 209, 88, 0.15);
-  color: var(--color-accent-green);
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-status-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
 }
 
 .status-badge.status-yellow {
-  background: rgba(255, 214, 10, 0.15);
-  color: var(--color-accent-yellow);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-status-warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
 
 .status-badge.status-red {
-  background: rgba(255, 69, 58, 0.15);
-  color: var(--color-accent-red);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-status-error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
 }
 
 .status-badge.status-gray {
-  background: var(--color-bg-tertiary);
+  background: var(--glass-bg-hover);
   color: var(--color-text-tertiary);
+  border: 1px solid var(--glass-border);
 }
 
 /* Agents Section */
@@ -174,27 +201,35 @@
 }
 
 .agents-panel {
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+}
+
+.agents-panel:hover {
+  border-color: var(--glass-border-strong);
+  box-shadow: var(--shadow-lg);
 }
 
 .agents-panel h3 {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
   color: var(--color-text-primary);
 }
 
 .agent-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
 }
 
 .agents-empty {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-3xl);
   text-align: center;
   color: var(--color-text-tertiary);
 }
@@ -204,21 +239,24 @@
 }
 
 .agents-empty-hint {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-quaternary);
 }
 
+/* Modern Agent Card */
 .agent-card {
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--glass-bg-hover);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
   transition: all var(--transition-fast);
+  backdrop-filter: blur(var(--blur-sm));
 }
 
 .agent-card:hover {
-  border-color: var(--color-border-default);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--color-accent-violet);
+  box-shadow: var(--shadow-md), 0 0 20px rgba(139, 92, 246, 0.15);
+  transform: translateY(-2px);
 }
 
 .agent-card .agent-header {
@@ -230,19 +268,22 @@
 
 .agent-card .agent-header h4 {
   font-size: var(--font-size-md);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   margin-bottom: 2px;
 }
 
 .agent-card .agent-role {
   font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
+  color: var(--color-accent-violet);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .agent-stats {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
 }
 
 .stat-item {
@@ -255,12 +296,13 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .stat-item .stat-value {
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Graph Section */
@@ -269,25 +311,27 @@
 }
 
 .communication-panel {
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
 }
 
 .communication-panel h3 {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
   color: var(--color-text-primary);
 }
 
 .agent-graph {
-  height: 400px;
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
+  height: 450px;
+  background: var(--glass-bg-hover);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,35 +341,44 @@
   height: 100%;
 }
 
-/* ReactFlow Custom Node Styles */
+/* ReactFlow Custom Node Styles - Modern */
 .agent-node {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  min-width: 180px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  min-width: 200px;
   padding: 0;
   font-family: inherit;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast);
+}
+
+.agent-node:hover {
+  border-color: var(--color-accent-violet);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(139, 92, 246, 0.2);
 }
 
 .agent-node-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-bottom: 1px solid var(--color-border-subtle);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-bg-hover);
 }
 
 .agent-node-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--font-size-sm);
+  background: var(--gradient-primary);
 }
 
 .agent-node-info {
@@ -345,13 +398,14 @@
 }
 
 .agent-node-status-indicator {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
 }
 
 .agent-node-body {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
@@ -369,5 +423,5 @@
 
 .agent-node-stat .stat-value {
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }

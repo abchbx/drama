@@ -1,6 +1,6 @@
 {
   "name": "drama-blackboard",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Shared blackboard service for multi-agent drama system",
   "main": "dist/index.js",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.0",
     "express": "^4.19.0",
     "jsonwebtoken": "^9.0.3",
@@ -25,6 +26,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/pino": "^7.0.4",

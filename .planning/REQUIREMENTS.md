@@ -21,10 +21,10 @@ Requirements for frontend interface and comprehensive documentation.
 
 ### Script Generation & Export
 
-- [ ] **EXP-01**: User can export generated scripts as JSON file
-- [ ] **EXP-02**: User can export generated scripts as Markdown file (formatted for readability)
-- [ ] **EXP-03**: User can export generated scripts as PDF file
-- [ ] **EXP-04**: User can download exported files directly from browser
+- [x] **EXP-01**: User can export generated scripts as JSON file
+- [x] **EXP-02**: User can export generated scripts as Markdown file (formatted for readability)
+- [x] **EXP-03**: User can export generated scripts as PDF file
+- [x] **EXP-04**: User can download exported files directly from browser
 
 ### Documentation
 
@@ -37,9 +37,9 @@ Requirements for frontend interface and comprehensive documentation.
 ### Real-Time Features
 
 - [x] **RT-01**: Frontend automatically reconnects to Socket.IO server on disconnection
-- [ ] **RT-02**: UI updates in real-time when agents connect/disconnect
+- [x] **RT-02**: UI updates in real-time when agents connect/disconnect
 - [x] **RT-03**: Message stream updates in real-time with agent communication
-- [ ] **RT-04**: Agent status dashboard updates in real-time with connection changes
+- [x] **RT-04**: Agent status dashboard updates in real-time with connection changes
 
 ### Configuration
 
@@ -72,51 +72,52 @@ Deferred to future release. Tracked but not in current roadmap.
 
 Explicitly excluded. Documented to prevent scope creep.
 
-| Feature | Reason |
-|---------|--------|
-| Real-time human-in-the-loop script editing during performance | High complexity, requires complex conflict resolution |
-| Visual rendering or animation of drama output | Overkill for current requirements, requires specialized skills |
-| Natural language speech synthesis for dialogue | Complex integration with external APIs, scope creep |
-| Persistent character memory across separate drama sessions | Requires significant backend changes, not core to v1.2 |
-| Collaborative multi-user editing | Adds significant complexity, focus on single-user experience |
+|| Feature | Reason |
+||---------|--------|
+|| Real-time human-in-the-loop script editing during performance | High complexity, requires complex conflict resolution |
+|| Visual rendering or animation of drama output | Overkill for current requirements, requires specialized skills |
+|| Natural language speech synthesis for dialogue | Complex integration with external APIs, scope creep |
+|| Persistent character memory across separate drama sessions | Requires significant backend changes, not core to v1.2 |
+|| Collaborative multi-user editing | Adds significant complexity, focus on single-user experience |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| UI-01 | 8 | Complete |
-| UI-02 | 9 | Complete |
-| UI-03 | 9 | Complete |
-| UI-04 | 10 | Complete |
-| UI-05 | 10 | Complete |
-| UI-06 | 10 | Complete |
-| UI-07 | 9 | Complete |
-| UI-08 | 8 | Complete |
-| UI-09 | 9 | Complete |
-| EXP-01 | 11 | Pending |
-| EXP-02 | 11 | Pending |
-| EXP-03 | 11 | Pending |
-| EXP-04 | 11 | Pending |
-| DOC-01 | 12 | Complete |
-| DOC-02 | 12 | Complete |
-| DOC-03 | 12 | Complete |
-| DOC-04 | 12 | Complete |
-| DOC-05 | 12 | Complete |
-| RT-01 | 8 | Complete |
-| RT-02 | 9 | Pending |
-| RT-03 | 10 | Complete |
-| RT-04 | 9 | Pending |
-| CFG-01 | 8 | Complete |
-| CFG-02 | 8 | Complete |
-| CFG-03 | 9 | Complete |
+|| Requirement | Phase | Status |
+||-------------|-------|--------|
+|| UI-01 | 8 | Complete |
+|| UI-02 | 9 | Complete |
+|| UI-03 | 9 | Complete |
+|| UI-04 | 10 | Complete |
+|| UI-05 | 10 | Complete |
+|| UI-06 | 10 | Complete |
+|| UI-07 | 9 | Complete |
+|| UI-08 | 8 | Complete |
+|| UI-09 | 9 | Complete |
+|| EXP-01 | 11 | Complete |
+|| EXP-02 | 11 | Complete |
+|| EXP-03 | 11 | Complete |
+|| EXP-04 | 11 | Complete |
+|| DOC-01 | 12 | Complete |
+|| DOC-02 | 12 | Complete |
+|| DOC-03 | 12 | Complete |
+|| DOC-04 | 12 | Complete |
+|| DOC-05 | 12 | Complete |
+|| RT-01 | 8 | Complete |
+|| RT-02 | 9 | Complete |
+|| RT-03 | 10 | Complete |
+|| RT-04 | 9 | Complete |
+|| CFG-01 | 8 | Complete |
+|| CFG-02 | 8 | Complete |
+|| CFG-03 | 9 | Complete |
 
 **Coverage:**
-- v1 requirements: 23 total
+- v1.2 requirements: 23 total
 - Mapped to phases: 23
 - Unmapped: 0 ✓
+- Completed: 23/23 ✓
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after roadmap creation*
+*Last updated: 2026-03-22 after v1.2 milestone*

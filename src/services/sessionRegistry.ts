@@ -1,4 +1,10 @@
+import { EventEmitter } from 'node:events';
+import type { DramaSession, SceneConfig } from '../session.js';
 import { Session, SessionStatus } from '../types/session.js';
+
+export interface SessionRegistryEvents {
+  sceneCompleted: { dramaId: string; sceneId: string; status: 'completed' | 'interrupted' | 'failed' };
+}
 
 /**
  * Custom error for session not found scenarios
@@ -31,12 +37,21 @@ export class SessionOperationError extends Error {
 }
 
 /**
+ * Extended session info that includes the DramaSession instance
+ */
+interface SessionInfo {
+  metadata: Session;
+  dramaSession: DramaSession | null;
+}
+
+/**
  * In-memory session registry with CRUD operations and scene control
  */
-export class SessionRegistry {
-  private sessions: Map<string, Session>;
+export class SessionRegistry extends EventEmitter {
+  private sessions: Map<string, SessionInfo>;
 
   constructor() {
+    super();
     this.sessions = new Map();
   }
 
@@ -62,33 +77,73 @@ export class SessionRegistry {
       lastResult: null,
     };
 
-    this.sessions.set(session.dramaId, session);
+    const sessionInfo: SessionInfo = {
+      metadata: session,
+      dramaSession: null,
+    };
+
+    this.sessions.set(session.dramaId, sessionInfo);
     return session;
+  }
+
+  /**
+   * Attach a DramaSession instance to an existing session
+   */
+  attachDramaSession(dramaId: string, dramaSession: DramaSession): void {
+    const sessionInfo = this.sessions.get(dramaId);
+    if (!sessionInfo) {
+      throw new SessionNotFoundError(dramaId);
+    }
+    sessionInfo.dramaSession = dramaSession;
+  }
+
+  /**
+   * Get the DramaSession instance for a session
+   */
+  getDramaSession(dramaId: string): DramaSession | null {
+    const sessionInfo = this.sessions.get(dramaId);
+    return sessionInfo?.dramaSession ?? null;
   }
 
   /**
    * Get session by dramaId
    */
   get(dramaId: string): Session {
-    const session = this.sessions.get(dramaId);
-    if (!session) {
+    const sessionInfo = this.sessions.get(dramaId);
+    if (!sessionInfo) {
       throw new SessionNotFoundError(dramaId);
     }
-    return session;
+    return sessionInfo.metadata;
   }
 
   /**
    * List all sessions
    */
   list(): Session[] {
-    return Array.from(this.sessions.values());
+    return Array.from(this.sessions.values()).map(info => info.metadata);
+  }
+
+  /**
+   * Remove a session from the registry
+   */
+  remove(dramaId: string): boolean {
+    const sessionInfo = this.sessions.get(dramaId);
+    if (!sessionInfo) {
+      throw new SessionNotFoundError(dramaId);
+    }
+    return this.sessions.delete(dramaId);
   }
 
   /**
    * Start a scene on a session
    */
-  startScene(dramaId: string, sceneId: string): Session {
-    const session = this.get(dramaId);
+  async startScene(dramaId: string, sceneId: string, sceneConfig?: Partial<SceneConfig>): Promise<Session> {
+    const sessionInfo = this.sessions.get(dramaId);
+    if (!sessionInfo) {
+      throw new SessionNotFoundError(dramaId);
+    }
+
+    const session = sessionInfo.metadata;
 
     // Must be CREATED or IDLE to start
     if (session.status !== SessionStatus.CREATED && session.status !== SessionStatus.IDLE) {
@@ -104,6 +159,39 @@ export class SessionRegistry {
     session.activeSceneId = sceneId;
     session.updatedAt = new Date();
 
+    // If we have a DramaSession instance, actually run the scene
+    if (sessionInfo.dramaSession) {
+      // Build scene config with defaults
+      const fullSceneConfig: SceneConfig = {
+        id: sceneId,
+        location: sceneConfig?.location ?? 'Default Location',
+        description: sceneConfig?.description ?? 'Scene started from dashboard',
+        tone: sceneConfig?.tone ?? 'dramatic',
+        actorIds: sceneConfig?.actorIds ?? Array.from(sessionInfo.dramaSession['actors'].keys()),
+      };
+
+      // Run scene asynchronously (don't await - let it run in background)
+      sessionInfo.dramaSession.runScene(fullSceneConfig).then((result) => {
+        console.log(`[SessionRegistry] Scene ${sceneId} completed with status: ${result.status}`);
+        // Update session status based on result
+        session.status = result.status === 'completed' ? SessionStatus.COMPLETED : SessionStatus.INTERRUPTED;
+        session.lastResult = {
+          sceneId: result.sceneId,
+          status: result.status,
+          entryCount: result.entryCount,
+          conflicts: result.conflicts,
+          beats: result.beats,
+        };
+        session.activeSceneId = null;
+        session.updatedAt = new Date();
+      }).catch((err) => {
+        console.error(`[SessionRegistry] Scene ${sceneId} failed:`, err);
+        session.status = SessionStatus.FAILED;
+        session.activeSceneId = null;
+        session.updatedAt = new Date();
+      });
+    }
+
     return session;
   }
 
@@ -111,7 +199,12 @@ export class SessionRegistry {
    * Stop the current scene on a session
    */
   stopScene(dramaId: string, sceneStatus: 'completed' | 'interrupted' | 'timeout'): Session {
-    const session = this.get(dramaId);
+    const sessionInfo = this.sessions.get(dramaId);
+    if (!sessionInfo) {
+      throw new SessionNotFoundError(dramaId);
+    }
+
+    const session = sessionInfo.metadata;
 
     // Must be running to stop
     if (session.status !== SessionStatus.RUNNING) {
@@ -147,7 +240,12 @@ export class SessionRegistry {
    * Update session status directly (with validation)
    */
   updateStatus(dramaId: string, status: SessionStatus): Session {
-    const session = this.get(dramaId);
+    const sessionInfo = this.sessions.get(dramaId);
+    if (!sessionInfo) {
+      throw new SessionNotFoundError(dramaId);
+    }
+
+    const session = sessionInfo.metadata;
 
     if (!this.isValidTransition(session.status, status)) {
       throw new InvalidStatusTransitionError(session.status, status);

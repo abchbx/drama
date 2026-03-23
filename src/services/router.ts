@@ -104,13 +104,31 @@ export class RouterService {
     this._io.on('connection', (socket) => {
       const agentId = this.readHandshakeValue(socket, 'agentId');
       const roleValue = this.readHandshakeValue(socket, 'role');
-      const role: AgentRole = roleValue === 'director' ? 'director' : 'actor';
+      const clientType = this.readHandshakeValue(socket, 'clientType') || 'agent';
 
-      if (!agentId) {
+      // Allow dashboard clients (frontend UI) to connect without agentId
+      if (!agentId && clientType !== 'dashboard') {
+        this.logger.warn({ socketId: socket.id }, 'router: disconnecting client without agentId');
         socket.disconnect(true);
         return;
       }
 
+      // Dashboard clients just listen, don't register as agents
+      if (clientType === 'dashboard' || !agentId) {
+        this.logger.info({ socketId: socket.id, clientType }, 'router: dashboard client connected');
+
+        // Dashboard clients join a special room for broadcast messages
+        socket.join('dashboard');
+
+        socket.on('disconnect', () => {
+          this.logger.info({ socketId: socket.id }, 'router: dashboard client disconnected');
+        });
+
+        return;
+      }
+
+      // Agent clients (director/actor)
+      const role: AgentRole = roleValue === 'director' ? 'director' : 'actor';
       this.registerConnection(socket, agentId, role);
 
       socket.on('disconnect', () => {

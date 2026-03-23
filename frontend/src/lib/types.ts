@@ -36,7 +36,7 @@ export interface StartSceneInput {
   location: string;
   description: string;
   tone: string;
-  actorIds: string[];
+  actorIds?: string[];
 }
 
 export type LLMProvider = 'openai' | 'anthropic' | 'mock';
@@ -84,6 +84,7 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+  technicalError?: string;
 }
 
 // Agent types

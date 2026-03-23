@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.IO Detailed Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        .log { margin: 5px 0; padding: 10px; background: white; border-left: 4px solid #ccc; }
+        .error { border-left-color: red; }
+        .success { border-left-color: green; }
+        .info { border-left-color: blue; }
+        #status { font-size: 24px; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Socket.IO Detailed Connection Test</h1>
+    <div id="status">Testing connection...</div>
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+    <div id="logs"></div>
+
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+    <script>
+        const statusDiv = document.getElementById('status');
+        const logsDiv = document.getElementById('logs');
+        let testSocket = null;
+
+        function log(message, type = 'info') {
+            const p = document.createElement('div');
+            p.className = `log ${type}`;
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.prepend(p);
+            console.log(`[${type}] ${message}`);
+        }
+
+        function clearLogs() {
+            logsDiv.innerHTML = '';
+        }
+
+        function testConnection() {
+            if (testSocket) {
+                testSocket.disconnect();
+            }
+
+            clearLogs();
+            statusDiv.textContent = 'Testing connection...';
+            statusDiv.style.color = 'blue';
+
+            log('Starting detailed connection test', 'info');
+
+            // Test 1: Direct connection to backend
+            log('Test 1: Testing direct connection to http://localhost:3000', 'info');
+            testDirectConnection();
+        }
+
+        function testDirectConnection() {
+            log('Connecting to http://localhost:3000 with path /socket.io/', 'info');
+
+            const socket = io('http://localhost:3000', {
+                path: '/socket.io/',
+                transports: ['websocket', 'polling'],
+                reconnection: false,
+                timeout: 5000
+            });
+
+            testSocket = socket;
+
+            socket.on('connect', () => {
+                statusDiv.textContent = '✅ Connected!';
+                statusDiv.style.color = 'green';
+                log(`SUCCESS: Connected! Socket ID: ${socket.id}`, 'success');
+                log(`Transport: ${socket.io.engine.transport.name}`, 'success');
+            });
+
+            socket.on('connect_error', (error) => {
+                statusDiv.textContent = '❌ Connection failed';
+                statusDiv.style.color = 'red';
+                log(`ERROR: Connection failed - ${error.message}`, 'error');
+                log(`Error details: ${JSON.stringify(error)}`, 'error');
+
+                // Try next test
+                setTimeout(() => testProxyConnection(), 2000);
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`Disconnected: ${reason}`, 'info');
+            });
+
+            socket.on('agent_updated', (data) => {
+                log(`Received agent_updated: ${JSON.stringify(data)}`, 'success');
+            });
+        }
+
+        function testProxyConnection() {
+            log('Test 2: Testing proxy connection via Vite', 'info');
+            log('Connecting to window.location.origin with path /socket.io/', 'info');
+
+            const socket = io(window.location.origin, {
+                path: '/socket.io/',
+                transports: ['websocket', 'polling'],
+                reconnection: false,
+                timeout: 5000
+            });
+
+            testSocket = socket;
+
+            socket.on('connect', () => {
+                statusDiv.textContent = '✅ Connected via proxy!';
+                statusDiv.style.color = 'green';
+                log(`SUCCESS: Connected via proxy! Socket ID: ${socket.id}`, 'success');
+            });
+
+            socket.on('connect_error', (error) => {
+                statusDiv.textContent = '❌ Proxy connection failed';
+                statusDiv.style.color = 'red';
+                log(`ERROR: Proxy connection failed - ${error.message}`, 'error');
+                log(`All connection tests failed. Check:`, 'error');
+                log(`1. Backend is running on port 3000`, 'error');
+                log(`2. Frontend proxy is configured correctly`, 'error');
+                log(`3. No firewall blocking connections`, 'error');
+            });
+        }
+
+        // Auto-start test
+        setTimeout(testConnection, 1000);
+    </script>
+</body>
+</html>

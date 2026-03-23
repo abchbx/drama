@@ -6,17 +6,21 @@ A shared-blackboard multi-agent drama orchestration system with explicit cogniti
 
 ## Status / 当前状态
 
-- Milestone: **v1.1 complete**
-- Completed phases: **7 / 7**
+- Milestone: **v1.2 released**
+- Completed phases: **13 / 13**
 - Test status: **104 tests passing**
 - Main runtime entry: [src/index.ts](src/index.ts)
 - Express app composition: [src/app.ts](src/app.ts)
+- Frontend: React 18 + TypeScript + Vite (v1.2)
+- Documentation: VitePress site (v1.2)
 
-- 当前里程碑：**v1.1 已完成**
-- 已完成阶段：**7 / 7**
+- 当前里程碑：**v1.2 已发布**
+- 已完成阶段：**13 / 13**
 - 测试状态：**104 个测试全部通过**
 - 主运行入口：[src/index.ts](src/index.ts)
 - Express 应用装配位置：[src/app.ts](src/app.ts)
+- 前端：React 18 + TypeScript + Vite (v1.2)
+- 文档站点：VitePress 站点 (v1.2)
 
 ## What this project does / 项目用途
 
@@ -27,6 +31,10 @@ This project coordinates a Director agent and multiple Actor agents to produce d
 - character-scoped views
 - long-context control through memory folding
 - resilient routing with heartbeat and timeout handling
+- **v1.2新增**: Web-based frontend interface for session management
+- **v1.2新增**: Real-time visualization of agent communication
+- **v1.2新增**: Script export in JSON, Markdown, and PDF formats
+- **v1.2新增**: Comprehensive documentation site
 
 该项目协调一个 Director（导演智能体）与多个 Actor（演员智能体），用于生成具备以下特性的戏剧内容：
 
@@ -35,9 +43,14 @@ This project coordinates a Director agent and multiple Actor agents to produce d
 - 面向演员的作用域视图
 - 通过 memory folding 控制长上下文膨胀
 - 通过心跳与超时机制实现更稳健的消息路由
+- **v1.2新增**: 基于 Web 的前端界面用于会话管理
+- **v1.2新增**: 智能体通信实时可视化
+- **v1.2新增**: 支持 JSON、Markdown、PDF 格式脚本导出
+- **v1.2新增**: 完整的文档站点
 
 ## Core capabilities / 核心能力
 
+### Backend / 后端
 - Shared blackboard architecture with layered memory
 - Programmatic capability enforcement instead of prompt-only isolation
 - Layer budgets with token-aware memory folding
@@ -46,6 +59,24 @@ This project coordinates a Director agent and multiple Actor agents to produce d
 - OpenAI and Anthropic provider adapters
 - DramaSession orchestration for end-to-end runs
 
+### Frontend (v1.2) / 前端 (v1.2)
+- Web-based session management with React 18 + TypeScript
+- Real-time visualization of agent communication using React Flow
+- LLM provider configuration (OpenAI, Anthropic, Mock)
+- Session parameter configuration
+- Script export in JSON, Markdown, and PDF formats
+- Session template management
+- Dashboard with agent health monitoring
+- Toast notifications for user feedback
+- Error boundary for crash recovery
+
+### Documentation (v1.2) / 文档 (v1.2)
+- VitePress-based documentation site
+- API documentation
+- Configuration guide
+- Deployment guide
+- UAT testing checklist
+
 - 基于分层记忆的共享黑板架构
 - 通过程序级能力控制实现边界隔离，而不是仅依赖提示词约束
 - 按 token 预算进行 memory folding
@@ -53,6 +84,22 @@ This project coordinates a Director agent and multiple Actor agents to produce d
 - 审计日志与快照持久化能力
 - OpenAI / Anthropic 提供商适配层
 - 通过 DramaSession 完成端到端戏剧编排
+
+- 基于 Web 的会话管理 (React 18 + TypeScript)
+- 使用 React Flow 的智能体通信实时可视化
+- LLM 提供商配置 (OpenAI、Anthropic、Mock)
+- 会话参数配置
+- 脚本导出 (JSON、Markdown、PDF 格式)
+- 会话模板管理
+- 带有智能体健康监控的仪表板
+- 用户反馈的 Toast 通知
+- 崩溃恢复的错误边界
+
+- 基于 VitePress 的文档站点
+- API 文档
+- 配置指南
+- 部署指南
+- UAT 测试检查清单
 
 ## Architecture overview / 架构概览
 
@@ -236,13 +283,21 @@ The runtime configuration is validated in [src/config.ts](src/config.ts) and sam
 ### 1. Install dependencies / 安装依赖
 
 ```bash
+# Install backend dependencies
 npm install
+
+# Install frontend dependencies
+cd frontend && npm install && cd ..
 ```
 
 ### 2. Create local env file / 创建本地环境文件
 
 ```bash
+# Backend environment
 cp .env.example .env
+
+# Frontend environment
+cd frontend && cp .env.example .env && cd ..
 ```
 
 Then update `.env` with your provider credentials and runtime settings.
@@ -252,20 +307,41 @@ Then update `.env` with your provider credentials and runtime settings.
 ### 3. Start in development / 启动开发模式
 
 ```bash
+# Start backend (terminal 1)
 npm run dev
+
+# Start frontend (terminal 2)
+cd frontend && npm run dev
 ```
+
+Frontend will be available at `http://localhost:5173`
+
+前端将在 `http://localhost:5173` 可用
 
 ### 4. Build / 构建
 
 ```bash
+# Build backend
 npm run build
+
+# Build frontend
+cd frontend && npm run build && cd ..
+
+# Build documentation
+npm run docs:build
 ```
 
 ### 5. Start production build / 启动生产构建
 
 ```bash
-npm run start
+npm start
 ```
+
+### 6. Access the application / 访问应用
+
+- **Frontend**: `http://localhost:5173` (dev) or `http://localhost:3000` (with Nginx)
+- **API**: `http://localhost:3000/api`
+- **Documentation**: `http://localhost:3000/docs`
 
 ## Testing / 测试
 
@@ -315,23 +391,47 @@ This repository is not trying to make a single model merely impersonate multiple
 - 长上下文控制
 - 失败恢复能力
 
-## v1.2 direction / v1.2 方向
+## v1.2 Features / v1.2 新功能
+
+### Frontend Web Interface / 前端 Web 界面
+- **Session Management**: Create, configure, and manage drama sessions
+- **Real-time Visualization**: Monitor agent communication with React Flow
+- **Dashboard**: Track agent health, session status, and system metrics
+- **Export**: Download scripts in JSON, Markdown, or PDF formats
+- **Templates**: Save and reuse session configurations
+
+### Improvements / 改进
+- Enhanced error handling with user-friendly messages
+- Socket.IO reconnection with visual status indicators
+- Global error boundary for crash recovery
+- Performance optimizations (virtual scrolling, event throttling)
+- Complete documentation suite
+
+### Documentation / 文档
+- Configuration guide with all environment variables
+- Deployment guide with step-by-step instructions
+- UAT testing checklist
+- API reference
+
+## v1.3 Roadmap / v1.3 路线图
 
 Planned next-step areas include:
 
-- API normalization and operability improvements
-- better deployment and onboarding experience
-- richer session lifecycle management
-- stronger observability and replay tooling
-- more advanced character and scene modeling
+- Performance optimization (message virtual scrolling, Actor rotation optimization)
+- Automated browser testing with Playwright
+- Docker containerization
+- Key management service integration
+- Additional export formats and visualization enhancements
+- Theme switching support (light/dark mode)
 
 下一阶段重点方向包括：
 
-- API 规范化与可运维性增强
-- 更完善的部署与上手体验
-- 更丰富的会话生命周期管理
-- 更强的可观测性与回放工具
-- 更复杂的角色与场景建模
+- 性能优化（消息虚拟滚动、Actor 轮转优化）
+- 使用 Playwright 的自动化浏览器测试
+- Docker 容器化
+- 密钥管理服务集成
+- 额外的导出格式和可视化增强
+- 主题切换支持（亮色/暗色模式）
 
 ## Repository / 仓库地址
 

@@ -30,10 +30,12 @@ export function SceneControls() {
     stoppingScene,
     startScene,
     stopScene,
+    lastError,
   } = useAppStore();
 
   const [showConfig, setShowConfig] = useState(false);
   const [config, setConfig] = useState<SceneConfig>(defaultSceneConfig);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   // Determine button states
   const isIdle = selectedSession?.status === 'idle' || selectedSession?.status === 'created';
@@ -41,6 +43,7 @@ export function SceneControls() {
   const isDisabled = !selectedSession;
   const isStarting = startingScene;
   const isStopping = stoppingScene;
+  const error = localError || lastError;
 
   const handleStartClick = () => {
     setShowConfig(true);
@@ -51,8 +54,8 @@ export function SceneControls() {
     console.log('[SceneControls] Starting scene with config:', config);
     setShowConfig(false);
     try {
-      // actorIds left empty - backend uses all actors from session by default
-      await startScene(config.location, config.description, config.tone, []);
+      // Don't pass actorIds - backend will use all actors from session by default
+      await startScene(config.location, config.description, config.tone);
       console.log('[SceneControls] Scene started successfully');
     } catch (error) {
       console.error('[SceneControls] Failed to start scene:', error);
@@ -75,6 +78,12 @@ export function SceneControls() {
 
   return (
     <div className="scene-controls">
+      {error && (
+        <div className="scene-error-message">
+          <span className="error-icon">⚠</span>
+          {error}
+        </div>
+      )}
       <button
         className="scene-controls__button scene-controls__button--start"
         onClick={showConfig ? handleConfirmStart : handleStartClick}
@@ -139,6 +148,19 @@ export function SceneControls() {
               </label>
             </div>
             <div className="scene-config-actions">
+              <button
+                className="scene-controls__button scene-controls__button--start"
+                onClick={handleConfirmStart}
+                disabled={isStarting}
+              >
+                {isStarting ? (
+                  <>
+                    <span className="spinner" /> Starting...
+                  </>
+                ) : (
+                  'Confirm Start'
+                )}
+              </button>
               <button
                 className="scene-controls__button scene-controls__button--cancel"
                 onClick={handleCancelStart}

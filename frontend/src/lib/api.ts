@@ -16,6 +16,31 @@ import { pdfExporter } from './pdfExporter.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+function getUserFriendlyErrorMessage(status: number, errorText: string): string {
+  switch (status) {
+    case 400:
+      return '请求参数错误';
+    case 401:
+      return '未授权,请重新登录';
+    case 403:
+      return '权限不足';
+    case 404:
+      return '资源不存在';
+    case 409:
+      return '资源冲突,请稍后重试';
+    case 429:
+      return '请求过于频繁,请稍后再试';
+    case 500:
+      return '服务器内部错误,请稍后重试';
+    case 502:
+    case 503:
+    case 504:
+      return '服务暂时不可用,请稍后重试';
+    default:
+      return `请求失败 (${status})`;
+  }
+}
+
 function extractErrorMessage(error: unknown): string {
   if (error instanceof Response) {
     return `HTTP ${error.status}`;
@@ -40,25 +65,41 @@ async function fetchWithErrorHandling<T>(
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
+      const userFriendlyError = getUserFriendlyErrorMessage(response.status, errorText);
+      const technicalError = `HTTP ${response.status}: ${errorText || response.statusText}`;
+
       return {
         success: false,
-        error: `HTTP ${response.status}: ${errorText || response.statusText}`,
+        error: userFriendlyError,
+        technicalError, // Store technical error for debugging
       };
     }
 
     const data = await response.json();
     return { success: true, data };
   } catch (err) {
+    const errorMessage = extractErrorMessage(err);
+
+    // Check for network errors
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      return {
+        success: false,
+        error: '网络连接失败,请检查网络设置',
+        technicalError: errorMessage,
+      };
+    }
+
     return {
       success: false,
-      error: extractErrorMessage(err),
+      error: '请求失败,请稍后重试',
+      technicalError: errorMessage,
     };
   }
 }
 
 export class ApiClient {
   async createSession(input: CreateSessionInput): Promise<ApiResponse<{ dramaId: string; status: string }>> {
-    return fetchWithErrorHandling('/session', {
+    return fetchWithErrorHandling('/sessions', {
       method: 'POST',
       body: JSON.stringify(input),
     });
@@ -72,6 +113,12 @@ export class ApiClient {
     return fetchWithErrorHandling(`/sessions/${dramaId}`);
   }
 
+  async deleteSession(dramaId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return fetchWithErrorHandling(`/sessions/${dramaId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async startScene(dramaId: string, sceneConfig: StartSceneInput): Promise<ApiResponse<BackendSceneResult>> {
     return fetchWithErrorHandling(`/sessions/${dramaId}/scene/start`, {
       method: 'POST',
@@ -79,9 +126,10 @@ export class ApiClient {
     });
   }
 
-  async stopScene(dramaId: string): Promise<ApiResponse<{ success: boolean }>> {
+  async stopScene(dramaId: string, status: 'completed' | 'interrupted' | 'timeout' = 'completed'): Promise<ApiResponse<{ success: boolean }>> {
     return fetchWithErrorHandling(`/sessions/${dramaId}/scene/stop`, {
       method: 'POST',
+      body: JSON.stringify({ status }),
     });
   }
 

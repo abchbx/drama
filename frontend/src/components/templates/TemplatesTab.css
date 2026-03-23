@@ -1,16 +1,40 @@
 .templates-tab {
-  height: 100%;
+  flex: 1;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-base);
   color: var(--color-text-primary);
+}
+
+.templates-tab .tab-header {
+  padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-xl);
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+}
+
+.templates-tab .tab-header h2 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.templates-tab .tab-header p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
 }
 
 .templates-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-xl);
+  gap: var(--spacing-xl);
+  padding: var(--spacing-2xl);
   height: 100%;
   overflow-y: auto;
 }
@@ -19,38 +43,46 @@
   flex: 1;
 }
 
+/* Modern Create Template Form - Glassmorphism */
 .create-template-form {
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
-  background: var(--color-bg-elevated);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-subtle);
-  box-shadow: var(--shadow-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  padding: var(--spacing-2xl);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
+}
+
+.create-template-form:hover {
+  border-color: var(--glass-border-strong);
 }
 
 .create-template-form h3 {
   margin-top: 0;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
   color: var(--color-text-primary);
   font-size: var(--font-size-xl);
+  font-weight: 600;
 }
 
 .form-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
 }
 
 .create-template-form label {
   display: block;
   margin-bottom: var(--spacing-sm);
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
   font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -60,54 +92,61 @@
 .create-template-form textarea,
 .create-template-form select {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--glass-bg-hover);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   color: var(--color-text-primary);
   font-size: var(--font-size-md);
   transition: all var(--transition-fast);
+  backdrop-filter: blur(var(--blur-sm));
 }
 
 .create-template-form input:focus,
 .create-template-form textarea:focus,
 .create-template-form select:focus {
   outline: none;
-  border-color: var(--color-accent-blue);
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+  border-color: var(--color-accent-violet);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.1);
+  background: var(--glass-bg-active);
 }
 
 .create-template-form textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 100px;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
 }
 
+/* Templates List */
 .templates-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--spacing-xl);
   flex: 1;
+  padding: var(--spacing-md) 0;
 }
 
+/* Modern Template Card - Glassmorphism */
 .template-card {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
   transition: all var(--transition-base);
+  backdrop-filter: blur(var(--blur-sm));
+  box-shadow: var(--shadow-md);
 }
 
 .template-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--color-border-default);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
+  border-color: var(--color-accent-violet);
 }
 
 .template-header {
@@ -140,14 +179,28 @@
 .template-actions .button {
   padding: var(--spacing-xs) var(--spacing-md);
   font-size: var(--font-size-sm);
+  background: var(--glass-bg-hover);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.template-actions .button:hover {
+  background: var(--glass-bg-active);
+  border-color: var(--glass-border-strong);
 }
 
 .template-meta {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   flex-wrap: wrap;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--glass-border);
 }
 
 .template-meta span {
@@ -159,32 +212,80 @@
 .template-controls {
   display: flex;
   justify-content: center;
-  gap: var(--spacing-md);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border-subtle);
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  margin-top: auto;
+  border-top: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
 }
 
+.template-controls .button {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-md);
+  min-width: 160px;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.template-controls .button-primary {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  box-shadow: var(--shadow-md), 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.template-controls .button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(99, 102, 241, 0.4);
+}
+
+.template-controls .button-secondary {
+  background: var(--glass-bg-hover);
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-primary);
+}
+
+.template-controls .button-secondary:hover {
+  background: var(--glass-bg-active);
+  border-color: var(--glass-border-strong);
+}
+
+/* Modern Empty State */
 .empty-state {
   text-align: center;
-  padding: var(--spacing-2xl) var(--spacing-lg);
+  padding: var(--spacing-3xl) var(--spacing-xl);
   color: var(--color-text-tertiary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
 }
 
 .empty-state p {
-  margin: var(--spacing-sm) 0;
+  margin: var(--spacing-md) 0;
+  font-size: var(--font-size-xl);
+}
+
+.empty-state p:first-child {
+  font-weight: 600;
+  color: var(--color-text-secondary);
 }
 
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--spacing-2xl) var(--spacing-lg);
+  padding: var(--spacing-3xl) var(--spacing-xl);
   color: var(--color-text-tertiary);
-}
-
-.template-controls {
-  display: flex;
-  gap: var(--spacing-md);
+  min-height: 300px;
 }
 
 /* Responsive design */
@@ -204,5 +305,14 @@
 
   .template-actions {
     justify-content: flex-start;
+  }
+
+  .template-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .template-controls .button {
+    width: 100%;
   }
 }

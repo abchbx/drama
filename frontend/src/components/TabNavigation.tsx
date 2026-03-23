@@ -11,11 +11,15 @@ const tabs = [
   { id: 'export' as const, label: 'Export', icon: '↓' },
 ];
 
-export function TabNavigation() {
+interface TabNavigationProps {
+  collapsed?: boolean;
+}
+
+export function TabNavigation({ collapsed = false }: TabNavigationProps) {
   const { activeTab, setActiveTab } = useAppStore();
 
   return (
-    <nav className="tab-navigation">
+    <nav className={`tab-navigation ${collapsed ? 'collapsed' : ''}`}>
       <ul className="nav-list">
         {tabs.map((tab) => (
           <li key={tab.id}>
@@ -24,9 +28,10 @@ export function TabNavigation() {
               onClick={() => setActiveTab(tab.id)}
               aria-label={tab.label}
               aria-current={activeTab === tab.id ? 'page' : undefined}
+              title={collapsed ? tab.label : undefined}
             >
               <span className="nav-icon">{tab.icon}</span>
-              <span className="nav-label">{tab.label}</span>
+              {!collapsed && <span className="nav-label">{tab.label}</span>}
             </button>
           </li>
         ))}

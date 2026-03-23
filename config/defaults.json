@@ -1,0 +1,43 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0"
+  },
+  "blackboard": {
+    "memoryFoldIntervalMs": 5000,
+    "dataDir": "./data"
+  },
+  "logging": {
+    "level": "info",
+    "format": "json"
+  },
+  "routing": {
+    "heartbeatIntervalMs": 5000,
+    "actorTimeoutMs": 30000,
+    "actorRetryTimeoutMs": 15000,
+    "socketGracePeriodMs": 10000,
+    "sceneTimeoutMs": 300000
+  },
+  "capabilities": {
+    "actor": ["semantic", "procedural"],
+    "director": ["core", "scenario", "semantic", "procedural"],
+    "admin": ["core", "scenario", "semantic", "procedural"]
+  },
+  "memoryBudgets": {
+    "core": 2048,
+    "scenario": 8192,
+    "semantic": 16384,
+    "procedural": 4096
+  },
+  "llm": {
+    "provider": "mock",
+    "temperature": 0.7,
+    "maxTokens": 2000
+  },
+  "session": {
+    "defaultSceneDurationMinutes": 5,
+    "defaultAgentCount": 3,
+    "maxTurns": 10,
+    "timeoutSeconds": 120
+  }
+}

@@ -118,7 +118,7 @@ export class ExportService {
    * Extract character cards from blackboard semantic layer
    */
   private async extractCharacters(dramaId: string): Promise<Array<{ agentId: string; characterCard: string }>> {
-    const readResponse = this.blackboardService.readLayer(dramaId, 'semantic');
+    const readResponse = this.blackboardService.readLayer('semantic');
     const characters: Array<{ agentId: string; characterCard: string }> = [];
 
     for (const entry of readResponse.entries) {
@@ -137,7 +137,7 @@ export class ExportService {
    * Extract backbone from blackboard core layer
    */
   private async extractBackbone(dramaId: string): Promise<Array<{ id: string; timestamp: string; content: string }>> {
-    const readResponse = this.blackboardService.readLayer(dramaId, 'core');
+    const readResponse = this.blackboardService.readLayer('core');
     const backbone: Array<{ id: string; timestamp: string; content: string }> = [];
 
     for (const entry of readResponse.entries) {

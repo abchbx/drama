@@ -24,9 +24,6 @@ export function ConnectionStatus() {
     // Initialize with current status
     setConnectionStatus(socketService.getStatus());
 
-    // Connect socket on mount
-    socketService.connect();
-
     return () => {
       unsubscribe();
     };

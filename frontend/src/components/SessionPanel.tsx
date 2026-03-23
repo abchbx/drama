@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAppStore } from '../store/appStore.js';
 import { SceneControls } from './SceneControls.js';
 import './SessionPanel.css';
@@ -22,6 +23,8 @@ const statusLabels: Record<string, string> = {
   failed: 'Failed',
 };
 
+type TabType = 'info' | 'scene' | 'history';
+
 function formatTimestamp(isoString: string): string {
   const date = new Date(isoString);
   return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -29,9 +32,7 @@ function formatTimestamp(isoString: string): string {
 
 export function SessionPanel() {
   const { selectedSession: session } = useAppStore();
-
-  // When a session is selected, we may want to fetch its detailed information
-  // For now, we display the basic metadata from the list
+  const [activeTab, setActiveTab] = useState<TabType>('info');
 
   if (!session) {
     return (
@@ -44,101 +45,212 @@ export function SessionPanel() {
     );
   }
 
-  return (
-    <div className="session-panel">
-      <div className="session-panel-header">
-        <h2>{session.name}</h2>
-        <span
-          className={`status-indicator ${session.status === 'running' ? 'pulse' : ''}`}
-          style={{ backgroundColor: statusColors[session.status] }}
-        >
-          {statusLabels[session.status]}
-        </span>
-        <SceneControls />
-      </div>
+  const tabs: { id: TabType; label: string; icon: string }[] = [
+    { id: 'info', label: 'Session Info', icon: '◆' },
+    { id: 'scene', label: 'Current Scene', icon: '▶' },
+    { id: 'history', label: 'History', icon: '◈' },
+  ];
 
-      <div className="session-panel-content">
-        <div className="details-grid">
-          <div className="detail-section">
-            <h3>Session Info</h3>
-            <dl>
-              <div className="detail-item">
-                <dt>Drama ID</dt>
-                <dd>{session.dramaId}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Status</dt>
-                <dd>{statusLabels[session.status]}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Scene Duration</dt>
-                <dd>{session.sceneDurationMinutes} minutes</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Agent Count</dt>
-                <dd>{session.agentCount}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="detail-section">
-            <h3>Timestamps</h3>
-            <dl>
-              <div className="detail-item">
-                <dt>Created</dt>
-                <dd>{formatTimestamp(session.createdAt)}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Last Updated</dt>
-                <dd>{formatTimestamp(session.updatedAt)}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="detail-section">
-            <h3>Current Scene</h3>
-            <dl>
-              <div className="detail-item">
-                <dt>Scene ID</dt>
-                <dd>{session.activeSceneId || 'No scene started'}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="detail-section">
-            <h3>Last Result</h3>
-            {session.lastResult ? (
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'info':
+        return (
+          <div className="tab-content-inner">
+            <div className="detail-section">
+              <h3>Basic Information</h3>
               <dl>
                 <div className="detail-item">
-                  <dt>Result ID</dt>
-                  <dd>{session.lastResult.sceneId}</dd>
+                  <dt>Session Name</dt>
+                  <dd>{session.name}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>Drama ID</dt>
+                  <dd className="monospace">{session.dramaId}</dd>
                 </div>
                 <div className="detail-item">
                   <dt>Status</dt>
-                  <dd>{session.lastResult.status}</dd>
+                  <dd>
+                    <span
+                      className={`status-badge ${session.status === 'running' ? 'pulse' : ''}`}
+                      style={{ backgroundColor: statusColors[session.status] }}
+                    >
+                      {statusLabels[session.status]}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="detail-section">
+              <h3>Configuration</h3>
+              <dl>
+                <div className="detail-item">
+                  <dt>Scene Duration</dt>
+                  <dd>{session.sceneDurationMinutes} minutes</dd>
                 </div>
                 <div className="detail-item">
-                  <dt>Entry Count</dt>
-                  <dd>{session.lastResult.entryCount}</dd>
+                  <dt>Agent Count</dt>
+                  <dd>{session.agentCount} agents</dd>
                 </div>
-                {session.lastResult.beats.length > 0 && (
-                  <div className="detail-item">
-                    <dt>Beats</dt>
-                    <dd>
-                      <ul className="beats-list">
-                        {session.lastResult.beats.map((beat, index) => (
-                          <li key={index}>{beat}</li>
-                        ))}
-                      </ul>
-                    </dd>
+              </dl>
+            </div>
+
+            <div className="detail-section">
+              <h3>Timestamps</h3>
+              <dl>
+                <div className="detail-item">
+                  <dt>Created</dt>
+                  <dd>{formatTimestamp(session.createdAt)}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>Last Updated</dt>
+                  <dd>{formatTimestamp(session.updatedAt)}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        );
+
+      case 'scene':
+        return (
+          <div className="tab-content-inner">
+            <div className="detail-section scene-status-section">
+              <h3>Scene Status</h3>
+              <div className="scene-status-display">
+                {session.activeSceneId ? (
+                  <>
+                    <div className="scene-status-indicator running">
+                      <span className="pulse-dot"></span>
+                      Scene Active
+                    </div>
+                    <div className="detail-item">
+                      <dt>Active Scene ID</dt>
+                      <dd className="monospace">{session.activeSceneId}</dd>
+                    </div>
+                  </>
+                ) : (
+                  <div className="scene-status-indicator idle">
+                    <span className="idle-dot"></span>
+                    No Active Scene
                   </div>
                 )}
-              </dl>
-            ) : (
-              <p className="no-result">No scene has been completed yet</p>
-            )}
+              </div>
+            </div>
+
+            <div className="detail-section">
+              <h3>Scene Controls</h3>
+              <p className="section-hint">
+                {session.status === 'running'
+                  ? 'The scene is currently running. You can stop it using the controls below.'
+                  : 'Start a new scene with the controls below.'}
+              </p>
+              <SceneControls />
+            </div>
           </div>
+        );
+
+      case 'history':
+        return (
+          <div className="tab-content-inner">
+            <div className="detail-section">
+              <h3>Last Scene Result</h3>
+              {session.lastResult ? (
+                <dl>
+                  <div className="detail-item">
+                    <dt>Scene ID</dt>
+                    <dd className="monospace">{session.lastResult.sceneId}</dd>
+                  </div>
+                  <div className="detail-item">
+                    <dt>Status</dt>
+                    <dd>
+                      <span
+                        className="status-badge"
+                        style={{
+                          backgroundColor:
+                            session.lastResult.status === 'completed'
+                              ? '#89b4fa'
+                              : session.lastResult.status === 'interrupted'
+                              ? '#fab387'
+                              : '#f38ba8',
+                        }}
+                      >
+                        {session.lastResult.status}
+                      </span>
+                    </dd>
+                  </div>
+                  <div className="detail-item">
+                    <dt>Entry Count</dt>
+                    <dd>{session.lastResult.entryCount} entries</dd>
+                  </div>
+                  {session.lastResult.beats.length > 0 && (
+                    <div className="detail-item beats-item">
+                      <dt>Scene Beats</dt>
+                      <dd>
+                        <ol className="beats-list">
+                          {session.lastResult.beats.map((beat, index) => (
+                            <li key={index}>{beat}</li>
+                          ))}
+                        </ol>
+                      </dd>
+                    </div>
+                  )}
+                  {session.lastResult.conflicts.length > 0 && (
+                    <div className="detail-item">
+                      <dt>Conflicts</dt>
+                      <dd>
+                        <ul className="conflicts-list">
+                          {session.lastResult.conflicts.map((conflict, index) => (
+                            <li key={index} className="conflict-item">{conflict}</li>
+                          ))}
+                        </ul>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              ) : (
+                <div className="empty-state">
+                  <p className="no-result">No scene has been completed yet</p>
+                  <p className="empty-hint">Complete a scene to see the results here.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="session-panel">
+      <div className="session-panel-header">
+        <div className="session-header-left">
+          <h2>{session.name}</h2>
+          <span
+            className={`status-indicator ${session.status === 'running' ? 'pulse' : ''}`}
+            style={{ backgroundColor: statusColors[session.status] }}
+          >
+            {statusLabels[session.status]}
+          </span>
         </div>
+      </div>
+
+      <div className="session-tabs">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={`session-tab ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <span className="tab-icon">{tab.icon}</span>
+            <span className="tab-label">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="session-panel-content">
+        {renderTabContent()}
       </div>
     </div>
   );

@@ -1,66 +1,101 @@
 .tab-navigation {
-  padding: 0;
+  width: 100%;
+}
+
+.tab-navigation.collapsed {
+  width: 100%;
 }
 
 .nav-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
-.nav-list li {
-  display: contents;
-}
-
+/* Modern Navigation Link - Glassmorphism */
 .nav-link {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: 500;
+  border-radius: var(--radius-lg);
   transition: all var(--transition-fast);
-  text-align: left;
   width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
 .nav-link:hover {
-  background: var(--color-bg-secondary);
   color: var(--color-text-primary);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border);
 }
 
-.nav-link.active {
-  background: var(--color-accent-blue);
-  color: white;
-}
-
-.nav-link:focus-visible {
-  outline: 2px solid var(--color-accent-blue);
-  outline-offset: 2px;
-}
-
-.nav-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  font-size: 16px;
-  flex-shrink: 0;
-  opacity: 0.8;
-}
-
-.nav-link.active .nav-icon {
+.nav-link:hover::before {
   opacity: 1;
 }
 
+.nav-link.active {
+  color: var(--color-text-primary);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  border-color: var(--color-accent-violet);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+.nav-link.active::before {
+  opacity: 1;
+}
+
+/* Icon styling */
+.nav-icon {
+  font-size: var(--font-size-lg);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-link.active .nav-icon {
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+}
+
 .nav-label {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  position: relative;
+  z-index: 1;
+}
+
+/* Collapsed state */
+.tab-navigation.collapsed .nav-link {
+  justify-content: center;
+  padding: var(--spacing-md);
+}
+
+.tab-navigation.collapsed .nav-icon {
+  font-size: var(--font-size-xl);
 }
