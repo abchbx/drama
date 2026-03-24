@@ -1,27 +1,19 @@
-# Testing Documentation
-
-**Project:** Multi-Agent Drama System  
-**Version:** v1.1  
-**Last Updated:** 2026-03-22  
-
-## Table of Contents
-- [Testing Framework](#testing-framework)
-- [Test Organization](#test-organization)
-- [Test Structure](#test-structure)
-- [Mock Patterns](#mock-patterns)
-- [Integration Testing](#integration-testing)
-- [Chaos Testing](#chaos-testing)
-- [Test Commands](#test-commands)
-
----
+# Testing
 
 ## Testing Framework
 
-### Vitest Configuration
+- **Runner**: Vitest v2.0.0
+- **Environment**: Node.js
+- **HTTP Testing**: Supertest v7.0.0
+- **Mocking**: Vitest built-in mocks (`vi.fn()`)
+- **Timeout**: 30 seconds default (`testTimeout: 30000`)
 
-**File**: `vitest.config.ts`
+## Test Configuration
 
 ```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
 export default defineConfig({
   test: {
     globals: true,
@@ -31,592 +23,393 @@ export default defineConfig({
 });
 ```
 
-**Key Settings**:
-- **globals**: `true` - Use `describe`, `it`, `expect` without imports
-- **environment**: `node` - Server-side testing environment
-- **testTimeout**: `30000` - 30 second timeout for each test
-
-### Dependencies
-
-- **vitest 2.0.0** - Testing framework
-- **supertest 7.0.0** - HTTP assertion library
-- **tsx 4.16.0** - TypeScript execution (for test setup)
-
----
-
-## Test Organization
-
-### Test File Structure
-
-**Directory**: `tests/`
+## Test File Structure
 
 ```
 tests/
-├── actor.test.ts              # Actor service tests
-├── blackboard.test.ts         # Blackboard service tests
-├── boundary.test.ts           # Capability enforcement tests
-├── chaos.test.ts              # Resilience and failure tests
-├── director.test.ts           # Director service tests
-├── e2e.test.ts               # End-to-end orchestration tests
+├── actor.test.ts              # Actor service unit tests
+├── blackboard.test.ts         # Blackboard API integration tests
+├── boundary.test.ts           # Perceptual boundary tests
+├── chaos.test.ts              # Chaos/resilience testing
+├── director.test.ts           # Director service unit tests
+├── e2e.test.ts                # End-to-end workflow tests
+├── llm.test.ts                # LLM provider tests
 ├── memoryManager.test.ts      # Memory management tests
-├── protocol.test.ts           # Message routing tests
+├── protocol.test.ts           # Message protocol tests
+├── routing.test.ts            # Socket.IO routing tests
+├── session.test.ts            # Session orchestration tests
+├── snapshot.test.ts           # Snapshot persistence tests
+├── timeout.test.ts            # Timeout handling tests
 ├── sessionRegistry.test.ts    # Session registry tests
-└── routes/                    # Route handler tests
-    ├── blackboard.test.ts
-    ├── sessions.test.ts
-    └── ...
+└── routes/
+    └── sessions.test.ts       # Session route tests
 ```
 
-### Test Naming Convention
+## Testing Patterns
 
-**Pattern**: `featureName.test.ts` or `serviceName.test.ts`
-
-**Examples**:
-- `actor.test.ts` - Actor service unit tests
-- `blackboard.test.ts` - Blackboard service unit tests
-- `boundary.test.ts` - Cognitive boundary enforcement tests
-- `chaos.test.ts` - Chaos and resilience tests
-- `e2e.test.ts` - End-to-end workflow tests
-
-### Test Categories
-
-1. **Unit Tests** - Individual service methods
-2. **Integration Tests** - Service interactions
-3. **E2E Tests** - Complete workflows
-4. **Chaos Tests** - Resilience under failure
-
----
-
-## Test Structure
-
-### Basic Test Structure
+### Service Unit Test Pattern
 
 ```typescript
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { BlackboardService } from '../src/services/blackboard.js';
-import { createTestEntry, createMockBlackboard } from './test-helpers.js';
+import { describe, it, expect, vi } from 'vitest';
+import { Director } from '../src/services/director.js';
 
-describe('BlackboardService', () => {
-  let blackboard: BlackboardService;
+// Mock LLM Provider for deterministic testing
+class MockLlmProvider implements LlmProvider {
+  private responses: LlmResponse[];
+  private callLog: { system: string; user: string }[] = [];
+
+  constructor(responses: LlmResponse[]) {
+    this.responses = responses;
+  }
+
+  async generate(prompt: LlmPrompt): Promise<LlmResponse> {
+    this.callLog.push({ system: prompt.system, user: prompt.user });
+    return this.responses.shift() ?? {
+      content: JSON.stringify({ exchangeId: 'fallback', contradictions: [] }),
+    };
+  }
+
+  getCallLog() { return this.callLog; }
+}
+
+// Mock Blackboard
+defunction createMockBlackboard() {
+  const layers = {
+    core: { entries: [], version: 0 },
+    scenario: { entries: [], version: 0 },
+    semantic: { entries: [], version: 0 },
+    procedural: { entries: [], version: 0 },
+  };
+
+  return {
+    readLayer: (layer: string) => ({ layer, entries: [...layers[layer].entries], /* ... */ }),
+    writeEntry: (layer: string, agentId: string, req: { content: string }) => {
+      // Mock implementation
+      return { entry: { id: 'test-id', agentId, content: req.content }, layerVersion: 1 };
+    },
+    // Track calls for assertions
+    readCalls: [] as string[],
+    writeCalls: [] as Array<{ layer: string; agentId: string; content: string }>,
+  };
+}
+
+describe('Director Service', () => {
+  it('should generate backbone with scene structure', async () => {
+    // Arrange
+    const mockBlackboard = createMockBlackboard();
+    const mockProvider = new MockLlmProvider([{
+      content: JSON.stringify({
+        scenes: [{ sceneId: 'scene-1', description: 'Opening' }],
+        characterArcs: [],
+        plotPoints: [],
+      }),
+    }]);
+
+    const director = new Director({
+      blackboard: mockBlackboard as any,
+      llmProvider: mockProvider,
+      // ... other dependencies
+    });
+
+    // Act
+    const result = await director.createBackbone({ theme: 'Test', characters: [] });
+
+    // Assert
+    expect(result.scenes).toHaveLength(1);
+    expect(mockProvider.getCallLog()).toHaveLength(1);
+    expect(mockBlackboard.writeCalls.some(c => c.layer === 'core')).toBe(true);
+  });
+});
+```
+
+### HTTP Integration Test Pattern
+
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import request from 'supertest';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import jwt from 'jsonwebtoken';
+import express = require('express');
+
+// Helper: create fully wired test app
+function createTestApp(dataDir: string) {
+  const app = express();
+  app.use(express.json({ limit: '1mb' }));
+
+  const snapshotService = new SnapshotService(dataDir);
+  const auditLogService = new AuditLogService(dataDir);
+  const blackboardService = new BlackboardService(snapshotService.tryRestore());
+  const capabilityService = createCapabilityService();
+
+  // Wire services (same pattern as production)
+  setBlackboardAuditLog(auditLogService);
+  setSnapshotService(snapshotService);
+  setBlackboardCapabilityService(capabilityService);
+
+  app.locals.blackboard = blackboardService;
+  app.locals.capabilityService = capabilityService;
+
+  app.use('/blackboard', blackboardRouter);
+  app.use('/health', healthRouter);
+
+  return { app, snapshotService, auditLogService, blackboardService, capabilityService };
+}
+
+// Helper: generate test JWT
+function issueToken(capabilityService: ReturnType<typeof createCapabilityService>, 
+                   agentId: string, 
+                   role: string): string {
+  return jwt.sign(
+    { agentId, role },
+    capabilityService.jwtSecret,
+    { expiresIn: '1h', algorithm: 'HS256' } as jwt.SignOptions,
+  );
+}
+
+describe('Blackboard REST API', () => {
+  let dataDir: string;
+  let base: ReturnType<typeof request.Supertest.prototype>;
+  let snapshotService: SnapshotService;
+  let capabilityService: ReturnType<typeof createCapabilityService>;
 
   beforeEach(() => {
-    // Set up fresh instance for each test
-    blackboard = createMockBlackboard();
+    // Create isolated temp directory for each test
+    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blackboard-test-'));
+    const result = createTestApp(dataDir);
+    base = request(result.app);
+    snapshotService = result.snapshotService;
+    capabilityService = result.capabilityService;
   });
 
   afterEach(() => {
-    // Cleanup if needed
-    vi.clearAllMocks();
+    // Clean up resources
+    try { snapshotService.stopTimer(); } catch {}
+    try { fs.rmSync(dataDir, { recursive: true }); } catch {}
   });
 
-  describe('writeEntry', () => {
-    it('should write entry to correct layer', () => {
-      const entry = createTestEntry('semantic', 'test content');
-      blackboard.writeEntry('semantic', entry);
-      
-      const layer = blackboard.readLayer('semantic');
-      expect(layer).toHaveLength(1);
-      expect(layer[0].content).toBe('test content');
+  it('SC1: write then read returns the same entry', async () => {
+    const token = issueToken(capabilityService, 'test-agent', 'Director');
+    const payload = { content: 'Hello world', messageId: 'msg-001' };
+
+    // Write
+    const postRes = await base
+      .post('/blackboard/core?agentId=test-agent')
+      .set('Authorization', `Bearer ${token}`)
+      .send(payload);
+    expect(postRes.status).toBe(201);
+
+    // Read
+    const getRes = await base
+      .get(`/blackboard/core/${postRes.body.entry.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.entry.content).toBe(payload.content);
+  });
+});
+```
+
+### Chaos Testing Pattern
+
+```typescript
+describe('Chaos Tests', () => {
+  it('should handle actor timeout gracefully', async () => {
+    const session = createTestSession();
+    
+    // Inject chaos: actor that never responds
+    session.setChaosHooks({
+      beforeTurn: async (agentId) => {
+        if (agentId === 'slow-actor') {
+          await sleep(10000); // Exceeds timeout
+        }
+      },
     });
 
-    it('should throw TokenBudgetExceededError when budget exceeded', () => {
-      const entry = createTestEntry('semantic', 'x'.repeat(10000));
-      
-      expect(() => {
-        blackboard.writeEntry('semantic', entry);
-      }).toThrow(TokenBudgetExceededError);
+    const result = await session.runExchange();
+    
+    // Should skip actor, not crash
+    expect(result.skippedActors).toContain('slow-actor');
+    expect(result.completedActors).toHaveLength(2);
+  });
+
+  it('should handle concurrent scene starts', async () => {
+    const promises = [
+      session.startScene(scene1),
+      session.startScene(scene2), // Should be rejected or queued
+    ];
+    
+    const results = await Promise.allSettled(promises);
+    expect(results.filter(r => r.status === 'rejected')).toHaveLength(1);
+  });
+});
+```
+
+### Mock Time for Timeout Tests
+
+```typescript
+describe('TimeoutManager', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should trigger timeout callback after delay', () => {
+    const onTimeout = vi.fn();
+    const manager = new TimeoutManager(logger, {
+      actorTimeoutMs: 5000,
+      onActorTimeout: onTimeout,
     });
 
-    it('should increment layer version on write', () => {
-      const versionBefore = blackboard.getVersion('semantic');
-      blackboard.writeEntry('semantic', createTestEntry('semantic', 'content'));
-      
-      expect(blackboard.getVersion('semantic')).toBe(versionBefore + 1);
-    });
+    manager.startActorTimer('actor-1', 'scene-1', 0);
+    
+    // Fast-forward time
+    vi.advanceTimersByTime(5000);
+    
+    expect(onTimeout).toHaveBeenCalledWith('actor-1', 'scene-1', 0);
   });
 });
 ```
 
-### Describe Blocks
+## Test Categories
 
-**Organize tests by feature**:
+### Unit Tests
+- **Location**: Adjacent to source or in `tests/`
+- **Scope**: Single class/function
+- **Dependencies**: Mocked
+- **Examples**:
+  - `director.test.ts` - Director service logic
+  - `actor.test.ts` - Actor dialogue generation
+  - `memoryManager.test.ts` - Folding/promotion logic
 
-```typescript
-describe('BlackboardService', () => {
-  describe('writeEntry', () => {
-    // All writeEntry tests
-  });
+### Integration Tests
+- **Location**: `tests/*.test.ts`
+- **Scope**: Multiple services + API
+- **Dependencies**: Real services, temp directories
+- **Examples**:
+  - `blackboard.test.ts` - Full blackboard API
+  - `sessionRegistry.test.ts` - Session CRUD
 
-  describe('readLayer', () => {
-    // All readLayer tests
-  });
+### E2E Tests
+- **Location**: `tests/e2e.test.ts`
+- **Scope**: Full workflow from HTTP to LLM to response
+- **Dependencies**: Complete service stack
+- **Pattern**: Create session → start scene → run exchanges → verify output
 
-  describe('token counting', () => {
-    // Token-related tests
-  });
-});
-```
+### Chaos/Resilience Tests
+- **Location**: `tests/chaos.test.ts`
+- **Scope**: Error handling and recovery
+- **Pattern**: Inject failures, verify graceful degradation
 
-### Test Descriptions
+## Testing Utilities
 
-**Pattern**: `should <expected behavior> when <condition>`
-
-```typescript
-it('should write entry to correct layer');
-it('should throw error when budget exceeded');
-it('should preserve order of entries');
-it('should fold semantic layer when 60% threshold reached');
-```
-
----
-
-## Mock Patterns
-
-### Factory Functions
-
-**File**: `tests/test-helpers.ts`
+### Common Helpers
 
 ```typescript
-import { Actor } from '../src/services/actor.js';
-import { Director } from '../src/services/director.js';
-import { BlackboardService } from '../src/services/blackboard.js';
-import { CapabilityService } from '../src/services/capability.js';
-import { MockLlmProvider } from './mocks/mockLlmProvider.js';
-import pino from 'pino';
+// tests/helpers.ts
 
-const logger = pino({ level: 'silent' });
-
-// Factory: Create test actor with optional overrides
-export function createTestActor(overrides?: Partial<ActorOptions>): Actor {
-  return new Actor(
-    overrides?.llmProvider ?? new MockLlmProvider(),
-    overrides?.blackboard ?? createMockBlackboard(),
-    overrides?.capability ?? createMockCapabilityService(),
-    logger,
-    overrides?.agentId ?? 'test-actor-1',
-    overrides?.role ?? 'Actor',
-  );
+export function createTestLogger(): pino.Logger {
+  return pino({ level: 'silent' }); // Suppress logs in tests
 }
 
-// Factory: Create test director
-export function createTestDirector(overrides?: Partial<DirectorOptions>): Director {
-  return new Director(
-    overrides?.llmProvider ?? new MockLlmProvider(),
-    overrides?.blackboard ?? createMockBlackboard(),
-    overrides?.memoryManager ?? undefined,
-    logger,
-    overrides?.agentId ?? 'test-director-1',
-  );
-}
-
-// Factory: Create mock blackboard with minimal setup
-export function createMockBlackboard(): BlackboardService {
-  return new BlackboardService(
-    logger,
-    undefined, // no snapshot service
-    undefined, // no audit log service
-  );
-}
-
-// Factory: Create mock capability service
-export function createMockCapabilityService(): CapabilityService {
-  return new CapabilityService('test-jwt-secret-32-chars-long!');
-}
-```
-
-### Mock LLM Provider
-
-**File**: `tests/mocks/mockLlmProvider.ts`
-
-```typescript
-import type { LlmProvider } from '../../src/services/llm.js';
-
-export class MockLlmProvider implements LlmProvider {
-  constructor(
-    private readonly response: string = 'Mock response',
-    private readonly delay: number = 0,
-    private readonly throwError?: Error,
-  ) {}
-
-  async generate(_request: { system: string; user: string }): Promise<{ content: string }> {
-    if (this.delay > 0) {
-      await new Promise(resolve => setTimeout(resolve, this.delay));
-    }
-    
-    if (this.throwError) {
-      throw this.throwError;
-    }
-    
-    return { content: this.response };
-  }
-}
-```
-
-### Flaky LLM Provider (for chaos testing)
-
-**File**: `tests/mocks/flakyLlmProvider.ts`
-
-```typescript
-import type { LlmProvider } from '../../src/services/llm.js';
-
-export class FlakyLlmProvider implements LlmProvider {
-  private callCount = 0;
-
-  constructor(
-    private readonly failureRate: number = 0.3, // 30% failure rate
-    private readonly timeoutAfter?: number, // timeout after N calls
-  ) {}
-
-  async generate(request: { system: string; user: string }): Promise<{ content: string }> {
-    this.callCount++;
-
-    // Simulate timeout
-    if (this.timeoutAfter && this.callCount >= this.timeoutAfter) {
-      await new Promise(() => {}); // Never resolves
-    }
-
-    // Simulate random failure
-    if (Math.random() < this.failureRate) {
-      throw new Error('Simulated LLM failure');
-    }
-
-    return { content: `Flaky response #${this.callCount}` };
-  }
-}
-```
-
-### Data Factory Functions
-
-**File**: `tests/test-data.ts`
-
-```typescript
-import type { BlackboardEntry, CharacterCard } from '../../src/types/index.js';
-
-export function createTestEntry(
-  layer: 'core' | 'scenario' | 'semantic' | 'procedural',
-  content: string,
-  overrides?: Partial<BlackboardEntry>
-): BlackboardEntry {
-  return {
-    id: crypto.randomUUID(),
-    agentId: 'test-agent-1',
-    timestamp: new Date().toISOString(),
-    content,
-    tokenCount: content.length, // Simplified for tests
-    version: 1,
-    ...overrides,
-  };
-}
-
-export function createTestCharacterCard(overrides?: Partial<CharacterCard>): CharacterCard {
-  return {
-    id: 'character-1',
-    name: 'Test Character',
-    role: 'Protagonist',
-    backstory: 'A test character for unit tests',
-    objectives: ['Complete objective 1', 'Complete objective 2'],
-    voice: {
-      vocabularyRange: ['simple', 'clear'],
-      sentenceLength: 'medium',
-      emotionalRange: ['neutral'],
-      speechPatterns: [],
-      forbiddenTopics: [],
-      forbiddenWords: [],
-    },
-    ...overrides,
-  };
-}
-```
-
----
-
-## Integration Testing
-
-### Service Interaction Tests
-
-```typescript
-describe('Actor-Blackboard Integration', () => {
-  it('should write dialogue to semantic layer', async () => {
-    const blackboard = createMockBlackboard();
-    const actor = createTestActor({ blackboard });
-    
-    await actor.generateDialogue(createTestSceneContext());
-    
-    const semanticLayer = blackboard.readLayer('semantic');
-    expect(semanticLayer).toHaveLength(1);
-    expect(semanticLayer[0].metadata?.dialogueFor).toBe(actor.agentId);
-  });
-
-  it('should read from correct layers based on capability', async () => {
-    const blackboard = createMockBlackboard();
-    const capability = createMockCapabilityService();
-    const actor = createTestActor({ blackboard, capability });
-    
-    // Write to different layers
-    blackboard.writeEntry('core', createTestEntry('core', 'core fact'));
-    blackboard.writeEntry('semantic', createTestEntry('semantic', 'dialogue'));
-    
-    const context = await actor.getFactContext();
-    
-    // Actor should read semantic but not core (boundary enforced)
-    expect(context.semantic).toHaveLength(1);
-    expect(context.core).toBeUndefined();
-  });
-});
-```
-
-### HTTP API Integration Tests
-
-```typescript
-import request from 'supertest';
-import { app } from '../src/app.js';
-
-describe('HTTP API Integration', () => {
-  let authToken: string;
-
-  beforeEach(async () => {
-    // Register agent and get JWT
-    const response = await request(app)
-      .post('/blackboard/agents/register')
-      .send({ agentId: 'test-agent-1', role: 'Actor' });
-    
-    authToken = response.body.token;
-  });
-
-  it('should create entry with valid JWT', async () => {
-    const response = await request(app)
-      .post('/blackboard/layers/semantic/entries')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({ content: 'test content' });
-    
-    expect(response.status).toBe(201);
-    expect(response.body.id).toBeDefined();
-  });
-
-  it('should reject entry creation without JWT', async () => {
-    const response = await request(app)
-      .post('/blackboard/layers/semantic/entries')
-      .send({ content: 'test content' });
-    
-    expect(response.status).toBe(401);
-  });
-});
-```
-
----
-
-## Chaos Testing
-
-### Actor Timeout Tests
-
-```typescript
-describe('Chaos: Actor Timeout', () => {
-  it('should skip actor when timeout exceeded', async () => {
-    const session = new DramaSession(/* ... */);
-    
-    // Inject slow LLM provider
-    session.injectChaos({
-      simulateTimeout: 'actor-1',
-      timeoutMs: 100,
-    });
-    
-    const result = await session.runScene({
-      actors: ['actor-1', 'actor-2'],
-      duration: 30000,
-    });
-    
-    expect(result.skippedActors).toContain('actor-1');
-    expect(result.dialogues).toHaveLength(1); // Only actor-2 completed
-  });
-});
-```
-
-### Network Failure Simulation
-
-```typescript
-describe('Chaos: Network Failures', () => {
-  it('should recover from temporary disconnection', async () => {
-    const router = new RouterService(/* ... */);
-    const actor = createTestActor();
-    
-    // Simulate disconnection
-    await router.disconnectAgent('actor-1');
-    
-    // Message should be buffered
-    router.sendPeerToPeer('actor-1', { type: 'your_turn', payload: {} });
-    
-    // Reconnect
-    await router.reconnectAgent('actor-1');
-    
-    // Buffered message should be delivered
-    const received = await actor.receiveMessage();
-    expect(received?.type).toBe('your_turn');
-  });
-});
-```
-
-### Memory Pressure Tests
-
-```typescript
-describe('Chaos: Memory Pressure', () => {
-  it('should fold semantic layer when budget exceeded', async () => {
-    const blackboard = createMockBlackboard({ 
-      semanticBudget: 100, // Very small budget
-    });
-    
-    // Write many entries
-    for (let i = 0; i < 20; i++) {
-      blackboard.writeEntry('semantic', createTestEntry('semantic', `entry ${i}`));
-    }
-    
-    const layer = blackboard.readLayer('semantic');
-    
-    // Should have folded and kept only recent entries
-    expect(layer.length).toBeLessThan(20);
-    expect(layer.some(e => e.metadata?.foldSummary)).toBe(true);
-  });
-});
-```
-
----
-
-## Error Testing
-
-### Throwing Expected Errors
-
-```typescript
-it('should throw BoundaryViolationError when actor writes to core', async () => {
-  const blackboard = createMockBlackboard();
-  const actor = createTestActor({ blackboard });
-  
-  const entry = createTestEntry('core', 'should fail');
-  
-  await expect(
-    actor.writeToBlackboard(entry)
-  ).rejects.toThrow(BoundaryViolationError);
-});
-```
-
-### Testing Error Properties
-
-```typescript
-it('should include error metadata in BoundaryViolationError', async () => {
-  const blackboard = createMockBlackboard();
-  const actor = createTestActor({ blackboard, agentId: 'actor-123', role: 'Actor' });
-  
+export async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'));
   try {
-    await actor.writeToBlackboard(createTestEntry('core', 'fail'));
-    expect.fail('Should have thrown');
-  } catch (error) {
-    expect(error).toBeInstanceOf(BoundaryViolationError);
-    expect((error as BoundaryViolationError).agentId).toBe('actor-123');
-    expect((error as BoundaryViolationError).layer).toBe('core');
-    expect((error as BoundaryViolationError).operation).toBe('write');
+    return await fn(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
-});
+}
+
+export function createMockLlmResponse(content: object): LlmResponse {
+  return {
+    content: JSON.stringify(content),
+  };
+}
 ```
-
----
-
-## Test Commands
-
-### Run All Tests
-
-```bash
-npm test
-```
-
-**Output**: All tests run once, results displayed in terminal
-
-### Watch Mode
-
-```bash
-npm run test:watch
-```
-
-**Behavior**: Tests re-run on file changes, useful for TDD
-
-### Run Specific Test File
-
-```bash
-npm test actor.test.ts
-```
-
-### Run Tests Matching Pattern
-
-```bash
-npm test -- --grep "should write"
-```
-
-### Coverage Report
-
-```bash
-npm test -- --coverage
-```
-
-**Note**: Coverage is tracked but no minimum enforced
-
----
 
 ## Best Practices
 
-### Test Independence
-
-**Each test should be isolated**:
-
+### 1. Isolated Test Data
 ```typescript
-describe('Feature', () => {
-  beforeEach(() => {
-    // Fresh state for each test
-  });
-
-  it('test 1', () => {
-    // No assumptions about other tests
-  });
-
-  it('test 2', () => {
-    // No assumptions about other tests
-  });
+// Good: Each test gets its own temp directory
+beforeEach(() => {
+  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'));
+});
+afterEach(() => {
+  fs.rmSync(dataDir, { recursive: true });
 });
 ```
 
-### Clear Assertions
-
-**Use specific assertions**:
-
+### 2. Resource Cleanup
 ```typescript
-// Good - Specific assertion
-expect(layer).toHaveLength(5);
-expect(layer[0].content).toBe('expected content');
-
-// Avoid - Generic assertions
-expect(layer).toBeTruthy();
-```
-
-### Test Edge Cases
-
-**Test boundary conditions**:
-
-```typescript
-it('should handle empty content', () => {
-  blackboard.writeEntry('semantic', createTestEntry('semantic', ''));
-  expect(blackboard.readLayer('semantic')).toHaveLength(1);
-});
-
-it('should handle maximum budget exactly', () => {
-  const blackboard = createMockBlackboard({ semanticBudget: 100 });
-  blackboard.writeEntry('semantic', createTestEntry('semantic', 'x'.repeat(100)));
-  expect(blackboard.readLayer('semantic')).toHaveLength(1);
-});
-
-it('should exceed budget by one token', () => {
-  const blackboard = createMockBlackboard({ semanticBudget: 100 });
-  expect(() => {
-    blackboard.writeEntry('semantic', createTestEntry('semantic', 'x'.repeat(101)));
-  }).toThrow(TokenBudgetExceededError);
+// Always clean up timers, connections, files
+afterEach(() => {
+  snapshotService.stopTimer();
+  routerService.stop();
+  auditLogService.close();
 });
 ```
 
----
+### 3. Deterministic Tests
+```typescript
+// Use mock LLM with predefined responses
+const mockProvider = new MockLlmProvider([
+  { content: JSON.stringify({ scenes: [] }) },
+  { content: JSON.stringify({ dialogue: 'Hello' }) },
+]);
+```
 
-**End of Testing Documentation**
+### 4. Clear Test Names
+```typescript
+// Pattern: [Component] should [behavior] when [condition]
+it('Director should arbitrate conflicts when actors contradict', async () => {
+  // ...
+});
+```
+
+### 5. Arrange-Act-Assert
+```typescript
+it('should fold layer when budget exceeded', async () => {
+  // Arrange
+  const blackboard = createBlackboardWithEntries(100);
+  const manager = new MemoryManagerService({ blackboard, ...deps });
+  
+  // Act
+  await manager.checkBudget('semantic');
+  
+  // Assert
+  expect(blackboard.readLayer('semantic').entries).toHaveLength(1);
+  expect(blackboard.readLayer('semantic').entries[0].metadata?.foldSummary).toBe(true);
+});
+```
+
+## Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Run specific test file
+npx vitest run tests/director.test.ts
+
+# Run with coverage (requires config)
+npx vitest run --coverage
+```
+
+## Coverage Areas
+
+| Component | Coverage Focus |
+|-----------|----------------|
+| Blackboard | CRUD, versioning, budget enforcement, error handling |
+| Director | Planning, arbitration, fact-checking, prompt building |
+| Actor | Dialogue generation, voice constraints, memory integration |
+| Router | Message routing, heartbeat, timeout handling |
+| Memory Manager | Folding, promotion, budget alerts |
+| Sessions | Lifecycle, state transitions, cleanup |

@@ -1,307 +1,308 @@
-# Codebase Concerns
+# Concerns
 
-**Analysis Date:** 2026-03-22
+## Technical Debt
 
-## Tech Debt
+### Known Issues
 
-**Type Safety Erosion from `any` Types:**
-- Issue: 25+ instances of `any` type usage undermine TypeScript strict mode benefits
-- Files: `src/services/llm.ts`, `src/services/actor.ts`, `src/services/director.ts`, `src/services/memoryManager.ts`
-- Why: Rapid prototyping and LLM response handling without proper type definitions
-- Impact: Loss of compile-time safety, runtime errors possible, harder refactoring
-- Fix approach: Define proper union types or Zod schemas for LLM responses, use `unknown` instead of `any`, parse with Zod before use
+#### 1. Type Safety Issues
+**Location**: `src/routes/sessions.ts`, `src/services/actor.ts`, `src/index.ts`
 
-**Service Singleton Anti-pattern:**
-- Issue: Services instantiated once in bootstrap but passed around as dependencies
-- Files: `src/index.ts` (service instantiation), multiple service files (constructor injection)
-- Why: Simpler initial implementation for single-instance services
-- Impact: Harder to test with different configurations, limits flexibility
-- Fix approach: Implement service factory pattern, support multiple service instances with different configs
+**Issues**:
+- Multiple uses of `as any` type assertions in route handlers
+- `req.app.locals as any` pattern used extensively instead of proper typing
+- `routerService: null as any` initialization in `index.ts` with TODO comment
 
-**Tight Coupling Between Director and MemoryManager:**
-- Issue: Director requires MemoryManager as dependency for memory folding
-- Files: `src/services/director.ts`, `src/services/memoryManager.ts`
-- Why: Direct control over when memory is folded
-- Impact: Cannot test Director without MemoryManager, limited reusability
-- Fix approach: Extract memory folding to callback interface, allow Director to work without MemoryManager
+**Impact**: Reduced type safety, potential runtime errors not caught by TypeScript
 
-**Hard-coded Layer Budgets:**
-- Issue: Token budgets for memory layers are environment variables but not validated at runtime
-- Files: `src/config.ts`, `src/services/blackboard.ts`
-- Why: Simplified configuration management
-- Impact: Invalid budgets can cause runtime errors, difficult to reason about layer behavior
-- Fix approach: Add Zod schema validation for budgets, ensure sum < total context window
+**Example**:
+```typescript
+// src/routes/sessions.ts:29
+const registry = (req.app.locals as any).sessionRegistry as SessionRegistry;
 
-**Inconsistent Error Handling in LLM Calls:**
-- Issue: Some LLM errors caught and wrapped, others propagate directly
-- Files: `src/services/actor.ts`, `src/services/director.ts`, `src/services/llm/`
-- Why: Iterative error handling implementation
-- Impact: Inconsistent error messages, harder to debug LLM failures
-- Fix approach: Standardize error handling with try/catch, wrap all LLM errors in custom error classes
+// src/index.ts:58
+routerService: null as any, // Will be initialized after httpServer
+```
 
-**Missing Semantic Continuity in Folded Memory:**
-- Issue: When semantic entries are folded, no mechanism ensures narrative continuity
-- Files: `src/services/memoryManager.ts`
-- Why: Folding logic prioritized token efficiency over story coherence
-- Impact: Folded dialogue may lose important narrative context, story gaps possible
-- Fix approach: Add continuity preservation in folding prompts, maintain narrative thread in summaries
+**Recommendation**: Define proper interface for `app.locals` and use type guards
 
-## Known Bugs
+#### 2. Console Logging in Production Code
+**Location**: `src/routes/sessions.ts`, `src/routes/config.ts`
 
-**Race Condition in Token Budget Enforcement:**
-- Symptoms: Two concurrent writes may both succeed when only budget for one
-- Trigger: Multiple agents write to same layer simultaneously during high activity
-- Files: `src/services/blackboard.ts` (writeEntry method), `src/services/memoryManager.ts`
-- Workaround: None currently, mitigated by low concurrency in typical usage
-- Root cause: Token budget check not atomic with write operation
-- Blocked by: Would require mutex/lock mechanism, not implemented
+**Issues**: Direct `console.log()` and `console.error()` calls instead of structured logging
 
-**Memory Fold May Lose Critical Information:**
-- Symptoms: Important facts folded away if not recently accessed
-- Trigger: Semantic layer exceeds budget, fold triggered with tail preservation
-- Files: `src/services/memoryManager.ts` (performFold method)
-- Workaround: Promote critical entries to core layer before fold
-- Root cause: Fold algorithm uses recency rather than importance
-- Fix: Add metadata priority field, sort by priority before folding
+**Impact**: 
+- Logs bypass Pino logger configuration
+- No log level control
+- Inconsistent log format (mix of console and Pino)
 
-**Director Cannot Promote to Core After Scenario Delete:**
-- Symptoms: Director.promoteToScenarioToCore fails if scenario entry was deleted
-- Trigger: Scenario layer entry deleted after being promoted
-- Files: `src/services/director.ts`, `src/services/memoryManager.ts`
-- Workaround: Re-write scenario entry before promotion
-- Root cause: Promotion references scenario entry ID by string, no validation
-- Blocked by: Need reference counting or soft-delete mechanism
+**Examples**:
+```typescript
+// src/routes/sessions.ts
+console.log('[API GET /sessions] Returning sessions:', ...);
+console.error('[API GET /sessions/agents] Error:', err);
+```
 
-## Security Considerations
+**Recommendation**: Replace with `req.app.locals.logger` or inject logger dependency
 
-**JWT Secret in Environment File:**
-- Risk: JWT signing secret stored in plain text in `.env` file
-- Files: `.env`, `src/config.ts`
-- Current mitigation: `.env` not committed to git, gitignore protects it
-- Recommendations: Use secret management service (AWS Secrets Manager, HashiCorp Vault), rotate secrets regularly, enforce minimum 32-character complexity
+#### 3. Incomplete Feature: Faction Matching
+**Location**: `src/services/blackboard.ts:238`
 
-**No Rate Limiting on Public Endpoints:**
-- Risk: Abuse of public endpoints (`/session`, `/blackboard/agents/register`) for DDoS or resource exhaustion
-- Files: `src/routes/session.ts`, `src/routes/agents.ts`
-- Current mitigation: None (all endpoints public except blackboard CRUD)
-- Recommendations: Add rate limiting middleware (express-rate-limit), implement API key authentication for public endpoints, add request quotas
+```typescript
+return true; // TODO: Implement faction matching
+```
 
-**Insufficient Input Validation on LLM Prompts:**
-- Risk: Prompt injection if user-provided content not sanitized
-- Files: `src/services/actor.ts`, `src/services/director.ts` (prompt construction)
-- Current mitigation: LLM providers have built-in safety filters
-- Recommendations: Add prompt sanitization, use prompt injection detection, limit prompt length
+**Impact**: Visibility filtering for "faction" type not implemented; all faction entries visible
 
-**No CSP Headers on HTTP Responses:**
-- Risk: XSS attacks if frontend served from same origin
-- Files: `src/app.ts` (Express app setup)
-- Current mitigation: No XSS vulnerabilities known in frontend
-- Recommendations: Add Helmet middleware for security headers, implement Content Security Policy
+**Recommendation**: Implement faction-based visibility rules or remove the feature
 
-**Audit Log Contains Sensitive Information:**
-- Risk: Agent JWT tokens and LLM prompts logged in audit trail
-- Files: `src/services/auditLog.ts`, multiple service files (audit calls)
-- Current mitigation: Audit logs not exposed via API, file permissions on data directory
-- Recommendations: Redact sensitive data from audit logs, implement log rotation, encrypt audit logs at rest
+#### 4. Actor Response Parsing Resilience
+**Location**: `src/services/actor.ts:130-140`
 
-## Performance Bottlenecks
+**Issues**:
+```typescript
+const parsedAny = parsed as any;
+const output: DialogueOutput = {
+  exchangeId: parsedAny?.exchangeId || exchangeId,
+  entries: parsedAny?.entries || [],
+  // ...
+};
+output.entries = output.entries.map((entry: any) => ({
+```
 
-**Memory Folding Blocks Write Operations:**
-- Problem: Write to layer waits for LLM summarization to complete
-- Measurement: 2-5 seconds per fold operation during high activity
-- Files: `src/services/memoryManager.ts` (writeEntryWithMemoryManagement)
-- Cause: Synchronous LLM call for summarization blocks write
-- Improvement path: Async folding in background, queue folds, allow writes during fold, cache summary results
+**Impact**: Multiple `any` casts defeat type safety; missing validation for LLM response structure
 
-**Sequential Actor Turns in Scene:**
-- Problem: Director waits for each actor to complete before next actor
-- Measurement: Scene with 3 actors takes 3x single actor time (no parallelism)
-- Files: `src/session.ts` (runScene method), `src/services/director.ts`
-- Cause: Round-robin pattern implemented sequentially
-- Improvement path: Parallel actor generation with Promise.all, Director arbitrates concurrent responses, timeout handling for parallel execution
+**Recommendation**: Use Zod schema validation for LLM responses instead of type casting
 
-**Blackboard Snapshot Synchronous:**
-- Problem: Snapshot write blocks HTTP response on `POST /session`
-- Measurement: 100-500ms additional latency on session creation
-- Files: `src/services/snapshot.ts`, `src/routes/session.ts`
-- Cause: File system write operation in request handler
-- Improvement path: Async snapshot writes, snapshot queue, debounced writes, move snapshot to background job
+### Security Concerns
 
-**No Token Counting Caching:**
-- Problem: Tiktoken encoding called for every entry, expensive operation
-- Measurement: ~50ms per 1000 characters encoded
-- Files: `src/services/blackboard.ts` (countTokens)
-- Cause: No caching of token counts for repeated content
-- Improvement path: Cache token counts by content hash, LRU cache for recently counted strings, pre-count known patterns
+#### 1. JWT Secret Validation
+**Location**: `src/config.ts`
 
-**Socket.IO Room Management Inefficient:**
-- Problem: Broadcasting to large rooms iterates all sockets
-- Measurement: O(n) complexity for broadcast to n agents
-- Files: `src/services/router.ts` (sendBroadcast method)
-- Cause: Socket.IO room implementation limits optimization
-- Improvement path: Use multicast patterns, limit room size, implement agent subscription filters
+Secret length validated (min 32 chars) but no additional security checks:
+- No entropy validation
+- No check against common/weak secrets
+- Development secrets may be committed (risk of .env file leakage)
 
-## Fragile Areas
+#### 2. CORS Configuration
+**Location**: `src/app.ts:32-36`, `src/services/router.ts`
 
-**Memory Manager State Management:**
-- Why fragile: Complex logic for fold/unfold, promotion, alerting
-- Common failures: Race conditions during concurrent folds, budget miscalculation, infinite loops in fold logic
-- Safe modification: Add comprehensive integration tests, use mutex for concurrent access, validate invariants in tests
-- Test coverage: Unit tests good, integration tests limited for concurrent scenarios
-- Files: `src/services/memoryManager.ts`, `tests/memoryManager.test.ts`
+```typescript
+app.use(cors({
+  origin: '*',  // Allows all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+}));
+```
 
-**Director-Actor Message Orchestration:**
-- Why fragile: Tight coupling between Director signaling and Actor response
-- Common failures: Actor timeout causes scene to hang, missed messages, out-of-order execution
-- Safe modification: Add message acknowledgments, implement retry with backoff, add timeout handling at every step
-- Test coverage: E2E tests cover happy path, chaos tests cover some failures
-- Files: `src/services/director.ts`, `src/services/actor.ts`, `src/session.ts`
+**Impact**: Open CORS policy may be overly permissive for production
 
-**Capability Enforcement Points:**
-- Why fragile: Enforced in multiple places (routes, services), easy to miss new endpoint
-- Common failures: New route forgets capability check, service bypasses capability, inconsistent layer access
-- Safe modification: Use middleware for all routes, enforce capability in service layer only, add automated tests for all capabilities
-- Test coverage: Boundary tests comprehensive but may not cover all code paths
-- Files: `src/services/capability.ts`, `src/routes/`, `tests/boundary.test.ts`
+**Recommendation**: Restrict to known frontend origins in production
 
-**Socket.IO Message Routing:**
-- Why fragile: Complex routing logic with buffering, timeout, reconnection
-- Common failures: Message buffer overflow on long disconnection, reconnection race conditions, duplicate message delivery
-- Safe modification: Add message deduplication, limit buffer size, implement exponential backoff for reconnection
-- Test coverage: Protocol tests cover basic routing, chaos tests cover some failures
-- Files: `src/services/router.ts`, `tests/protocol.test.ts`, `tests/chaos.test.ts`
+#### 3. No Rate Limiting
+**Location**: API routes (`src/routes/*.ts`)
 
-**Bootstrap and Service Initialization:**
-- Why fragile: Services must be initialized in correct order, missing service causes crash
-- Common failures: Dependency not initialized before use, circular dependencies, startup errors not caught
-- Safe modification: Document dependency order, add startup health checks, lazy initialize optional services
-- Test coverage: No integration tests for bootstrap sequence
-- Files: `src/index.ts`, `src/config.ts`
+**Impact**: Susceptible to:
+- LLM API abuse (cost attacks)
+- Brute force on JWT endpoints
+- Resource exhaustion
 
-## Scaling Limits
+**Recommendation**: Implement rate limiting middleware
 
-**Single-Process Architecture:**
-- Current capacity: ~10 concurrent drama sessions, ~30 concurrent actors
-- Limit: Single Node.js process limited to CPU cores, memory constrained to process heap
-- Symptoms at limit: CPU at 100%, memory errors, request timeouts
-- Scaling path: Use Node.js cluster mode, deploy multiple instances behind load balancer, implement shared state (Redis) for distributed blackboard
+#### 4. File System Path Traversal
+**Location**: `src/services/snapshot.ts`, `src/services/auditLog.ts`
 
-**In-Memory Blackboard State:**
-- Current capacity: ~1GB total blackboard state (all layers)
-- Limit: Node.js heap size limit (~1-2GB in production)
-- Symptoms at limit: Out of memory errors, GC pauses, process crashes
-- Scaling path: Move blackboard to external database (PostgreSQL, Redis), implement state sharding by session, add cache eviction policies
+File operations use user-influenced paths without sanitization:
+```typescript
+const filePath = path.join(this.dataDir, `${sessionId}-snapshot.json`);
+```
 
-**Sequential LLM Calls:**
-- Current capacity: ~1 LLM call per second per process (limited by API rate limits)
-- Limit: LLM API rate limits (OpenAI: ~3-5 RPM for GPT-4, Anthropic: ~5-20 RPM for Claude)
-- Symptoms at limit: 429 Too Many Requests errors, long queues, degraded experience
-- Scaling path: Implement request queuing and batching, use multiple API keys across accounts, cache LLM responses, implement fallback providers
+If `sessionId` is not properly validated, could lead to path traversal
 
-**File-Based Audit Logging:**
-- Current capacity: ~100MB/day of audit logs
-- Limit: File system I/O becomes bottleneck, disk space consumption
-- Symptoms at limit: Slow audit log writes, disk space exhaustion, query performance degradation
-- Scaling path: Use centralized logging (ELK stack), implement log rotation and archival, store audit logs in database, log sampling for high volume
+**Recommendation**: Validate session IDs against UUID format before file operations
 
-**Socket.IO Connections:**
-- Current capacity: ~100 concurrent socket connections per process
-- Limit: File descriptor limits, memory per connection, WebSocket overhead
-- Symptoms at limit: Connection errors, memory exhaustion, high CPU usage
-- Scaling path: Use Redis adapter for distributed Socket.IO, implement connection pooling, add connection limits and timeouts
+### Performance Concerns
 
-## Dependencies at Risk
+#### 1. Synchronous Token Counting
+**Location**: `src/services/blackboard.ts:61-63`
 
-**ReactFlow 11.11.4:**
-- Risk: Minor version updates may introduce breaking changes, API not stable
-- Impact: Agent graph visualization breaks, UI errors
-- Migration plan: Pin to specific version, test upgrades carefully, consider alternative (vis-network, d3-graphviz)
+```typescript
+countTokens(text: string): number {
+  return getEncoder().encode(text).length; // Synchronous
+}
+```
 
-**Zod 3.23.0:**
-- Risk: Major version 4 in development, potential breaking changes
-- Impact: Schema validation breaks, runtime errors on type checking
-- Migration plan: Monitor Zod v4 release, plan migration path, test all schemas after upgrade
+**Impact**: CPU-intensive operation on main thread; may block event loop for large texts
 
-**pino 9.0.0:**
-- Risk: Minor version updates may change log format, break log parsing
-- Impact: Log analysis tools fail, monitoring breaks
-- Migration plan: Pin to specific version, test log output after upgrade, implement log format validation
+**Mitigation**: Currently acceptable for typical use; monitor for large content
 
-**tiktoken 1.0.0:**
-- Risk: OpenAI may change tokenization, WASM dependencies may break
-- Impact: Token counts become inaccurate, budget enforcement fails
-- Migration plan: Monitor OpenAI tokenization changes, test token counts on upgrade, implement fallback token estimation
+#### 2. Memory Leaks
+**Location**: `src/services/router.ts`, `src/services/sessionRegistry.ts`
 
-**html2pdf.js 0.10.1:**
-- Risk: Unmaintained (last update 2+ years ago), may not work with newer browsers
-- Impact: PDF export fails, user cannot download scripts
-- Migration plan: Switch to puppeteer or pdf-lib for PDF generation, add PDF export tests
+**Concerns**:
+- Agent disconnection cleanup may not remove all references
+- Event listeners may accumulate on repeated connect/disconnect
+- Session registry holds references indefinitely
 
-## Missing Critical Features
+**Recommendation**: Add periodic audit of Map sizes; implement session TTL
 
-**Graceful Shutdown:**
-- Problem: No graceful shutdown handler, abrupt termination may corrupt state
-- Current workaround: Manual shutdown with caution
-- Blocks: Clean deployment, zero-downtime updates, proper error recovery
-- Implementation complexity: Low (add SIGTERM/SIGINT handlers, drain connections, flush logs)
+#### 3. LLM Timeout Handling
+**Location**: `src/services/llm/openai.ts`, `src/services/llm/anthropic.ts`
 
-**Session Resume After Crash:**
-- Problem: No mechanism to resume session after server restart
-- Current workaround: Start new session from scratch
-- Blocks: Long-running dramas, production reliability
-- Implementation complexity: Medium (implement session persistence, load state on startup, validate consistency)
+No explicit request timeouts on LLM calls (relies on global actor timeout):
+```typescript
+const response = await this.client.chat.completions.create({
+  // ...no timeout specified
+});
+```
 
-**Actor State Management:**
-- Problem: No tracking of actor state (connected/disconnected/timeout)
-- Current workaround: Director assumes all actors present
-- Blocks: Dynamic actor addition/removal, partial session recovery
-- Implementation complexity: Medium (add actor state tracking, implement reconnection logic, update director orchestration)
+**Impact**: Hanging LLM requests may consume resources
 
-**Backpressure Control:**
-- Problem: No mechanism to slow down message flow under load
-- Current workaround: System degrades under high load, may crash
-- Blocks: Production stability, predictable performance
-- Implementation complexity: Medium (implement message queue, add rate limiting, monitor queue depth)
+**Recommendation**: Add explicit timeout with AbortController
 
-**Observability and Metrics:**
-- Problem: No metrics collection, monitoring, or alerting
-- Current workaround: Manual log analysis, reactive troubleshooting
-- Blocks: Proactive issue detection, capacity planning, SLA monitoring
-- Implementation complexity: High (add Prometheus metrics, implement distributed tracing, set up alerting)
+### Reliability Concerns
 
-## Test Coverage Gaps
+#### 1. Error Handling Inconsistency
+**Location**: Multiple route files
 
-**Concurrent Access Patterns:**
-- What's not tested: Multiple agents writing to blackboard simultaneously, concurrent folds, race conditions
-- Risk: Data corruption, lost updates, inconsistent state
-- Priority: High
-- Difficulty to test: Need to intentionally create race conditions, use async/await patterns, verify invariants
+**Pattern observed**:
+```typescript
+try {
+  // ... operation
+} catch (err: any) {
+  res.status(500).json({ error: err.message });
+}
+```
 
-**Error Recovery Paths:**
-- What's not tested: System behavior after errors, retry logic, degraded mode
-- Risk: Errors cause cascading failures, system doesn't recover
-- Priority: Medium
-- Difficulty to test: Need to simulate errors at various layers, verify recovery, test multiple failure modes
+**Issues**:
+- Error type not checked before accessing `.message`
+- Stack traces may leak to client
+- No structured error logging
 
-**Long-Running Sessions:**
-- What's not tested: Sessions lasting hours/days, memory usage over time, connection stability
-- Risk: Memory leaks, connection drops, gradual degradation
-- Priority: Medium
-- Difficulty to test: Need to run long-duration tests, monitor memory and connections, simulate network issues
+#### 2. Snapshot File Corruption
+**Location**: `src/services/snapshot.ts`
 
-**Edge Cases in Memory Folding:**
-- What's not tested: Boundary conditions (exact budget, one over, one under), empty layers, corrupted metadata
-- Risk: Incorrect folding logic, loss of critical data, infinite loops
-- Priority: High
-- Difficulty to test: Need comprehensive boundary test matrix, validate all folding branches
+**Issues**:
+- Write is not atomic (read-modify-write pattern)
+- No checksum validation
+- Corrupted files may crash on restore
 
-**Integration with Frontend:**
-- What's not tested: Full frontend-backend integration flow, WebSocket connection handling, UI error states
-- Risk: Frontend-backend contract breaks, user-facing errors
-- Priority: Medium
-- Difficulty to test: Need browser automation (Playwright), test WebSocket reconnection, verify UI states
+**Recommendation**: Write to temp file, then rename for atomicity
 
----
+#### 3. Audit Log File Rotation
+**Location**: `src/services/auditLog.ts`
 
-*Concerns audit: 2026-03-22*
-*Update as issues are fixed or new ones discovered*
+**Issues**:
+- Audit logs append indefinitely
+- No automatic rotation or cleanup
+- Files may grow unbounded
+
+### Maintainability Concerns
+
+#### 1. Large Files
+| File | Lines | Concern |
+|------|-------|---------|
+| `src/session.ts` | 800+ | Multiple responsibilities (orchestration, state machine, chaos hooks) |
+| `src/services/llm.ts` | 500+ | Prompt building, provider management, utilities |
+| `src/services/directorMemory.ts` | 580+ | Complex memory management logic |
+| `src/services/actorMemory.ts` | 697+ | Large memory system implementation |
+
+#### 2. Complex Dependencies
+**Location**: `src/index.ts`
+
+Service initialization has complex wiring order:
+1. SnapshotService (needs dataDir)
+2. AuditLogService (needs dataDir)
+3. BlackboardService (needs snapshot)
+4. CapabilityService
+5. SessionRegistry
+6. HTTP Server + Express app
+7. RouterService (needs HTTP server)
+8. MemoryManagerService (needs blackboard + LLM)
+
+**Impact**: Difficult to test in isolation; circular dependency risk
+
+#### 3. Magic Numbers
+**Location**: Throughout codebase
+
+Examples:
+```typescript
+// src/services/directorMemory.ts
+maxAnchors: 15,
+maxThreads: 8,
+compressionThreshold: 3,
+
+// src/services/blackboard.ts
+BUDGET_ALERT_THRESHOLD = 0.6;
+
+// src/services/actorMemory.ts
+maxEpisodic: 50,
+maxRelationships: 10,
+```
+
+**Recommendation**: Extract to configuration with documentation
+
+### Testing Gaps
+
+#### 1. Missing Test Coverage
+| Component | Status |
+|-----------|--------|
+| Frontend React components | No automated tests |
+| WebSocket real-time scenarios | Limited coverage |
+| LLM provider fallback logic | Partial |
+| Snapshot corruption recovery | None |
+| Audit log rotation | None |
+
+#### 2. Flaky Tests
+**Location**: `tests/chaos.test.ts`
+
+Chaos tests use timing-dependent operations that may be flaky in CI
+
+#### 3. No Browser/Visual Testing
+**Location**: `frontend/`
+
+No Playwright, Cypress, or similar for UI testing
+
+### Documentation Gaps
+
+#### 1. API Documentation
+- OpenAPI/Swagger spec not generated
+- API changes not versioned
+
+#### 2. Architecture Decision Records
+- No ADRs for major decisions
+- "Why" behind designs not documented
+
+#### 3. Operational Documentation
+- No runbook for common incidents
+- Alerting/observability not documented
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Priority |
+|------|------------|--------|----------|
+| CORS misconfiguration in production | Medium | Medium | High |
+| Memory leak in long-running sessions | Medium | High | High |
+| Type safety issues causing runtime errors | Medium | Medium | Medium |
+| Audit log disk exhaustion | Low | High | Medium |
+| LLM API abuse (cost) | Low | High | Medium |
+| Console logging noise | High | Low | Low |
+| Incomplete faction feature | Low | Low | Low |
+
+## Recommended Actions
+
+### Immediate (High Priority)
+1. Add proper typing for `app.locals` to eliminate `as any` casts
+2. Replace console.log with structured logger in routes
+3. Implement rate limiting for LLM endpoints
+4. Add explicit timeouts to LLM calls
+
+### Short Term (Medium Priority)
+5. Restrict CORS origins for production
+6. Implement audit log rotation
+7. Add atomic snapshot writes
+8. Extract magic numbers to config
+
+### Long Term (Low Priority)
+9. Add frontend browser tests (Playwright)
+10. Generate OpenAPI spec
+11. Implement ADR process
+12. Create operational runbooks

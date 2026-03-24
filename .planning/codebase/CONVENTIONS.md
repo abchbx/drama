@@ -1,785 +1,355 @@
-# Code Conventions
+# Conventions
 
-**Project:** Multi-Agent Drama System  
-**Version:** v1.1  
-**Last Updated:** 2026-03-22  
-
-## Table of Contents
-- [Language and Compiler](#language-and-compiler)
-- [Code Organization](#code-organization)
-- [Naming Conventions](#naming-conventions)
-- [Type Safety](#type-safety)
-- [Error Handling](#error-handling)
-- [Logging](#logging)
-- [Service Patterns](#service-patterns)
-- [Testing Patterns](#testing-patterns)
-- [Configuration](#configuration)
-
----
-
-## Language and Compiler
+## Code Style
 
 ### TypeScript Configuration
+- **Target**: ES2022
+- **Module**: NodeNext with NodeNext resolution
+- **Strict Mode**: Enabled with `noUncheckedIndexedAccess`
+- **ESM**: All files use ES Modules (`"type": "module"` in package.json)
 
-**File**: `tsconfig.json`
+### Import/Export Conventions
 
-**Key Settings**:
-- **Target**: `ES2022` - Modern JavaScript features
-- **Module**: `NodeNext` - Node.js ES modules
-- **Module Resolution**: `NodeNext`
-- **Strict Mode**: `true` - Strict type checking enabled
-- **Declaration**: `true` - Generate `.d.ts` files
-- **OutDir**: `dist/` - Compiled output directory
-- **RootDir**: `src/` - Source root
-
-**Implications**:
-- All files must use `.js` extensions in imports (ES modules)
-- Type checking is strict (no implicit `any`, null checks enabled)
-- Decorators are not used (not in tsconfig)
-- Source maps are generated for debugging
-
-### Development Mode
-
-**Tool**: `tsx 4.16.0`
-
-- Executes TypeScript directly without compilation
-- Watch mode for hot reload (`tsx watch src/index.ts`)
-- Used in development workflow (`npm run dev`)
-
----
-
-## Code Organization
-
-### File Structure
-
-**Backend** (`src/`):
-```
-src/
-├── types/          # Type definitions and Zod schemas
-├── services/       # Business logic implementations
-├── routes/         # Express route handlers
-├── config.ts       # Configuration (lowercase for entry point)
-├── index.ts        # Bootstrap entry point (lowercase)
-├── app.ts          # Express app composition (lowercase)
-└── session.ts      # Session orchestration
-```
-
-**Frontend** (`frontend/src/`):
-```
-frontend/src/
-├── components/     # React components
-├── lib/            # Third-party wrappers
-├── store/          # Zustand stores
-├── types/          # Frontend types
-├── utils/          # Utility functions
-├── App.tsx         # Root component
-└── main.tsx        # Entry point
-```
-
-### Import Order
-
-1. **Node.js built-in modules** (with `node:` prefix)
-2. **External dependencies** (npm packages)
-3. **Internal modules** (relative imports with `.js` extension)
-
-**Example**:
+#### Import Order
 ```typescript
-import { createHash } from 'node:crypto';
-import { Router } from 'express';
+// 1. External dependencies
 import type pino from 'pino';
 import { z } from 'zod';
+import { Server as SocketIOServer } from 'socket.io';
 
-import type { BlackboardLayer } from '../types/blackboard.js';
-import { BlackboardService } from '../services/blackboard.js';
+// 2. Internal types
+import type { BlackboardService } from '../types/blackboard.js';
+import type { LlmProvider } from './llm.js';
+
+// 3. Internal implementations
+import { DirectorMemoryService } from './directorMemory.js';
+import { config } from '../config.js';
 ```
 
----
+#### File Extensions
+- **CRITICAL**: All imports MUST include `.js` extension for ESM compatibility
+- Correct: `import { X } from './file.js'`
+- Incorrect: `import { X } from './file'`
 
-## Naming Conventions
-
-### Files
-
-- **Type definitions**: `PascalCase.ts` (e.g., `actor.ts`, `blackboard.ts`)
-- **Services**: `PascalCase.ts` (e.g., `actor.ts`, `director.ts`)
-- **Routes**: `PascalCase.ts` (e.g., `blackboard.ts`, `health.ts`)
-- **Entry points**: `lowercase.ts` (e.g., `index.ts`, `app.ts`, `config.ts`)
-- **Test files**: `*.test.ts` (e.g., `actor.test.ts`, `blackboard.test.ts`)
-
-### Classes
-
-**Pattern**: `PascalCase`
-
+#### Type-Only Imports
+Use `import type` for type-only imports to avoid circular dependency issues:
 ```typescript
-class BlackboardService { }
-class CapabilityService { }
-class Actor { }
-class Director { }
-class DramaSession { }
+import type { BlackboardService } from './blackboard.js';
+import type { CharacterCard } from '../types/actor.js';
 ```
 
-**Suffixes**:
-- `*Service` - Stateless service classes
-- `*Manager` - Stateful management classes
-- `*Provider` - External integration classes
-- `*Error` - Custom error classes
+### Naming Conventions
 
-### Functions and Methods
+| Category | Pattern | Example |
+|----------|---------|---------|
+| Services | PascalCase | `BlackboardService`, `Director`, `Actor` |
+| Interfaces | PascalCase | `LlmProvider`, `SceneConfig` |
+| Types | PascalCase | `BlackboardLayer`, `DialogueOutput` |
+| Zod Schemas | PascalCase + Schema | `CharacterCardSchema`, `RoutingMessageSchema` |
+| Functions | camelCase | `buildActorSystemPrompt()`, `countTokens()` |
+| Variables | camelCase | `blackboardService`, `entryCount` |
+| Constants | UPPER_SNAKE_CASE | `LAYER_BUDGETS`, `BUDGET_ALERT_THRESHOLD` |
+| Error Classes | PascalCase + Error | `VersionConflictError`, `ActorGenerationError` |
+| Private Members | Leading underscore | `_encoder`, `_io` |
 
-**Pattern**: `camelCase`
+### Class Structure
 
+#### Service Classes
 ```typescript
-function writeEntry() { }
-function getCharacterCard() { }
-function checkCapability() { }
-function factCheck() { }
-```
-
-**Private methods**:
-- Use TypeScript `private` keyword
-- No underscore prefix convention (use TypeScript visibility modifiers)
-
-### Interfaces and Types
-
-**Pattern**: `PascalCase`
-
-```typescript
-interface BlackboardEntry { }
-interface CharacterCard { }
-interface RoutingMessage { }
-```
-
-**Type aliases**:
-```typescript
-type BlackboardLayer = 'core' | 'scenario' | 'semantic' | 'procedural';
-type AgentRole = 'Actor' | 'Director' | 'Admin';
-```
-
-### Variables and Constants
-
-**Pattern**: `camelCase`
-
-```typescript
-const agentId = 'actor-123';
-const layer: BlackboardLayer = 'semantic';
-const message = routingMessage;
-```
-
-**Constants** (module-level):
-```typescript
-const RECENT_TAIL_SIZE = 3;
-const BUDGET_ALERT_THRESHOLD = 0.6;
-const DEFAULT_TIMEOUT_MS = 30000;
-```
-
-### Enums
-
-**Pattern**: `PascalCase` for enum, `UPPER_SNAKE_CASE` for values
-
-```typescript
-enum SessionStatus {
-  CREATED = 'created',
-  IDLE = 'idle',
-  RUNNING = 'running',
-  COMPLETED = 'completed',
+export class ServiceName {
+  // Private readonly dependencies first
+  private readonly dependency: DependencyType;
+  private readonly logger: pino.Logger;
+  
+  // Private mutable state
+  private currentState: StateType;
+  
+  constructor(options: ServiceOptions) {
+    // Validation first
+    if (!options.required) throw new Error('Service requires X');
+    
+    // Assignment
+    this.dependency = options.dependency;
+    this.logger = options.logger;
+    this.currentState = initialState;
+  }
+  
+  // Public methods
+  public async doSomething(): Promise<Result> { }
+  
+  // Private methods
+  private helper(): void { }
 }
 ```
 
-### Environment Variables
+## Type Patterns
 
-**Pattern**: `UPPER_SNAKE_CASE`
-
+### Zod Schema Definition Pattern
 ```typescript
-process.env.PORT
-process.env.JWT_SECRET
-process.env.LLM_PROVIDER
-process.env.OPENAI_API_KEY
-```
-
----
-
-## Type Safety
-
-### TypeScript Strict Mode
-
-**Enabled**: All strict checks are enabled in `tsconfig.json`
-
-**Key implications**:
-- No implicit `any` types
-- Null/undefined checks required
-- Explicit return types encouraged (optional)
-- `this` context must be typed
-
-### Type Definitions
-
-**Organized by domain**: `src/types/`
-
-Each type file contains:
-1. TypeScript type definitions
-2. Zod validation schemas
-3. Custom error classes (if applicable)
-
-**Example** (`src/types/blackboard.ts`):
-```typescript
-// TypeScript types
-export type BlackboardLayer = 'core' | 'scenario' | 'semantic' | 'procedural';
-
-export interface BlackboardEntry {
-  id: string;
-  agentId: string;
-  timestamp: string;
-  content: string;
-  tokenCount: number;
-  version: number;
-  metadata?: EntryMetadata;
+// 1. Define raw interface (for documentation)
+export interface CharacterCard {
+  name: string;
+  role: string;
+  voice: VoiceProfile;
 }
 
-// Zod schemas
-export const BlackboardLayerSchema = z.enum(['core', 'scenario', 'semantic', 'procedural']);
-
-export const BlackboardEntrySchema = z.object({
-  id: z.string().uuid(),
-  agentId: z.string(),
-  timestamp: z.string().datetime(),
-  content: z.string(),
-  tokenCount: z.number().int().nonnegative(),
-  version: z.number().int().nonnegative(),
-  metadata: EntryMetadataSchema.optional(),
+// 2. Define Zod schema with runtime validation
+export const CharacterCardSchema = z.object({
+  name: z.string().min(1),
+  role: z.string().min(1),
+  voice: VoiceProfileSchema,
 });
 
-// Custom error types
-export class TokenBudgetExceededError extends Error {
-  constructor(
-    public readonly layer: BlackboardLayer,
-    public readonly budget: number,
-    public readonly requested: number,
-  ) {
-    super(`Token budget exceeded for layer ${layer}`);
+// 3. Infer and export type from schema
+export type CharacterCard = z.infer<typeof CharacterCardSchema>;
+
+// 4. Custom error class
+export class CharacterCardError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = 'CharacterCardError';
   }
 }
 ```
 
-### Type Assertions and Guards
-
-**Prefer type guards over type assertions**:
-
+### Discriminated Union Pattern
 ```typescript
-// Good - Type guard
-function isRoutingMessage(msg: unknown): msg is RoutingMessage {
-  return RoutingMessageSchema.safeParse(msg).success;
-}
-
-if (isRoutingMessage(data)) {
-  // data is typed as RoutingMessage
-}
-
-// Acceptable - Zod parsing
-const result = RoutingMessageSchema.safeParse(data);
-if (result.success) {
-  // result.data is typed
-}
+export type RoutingMessage = 
+  | { type: 'scene:start'; sceneId: string; directorId: string; }
+  | { type: 'scene:end'; sceneId: string; directorId: string; }
+  | { type: 'dialogue'; agentId: string; content: string; };
 ```
 
-**Avoid `any` type**:
-- Use `unknown` for truly untyped data
-- Parse with Zod schemas before use
-- Create union types where appropriate
-
----
+### Readonly Pattern
+Use `readonly` for immutable properties:
+```typescript
+export interface BlackboardEntry {
+  readonly id: string;
+  readonly agentId: string;
+  readonly timestamp: string;
+  readonly content: string;
+  readonly tokenCount: number;
+  readonly version: number;
+}
+```
 
 ## Error Handling
 
 ### Custom Error Classes
-
-**Location**: `src/types/*.ts` (domain-specific)
-
-**Pattern**: Extend `Error` with typed properties
+All service errors extend Error with additional context:
 
 ```typescript
+// src/types/blackboard.ts
 export class VersionConflictError extends Error {
-  constructor(
-    public readonly layer: BlackboardLayer,
-    public readonly expectedVersion: number,
-    public readonly actualVersion: number,
-  ) {
-    super(`Version conflict in layer ${layer}`);
+  readonly currentVersion: number;
+  readonly expectedVersion: number;
+  
+  constructor(currentVersion: number, expectedVersion: number) {
+    super(`Version conflict: expected ${expectedVersion}, current ${currentVersion}`);
     this.name = 'VersionConflictError';
+    this.currentVersion = currentVersion;
+    this.expectedVersion = expectedVersion;
   }
 }
 
-export class BoundaryViolationError extends Error {
-  constructor(
-    public readonly agentId: string,
-    public readonly role: AgentRole,
-    public readonly layer: BlackboardLayer,
-    public readonly operation: 'read' | 'write',
-  ) {
-    super(`Agent ${agentId} (${role}) cannot ${operation} layer ${layer}`);
-    this.name = 'BoundaryViolationError';
-  }
-}
-```
-
-### Error Throwing
-
-**Throw domain-specific errors**:
-
-```typescript
-// Service layer
-export class BlackboardService {
-  writeEntry(layer: BlackboardLayer, entry: BlackboardEntry): void {
-    if (layer === 'core' && !this.canWriteCore(agent.role)) {
-      throw new BoundaryViolationError(agentId, agent.role, layer, 'write');
-    }
-    // ...
+export class TokenBudgetExceededError extends Error {
+  readonly layer: BlackboardLayer;
+  readonly budget: number;
+  
+  constructor(layer: BlackboardLayer, budget: number, currentCount: number, attemptedCount: number) {
+    super(`Token budget exceeded for layer '${layer}': budget=${budget}...`);
+    this.name = 'TokenBudgetExceededError';
+    this.layer = layer;
+    this.budget = budget;
+    this.currentCount = currentCount;
+    this.attemptedCount = attemptedCount;
   }
 }
 ```
 
-### Error Catching and Logging
-
-**Always log errors with context**:
-
+### Error Handling Pattern
 ```typescript
+// In services: throw typed errors
 try {
-  await this.llmProvider.generate(prompt);
+  const result = riskyOperation();
+  return result;
 } catch (error) {
-  logger.error(
-    { err: error, agentId, promptLength: prompt.user.length },
-    'LLM generation failed'
-  );
-  throw new ActorGenerationError(agentId, error);
+  this.logger.error({ error }, 'operation failed');
+  throw new SpecificServiceError('context', error);
+}
+
+// In routes: convert to HTTP responses
+try {
+  const result = await service.operation();
+  res.json(result);
+} catch (error) {
+  if (error instanceof VersionConflictError) {
+    return res.status(409).json({ error: 'Conflict', currentVersion: error.currentVersion });
+  }
+  next(error);
 }
 ```
 
-### Route-Level Error Handling
+## Logging Conventions
 
-**Express error middleware**:
-
+### Logger Usage
 ```typescript
-// Custom error types map to HTTP status codes
-const errorStatusMap: Record<string, number> = {
-  VersionConflictError: 409,
-  TokenBudgetExceededError: 413,
-  BoundaryViolationError: 403,
-  NotFoundError: 404,
-  ValidationError: 400,
-};
+// Child loggers for components
+const logger = pino({ level: config.LOG_LEVEL });
+const childLogger = logger.child({ component: 'Director' });
+const sessionLogger = (sessionId: string) => logger.child({ sessionId });
 
-router.use((err: Error, _req, res, _next) => {
-  const statusCode = errorStatusMap[err.constructor.name] || 500;
-  res.status(statusCode).json({
-    error: err.constructor.name,
-    message: err.message,
-  });
-});
+// Structured logging
+logger.info({ sessionId, actorCount: 3 }, 'session initialized');
+logger.error({ error, agentId }, 'agent generation failed');
+logger.debug({ layer, tokenCount }, 'blackboard write');
 ```
 
----
+### Log Levels
+- `fatal` - System cannot continue
+- `error` - Operation failed, may retry
+- `warn` - Unexpected but handled condition
+- `info` - Normal operation milestones
+- `debug` - Detailed flow tracing (dev only)
 
-## Logging
+## Code Organization Patterns
 
-### Logger Setup
-
-**File**: `src/services/logger.ts`
-
-**Library**: `pino 9.0.0`
-
-**Configuration**:
-```typescript
-import pino from 'pino';
-
-export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: process.env.NODE_ENV === 'development' ? {
-    target: 'pino-pretty',
-    options: { colorize: true }
-  } : undefined,
-});
-```
-
-### Logging Patterns
-
-**Structured logging with context**:
+### Service Dependencies
+Dependencies are explicitly declared and validated:
 
 ```typescript
-// Info level - Normal operations
-logger.info({ dramaId, agentId, layer }, 'Entry written to blackboard');
-
-// Warn level - Warnings that don't stop execution
-logger.warn({ layer, usagePct: 0.75 }, 'Token budget approaching limit');
-
-// Error level - Errors that are handled
-logger.error({ err, agentId, role }, 'Failed to generate dialogue');
-
-// Fatal level - Errors that crash the process
-logger.fatal({ err }, 'Fatal error during server startup');
-```
-
-### Log Context
-
-**Always include relevant context**:
-
-```typescript
-// Good - Contextual logging
-logger.info(
-  { dramaId, sceneNumber, turnIndex, actorId },
-  'Actor generated dialogue'
-);
-
-// Bad - Insufficient context
-logger.info('Dialogue generated');
-```
-
-### Agent Attribution
-
-**Include agent information in logs**:
-
-```typescript
-logger.info(
-  { agentId, agentType: 'Actor' | 'Director', dramaId },
-  'Agent action'
-);
-```
-
----
-
-## Service Patterns
-
-### Constructor Injection
-
-**Services receive dependencies via constructor**:
-
-```typescript
-export class Actor {
-  constructor(
-    private readonly llmProvider: LlmProvider,
-    private readonly blackboard: BlackboardService,
-    private readonly capability: CapabilityService,
-    private readonly logger: pino.Logger,
-  ) {}
+export interface DirectorOptions {
+  blackboard: BlackboardService;
+  capabilityService: CapabilityService;
+  llmProvider: LlmProvider;
+  memoryManager: MemoryManagerService;
+  logger: pino.Logger;
+  agentId: string;
 }
-```
 
-### Readonly Properties
-
-**Use `readonly` for immutable dependencies**:
-
-```typescript
-export class BlackboardService {
-  constructor(
-    private readonly logger: pino.Logger,
-    private readonly layerBudgets: Map<BlackboardLayer, number>,
-  ) {
-    // logger and layerBudgets cannot be reassigned
+export class Director {
+  constructor(options: DirectorOptions) {
+    if (!options.blackboard) throw new Error('Director requires blackboard service');
+    if (!options.capabilityService) throw new Error('Director requires capability service');
+    // ... validation for all required dependencies
+    
+    this.blackboard = options.blackboard;
+    // ... assignment
   }
 }
 ```
 
-### Service Options Pattern
-
-**Optional services can be null**:
+### Interface Segregation
+LLM providers implement a common interface:
 
 ```typescript
-export class Director {
-  constructor(
-    private readonly llmProvider: LlmProvider,
-    private readonly blackboard: BlackboardService,
-    private readonly memoryManager?: MemoryManagerService,
-  ) {}
+export interface LlmProvider {
+  generate(prompt: LlmPrompt): Promise<LlmResponse>;
+}
+
+// Implementations in separate files
+export class OpenAiLlmProvider implements LlmProvider { }
+export class AnthropicLlmProvider implements LlmProvider { }
+export class MockLlmProvider implements LlmProvider { }
+```
+
+### Factory Pattern
+```typescript
+export async function createLlmProvider(logger: pino.Logger): Promise<LlmProvider> {
+  const config = await getLLMConfig();
+  
+  if (config.provider === 'openai' && config.openaiApiKey) {
+    return new OpenAiLlmProvider(config, logger);
+  }
+  if (config.provider === 'anthropic' && config.anthropicApiKey) {
+    return new AnthropicLlmProvider(config, logger);
+  }
+  
+  logger.warn('No valid LLM config, using mock provider');
+  return new MockLlmProvider(logger);
 }
 ```
 
-### Service Factory Pattern
+## Documentation Conventions
 
-**Services are instantiated in bootstrap order**:
-
+### JSDoc for Public APIs
 ```typescript
-// src/index.ts
-const snapshotService = new SnapshotService(config.blackboard.dataDir);
-const auditLogService = new AuditLogService(config.blackboard.dataDir);
-const blackboardService = new BlackboardService(logger, snapshotService, auditLogService);
-const capabilityService = new CapabilityService(config.jwt.secret);
-// ...
+/**
+ * Main public API: generate dialogue for a scene exchange.
+ *
+ * Flow:
+ * 1. Generate exchangeId
+ * 2. Build system + user prompts from SceneContext
+ * 3. Call LLM via injected provider (no hardcoded SDK)
+ * 4. Parse + validate JSON response with Zod
+ * 5. Write dialogue entries to semantic layer
+ * 6. Return DialogueOutput
+ */
+public async generate(context: SceneContext): Promise<DialogueOutput> {
+  // Implementation
+}
 ```
 
----
+### Comments for Complex Logic
+```typescript
+// Hard assertion: Director MUST NOT write to semantic layer
+// (role contract — DIR-03)
+const allowedLayers = this.capabilityService.capabilityMap['Director'];
+if ((allowedLayers as string[]).includes('semantic')) {
+  throw new Error('Director capability configuration error: semantic layer write must be denied');
+}
+```
+
+## Configuration Patterns
+
+### Environment Validation with Zod
+```typescript
+const ConfigSchema = z.object({
+  PORT: z.coerce.number().default(3000),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error', 'fatal']).default('info'),
+  OPENAI_API_KEY: z.string().optional(),
+});
+
+export function loadConfig(): Config {
+  try {
+    return ConfigSchema.parse(process.env);
+  } catch (error) {
+    console.error('❌ Configuration validation failed:', error);
+    process.exit(1);
+  }
+}
+```
+
+## File Organization
+
+### Service File Template
+```typescript
+// 1. Imports
+import type { Dependency } from './dependency.js';
+
+// 2. Type exports (if any)
+export interface ServiceOptions { }
+export type ServiceResult = { };
+
+// 3. Error classes
+export class ServiceError extends Error { }
+
+// 4. Main class
+export class ServiceName {
+  // Implementation
+}
+
+// 5. Helper functions (private or exported)
+function helper(): void { }
+```
 
 ## Testing Patterns
 
-### Test File Organization
+See [TESTING.md](./TESTING.md) for detailed testing conventions.
 
-**Structure**: `tests/*.test.ts`
-
-**Naming**: `serviceName.test.ts` or `featureName.test.ts`
-
-**Categories**:
-- Unit tests - Individual service methods
-- Integration tests - Service interactions
-- E2E tests - Complete workflows
-- Chaos tests - Resilience testing
-
-### Test Structure
-
-**Vitest test structure**:
-
-```typescript
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BlackboardService } from '../src/services/blackboard.js';
-import { createTestActor, createMockBlackboard } from './test-helpers.js';
-
-describe('BlackboardService', () => {
-  let blackboard: BlackboardService;
-
-  beforeEach(() => {
-    blackboard = createMockBlackboard();
-  });
-
-  describe('writeEntry', () => {
-    it('should write entry to correct layer', () => {
-      const entry = createTestEntry('semantic', 'test content');
-      blackboard.writeEntry('semantic', entry);
-      
-      const layer = blackboard.readLayer('semantic');
-      expect(layer).toHaveLength(1);
-      expect(layer[0].content).toBe('test content');
-    });
-
-    it('should throw TokenBudgetExceededError when budget exceeded', () => {
-      const entry = createTestEntry('semantic', 'x'.repeat(10000));
-      
-      expect(() => {
-        blackboard.writeEntry('semantic', entry);
-      }).toThrow(TokenBudgetExceededError);
-    });
-  });
-});
-```
-
-### Mock Patterns
-
-**Factory functions for test doubles**:
-
-```typescript
-// tests/test-helpers.ts
-export function createTestActor(overrides?: Partial<ActorOptions>): Actor {
-  return new Actor(
-    overrides?.llmProvider ?? new MockLlmProvider(),
-    overrides?.blackboard ?? createMockBlackboard(),
-    overrides?.capability ?? createMockCapabilityService(),
-    logger,
-  );
-}
-
-export function createMockBlackboard(): BlackboardService {
-  return new BlackboardService(
-    logger,
-    undefined, // no snapshot
-    undefined, // no audit log
-  );
-}
-```
-
-**Mock implementations**:
-
-```typescript
-// tests/mocks/mockLlmProvider.ts
-export class MockLlmProvider implements LlmProvider {
-  constructor(
-    private readonly response: string = 'Mock response',
-    private readonly delay: number = 0,
-  ) {}
-
-  async generate(_request: { system: string; user: string }): Promise<{ content: string }> {
-    if (this.delay > 0) {
-      await new Promise(resolve => setTimeout(resolve, this.delay));
-    }
-    return { content: this.response };
-  }
-}
-```
-
-### Error Testing
-
-**Test error conditions**:
-
-```typescript
-it('should throw BoundaryViolationError when actor writes to core layer', async () => {
-  const actor = createTestActor({ role: 'Actor' });
-  const entry = createTestEntry('core', 'should fail');
-
-  await expect(
-    actor.generateDialogue(entry)
-  ).rejects.toThrow(BoundaryViolationError);
-});
-```
-
-### Integration Testing
-
-**Test service interactions**:
-
-```typescript
-describe('Session Orchestration', () => {
-  it('should complete full session with director and actors', async () => {
-    const session = new DramaSession(/* ... */);
-    
-    const result = await session.runCompleteDrama(3);
-    
-    expect(result.scenes).toHaveLength(3);
-    expect(result.dialogues).toHaveLength(9); // 3 actors × 3 scenes
-  });
-});
-```
-
-### Chaos Testing
-
-**Test resilience**:
-
-```typescript
-describe('Chaos Resilience', () => {
-  it('should recover from actor timeout', async () => {
-    const session = new DramaSession(/* ... */);
-    const flakyActor = new FlakyLlmProvider({ timeoutAfter: 100 });
-    
-    session.injectChaos({ simulateTimeout: 'actor-1' });
-    
-    const result = await session.runScene(/* ... */);
-    
-    expect(result.skippedActors).toContain('actor-1');
-  });
-});
-```
-
----
-
-## Configuration
-
-### Environment Variable Validation
-
-**File**: `src/config.ts`
-
-**Pattern**: Zod schema + typed config object
-
-```typescript
-const ConfigSchema = z.object({
-  server: z.object({
-    port: z.coerce.number().int().min(1).max(65535).default(3000),
-    socketPort: z.coerce.number().int().min(1).max(65535).default(3001),
-    logLevel: z.enum(['debug', 'info', 'warn', 'error', 'fatal']).default('info'),
-  }),
-  jwt: z.object({
-    secret: z.string().min(32),
-    expiresIn: z.string().default('24h'),
-  }),
-  llm: z.object({
-    provider: z.enum(['openai', 'anthropic']),
-    openaiApiKey: z.string().optional(),
-    anthropicApiKey: z.string().optional(),
-  }),
-  // ...
-});
-
-export type Config = z.infer<typeof ConfigSchema>;
-
-export function loadConfig(): Config {
-  const rawConfig = ConfigSchema.parse({
-    server: {
-      port: process.env.PORT,
-      socketPort: process.env.SOCKET_PORT,
-      logLevel: process.env.LOG_LEVEL,
-    },
-    jwt: {
-      secret: process.env.JWT_SECRET,
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    },
-    llm: {
-      provider: process.env.LLM_PROVIDER,
-      openaiApiKey: process.env.OPENAI_API_KEY,
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY,
-    },
-  });
-
-  return rawConfig;
-}
-```
-
-### Constants
-
-**Define constants in appropriate files**:
-
-```typescript
-// src/services/blackboard.ts
-export const RECENT_TAIL_SIZE = 3;
-export const BUDGET_ALERT_THRESHOLD = 0.6;
-export const LAYER_NAMES: BlackboardLayer[] = ['core', 'scenario', 'semantic', 'procedural'];
-
-// src/services/router.ts
-export const DEFAULT_HEARTBEAT_INTERVAL_MS = 5000;
-export const DEFAULT_ACTOR_TIMEOUT_MS = 30000;
-export const DEFAULT_GRACE_PERIOD_MS = 10000;
-```
-
----
-
-## Frontend Conventions
-
-### React Component Structure
-
-```typescript
-// frontend/src/components/SessionPanel.tsx
-import { useState, useEffect } from 'react';
-
-export function SessionPanel({ dramaId }: SessionPanelProps) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchSession() {
-      try {
-        const data = await api.getSession(dramaId);
-        setSession(data);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchSession();
-  }, [dramaId]);
-
-  if (isLoading) return <div>Loading...</div>;
-  if (!session) return <div>Session not found</div>;
-
-  return (
-    <div className="session-panel">
-      {/* JSX */}
-    </div>
-  );
-}
-```
-
-### Zustand Store Pattern
-
-```typescript
-// frontend/src/store/appStore.ts
-import { create } from 'zustand';
-
-interface AppState {
-  sessions: Session[];
-  config: Config;
-  addSession: (session: Session) => void;
-  updateConfig: (config: Partial<Config>) => void;
-}
-
-export const useAppStore = create<AppState>((set) => ({
-  sessions: [],
-  config: defaultConfig,
-  addSession: (session) => set((state) => ({ 
-    sessions: [...state.sessions, session] 
-  })),
-  updateConfig: (config) => set((state) => ({ 
-    config: { ...state.config, ...config } 
-  })),
-}));
-```
-
----
-
-**End of Code Conventions**
+### Key Testing Principles
+- Use `MockLlmProvider` for deterministic LLM responses
+- Create fresh test apps with isolated data directories
+- Clean up resources in `afterEach`
+- Use JWT tokens for authenticated routes
+- Mock time for timeout-related tests

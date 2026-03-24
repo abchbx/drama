@@ -1,550 +1,190 @@
-# External Integrations
+# Integrations
 
-**Project:** Multi-Agent Drama System  
-**Version:** v1.1  
-**Last Updated:** 2026-03-22  
+## External Services
 
-## LLM Provider APIs
+### LLM Providers
 
-### OpenAI Integration
+#### OpenAI
+- **Package**: `openai` v6.32.0
+- **Models Supported**: gpt-4-turbo, gpt-4o, gpt-3.5-turbo
+- **Configuration**: `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL` (optional)
+- **Usage**: `src/services/llm/openai.ts`
+- **Features**:
+  - Chat completions API
+  - Streaming responses
+  - Token counting via tiktoken
 
-**SDK**: `openai 6.32.0`
+#### Anthropic
+- **Package**: `@anthropic-ai/sdk` v0.80.0
+- **Models Supported**: claude-3-opus-20240229, claude-3-5-sonnet, etc.
+- **Configuration**: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`
+- **Usage**: `src/services/llm/anthropic.ts`
+- **Features**:
+  - Messages API
+  - Streaming responses
+  - Token counting (provider-native)
 
-**API Endpoint**:
-- Default: `https://api.openai.com/v1`
-- Customizable via `OPENAI_BASE_URL` environment variable
+#### Mock Provider
+- **Purpose**: Development/testing without API keys
+- **Usage**: `src/services/llm/mock.ts`
+- **Behavior**: Returns deterministic mock responses based on prompt content
 
-**Models Supported**:
-- `gpt-4-turbo` (default)
-- Configurable via `OPENAI_MODEL`
+### Authentication
 
-**Authentication**:
-- API Key via `OPENAI_API_KEY` environment variable
-- Bearer token authentication
+#### JWT (JSON Web Tokens)
+- **Package**: `jsonwebtoken` v9.0.3
+- **Usage**: `src/services/capability.ts`
+- **Purpose**: Agent authentication and capability verification
+- **Configuration**:
+  - `JWT_SECRET`: Min 32 characters required
+  - `JWT_EXPIRES_IN`: Default '24h'
+- **Features**:
+  - Agent token generation
+  - Token verification middleware
+  - Capability-based access control
 
-**Features**:
-- Chat completions API
-- Temperature and max_tokens configuration
-- Streaming support (currently disabled, using non-streaming mode)
-- Error handling with detailed logging
+### Real-time Communication
 
-**Implementation**: `src/services/llm/openai.ts`
+#### Socket.IO
+- **Server Package**: `socket.io` v4.8.3
+- **Client Package**: `socket.io-client` v4.8.3
+- **Server Port**: 3000 (shared with HTTP)
+- **Usage**: `src/services/router.ts`
+- **Features**:
+  - Bidirectional event-based communication
+  - Room-based message routing (per session)
+  - Agent connection management
+  - Heartbeat/ping monitoring
+  - Graceful disconnection handling
 
-**Usage**:
-```typescript
-const completion = await client.chat.completions.create({
-  model: this.model,
-  messages: [
-    { role: 'system', content: prompt.system },
-    { role: 'user', content: prompt.user },
-  ],
-  temperature: this.temperature,
-  max_tokens: this.maxTokens,
-  stream: false,
-});
+### Logging
+
+#### Pino
+- **Package**: `pino` v9.0.0
+- **Dev Formatter**: `pino-pretty` v13.1.3
+- **Usage**: `src/services/logger.ts`
+- **Configuration**: `LOG_LEVEL` (debug, info, warn, error, fatal)
+- **Features**:
+  - Structured JSON logging
+  - Child loggers per session/component
+  - Pretty printing in development
+
+## Internal Integrations
+
+### Data Persistence
+
+#### File System Storage
+- **Purpose**: Session data, audit logs, blackboard state
+- **Location**: `data/` directory (configurable via `BLACKBOARD_DATA_DIR`)
+- **Usage**: `src/services/snapshot.ts`, `src/services/auditLog.ts`
+- **Features**:
+  - JSON file serialization
+  - Session snapshot save/load
+  - Audit log append-only writes
+
+### Memory System
+
+#### Tiktoken
+- **Package**: `tiktoken` v1.0.0
+- **Usage**: `src/services/blackboard.ts`
+- **Purpose**: Token counting for OpenAI model context management
+- **Features**:
+  - Model-specific encoding
+  - Context budget enforcement per layer
+
+### API Routing
+
+#### Express.js
+- **Package**: `express` v4.19.0
+- **Port**: 3000 (configurable via `PORT`)
+- **Routes**: `src/routes/`
+- **Endpoints**:
+  - `/api/sessions` - Session management
+  - `/api/blackboard` - Blackboard operations
+  - `/api/agents` - Agent management
+  - `/api/config` - Configuration
+  - `/api/templates` - Template management
+  - `/api/audit` - Audit log access
+  - `/api/health` - Health checks
+
+#### CORS
+- **Package**: `cors` v2.8.6
+- **Usage**: `src/app.ts`
+- **Purpose**: Cross-origin requests from frontend dev server
+
+## Frontend Integrations
+
+### Build & Development
+
+#### Vite
+- **Dev Server**: Port 5174
+- **API Proxy**: `/api` → `http://localhost:3000`
+- **Socket Proxy**: `/socket.io` → `http://localhost:3000` (local only)
+- **Environment Variables**: `VITE_*` prefix required
+
+### Visualization
+
+#### React Flow
+- **Package**: `reactflow` v11.11.4
+- **Usage**: Agent communication graph visualization
+- **Features**:
+  - Interactive node-based graphs
+  - Custom node types for agents
+  - Edge animations for message flow
+
+### Export
+
+#### html2pdf.js
+- **Package**: `html2pdf.js` v0.10.1
+- **Usage**: Script export to PDF format
+- **Features**:
+  - Client-side PDF generation
+  - HTML template rendering
+
+## Environment Variables
+
+### Required
+| Variable | Description |
+|----------|-------------|
+| `JWT_SECRET` | Min 32 chars, for token signing |
+
+### Optional (with defaults)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | 3000 | HTTP server port |
+| `SOCKET_PORT` | 3001 | WebSocket port (unused, merged to PORT) |
+| `LOG_LEVEL` | info | Pino log level |
+| `LLM_PROVIDER` | openai | Default LLM provider |
+| `BLACKBOARD_DATA_DIR` | ./data | Data persistence path |
+
+### API Keys (one required for production)
+| Variable | Provider |
+|----------|----------|
+| `OPENAI_API_KEY` | OpenAI GPT models |
+| `ANTHROPIC_API_KEY` | Anthropic Claude models |
+
+## Integration Points Summary
+
 ```
-
----
-
-### Anthropic Claude Integration
-
-**SDK**: `@anthropic-ai/sdk 0.80.0`
-
-**API Endpoint**: `https://api.anthropic.com/v1/messages`
-
-**Models Supported**:
-- `claude-3-opus-20240229` (default)
-- Configurable via `ANTHROPIC_MODEL`
-
-**Authentication**:
-- API Key via `ANTHROPIC_API_KEY` environment variable
-- x-api-key header authentication
-
-**Features**:
-- Messages API
-- System prompt support
-- Temperature and max_tokens configuration
-- Content blocks handling (text blocks)
-- Error handling with detailed logging
-
-**Implementation**: `src/services/llm/anthropic.ts`
-
-**Usage**:
-```typescript
-const completion = await client.messages.create({
-  model: this.model,
-  system: prompt.system,
-  messages: [
-    { role: 'user', content: prompt.user },
-  ],
-  temperature: this.temperature,
-  max_tokens: this.maxTokens,
-  stream: false,
-});
+┌─────────────────────────────────────────────────────────────┐
+│                      Frontend (React + Vite)                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐  │
+│  │ Socket.IO Client │  │ React Flow      │  │ html2pdf.js │  │
+│  └────────┬────────┘  └─────────────────┘  └──────────────┘  │
+│           │                                                  │
+│           ▼ WebSocket                                        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ HTTP/WebSocket
+┌─────────────────────────────────────────────────────────────┐
+│                      Backend (Express)                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ Socket.IO   │  │ JWT Auth    │  │ OpenAI/Anthropic   │  │
+│  │ Server      │  │ Capability  │  │ LLM Clients        │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ Pino Logger │  │ Tiktoken    │  │ File System        │  │
+│  │             │  │ (Token ctr) │  │ (Data/Logs)        │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
-
----
-
-### LLM Provider Switching
-
-**Configuration**: `LLM_PROVIDER` environment variable
-- Values: `"openai"` | `"anthropic"`
-- Default: `"openai"`
-
-**Fallback**:
-- MockLlmProvider automatically used when:
-  - API keys are missing
-  - Test mode is active (`NODE_ENV=test` or `VITEST=true`)
-
-**Abstraction Layer**:
-- `LlmProvider` interface defines common contract
-- `createLlmProvider()` factory function selects implementation
-- Zero code changes required when switching providers
-
-**Implementation**: `src/services/llm.ts`
-
----
-
-## Token Counting Integration
-
-### Tiktoken
-
-**Library**: `tiktoken 1.0.0`
-
-**Purpose**: Accurate token counting for budget management
-
-**Encoding**: `cl100k_base` (GPT-4 compatible encoding)
-
-**Features**:
-- Synchronous WASM-based tokenizer
-- Cached encoder instance for performance
-- Used by BlackboardService for token budget enforcement
-- Integrates with MemoryManager for memory folding decisions
-
-**Implementation**: `src/services/blackboard.ts`
-
-**Usage**:
-```typescript
-import { encoding_for_model } from 'tiktoken';
-
-function countTokens(text: string): number {
-  const encoder = encoding_for_model('gpt-4'); // Uses cl100k_base
-  const tokens = encoder.encode(text);
-  encoder.free();
-  return tokens.length;
-}
-```
-
----
-
-## Real-Time Communication
-
-### Socket.IO Integration
-
-**Server**: `socket.io 4.8.3`
-**Client**: `socket.io-client 4.8.3`
-
-**Ports**:
-- HTTP API: `PORT` (default: 3000)
-- Socket.IO: `SOCKET_PORT` (default: 3001)
-
-**Transports**:
-- WebSocket (primary)
-- Polling (fallback)
-
-**CORS Configuration**:
-- Origin: `*` (all origins allowed)
-- Configurable in `src/services/router.ts`
-
-**Features**:
-- Bidirectional event-based communication
-- Automatic reconnection with configurable attempts
-- Room-based messaging (actors, directors, agent-specific)
-- Heartbeat monitoring for connection health
-- Message buffering for offline agents
-- Grace period handling for temporary disconnections
-
-**Server-Side Events**:
-- `connection` - New client connection
-- `disconnect` - Client disconnection
-- `heartbeat:pong` - Heartbeat response
-- `routing:message` - Agent-to-agent routing messages
-- `agent_connected` - Agent connection notification
-- `agent_disconnected` - Agent disconnection notification
-- `agent_updated` - Agent state update broadcast
-- `message:received` - Message received broadcast
-
-**Client-Side Events**:
-- `connect` - Connection established
-- `disconnect` - Disconnection
-- `connect_error` - Connection error
-- `reconnect_attempt` - Reconnection attempt
-- `reconnect` - Reconnection successful
-- `reconnect_error` - Reconnection error
-- `reconnect_failed` - Reconnection failed
-- `scene_started` - Scene started notification
-- `scene_stopped` - Scene stopped notification
-- `scene_completed` - Scene completed notification
-- `session_state` - Session state synchronization
-
-**Implementation**:
-- Server: `src/services/router.ts`
-- Client: `frontend/src/lib/socket.ts`
-
----
-
-## HTTP API Integration
-
-### Express REST API
-
-**Framework**: `Express 4.19.0`
-
-**Base URL**: `http://localhost:3000` (default)
-
-**Frontend Proxy**:
-- Vite dev server proxies `/api` → backend `http://localhost:3000`
-- Socket.IO proxied to backend Socket.IO server
-
-**Endpoints**:
-- `GET /health` - Health check
-- `POST /session` - Create drama session
-- `POST /blackboard/agents/register` - Register agent (issue JWT)
-- `GET /blackboard/agents/me/scope` - Get agent scope
-- `GET /blackboard/audit` - Query audit log
-- `GET /blackboard/layers/:layer/entries` - Read layer entries
-- `GET /blackboard/layers/:layer/entries/:id` - Read single entry
-- `POST /blackboard/layers/:layer/entries` - Write entry
-- `DELETE /blackboard/layers/:layer/entries/:id` - Delete entry
-- `GET /sessions` - List sessions
-- `GET /sessions/:dramaId` - Get session details
-- `POST /sessions/:dramaId/scene/start` - Start scene
-- `POST /sessions/:dramaId/scene/stop` - Stop scene
-- `GET /config` - Get configuration
-- `PUT /config` - Update configuration
-- `PUT /config/llm` - Update LLM configuration
-- `PUT /config/session` - Update session parameters
-- `GET /templates` - List templates
-- `GET /templates/:id` - Get template
-- `POST /templates` - Create template
-- `PUT /templates/:id` - Update template
-- `DELETE /templates/:id` - Delete template
-- `GET /health` - System health check
-- `GET /metrics` - System metrics
-- `GET /sessions/:dramaId/export` - Export session (JSON/Markdown)
-
-**Implementation**: `src/routes/` directory
-
----
-
-## Authentication Integration
-
-### JWT (JSON Web Tokens)
-
-**Library**: `jsonwebtoken 9.0.3`
-
-**Algorithm**: HS256 (HMAC-SHA256 symmetric)
-
-**Purpose**: Agent authentication and authorization
-
-**Flow**:
-1. Agent calls `POST /blackboard/agents/register` with agentId and role
-2. Server issues JWT token signed with `JWT_SECRET`
-3. Agent includes token in `Authorization: Bearer <jwt>` header
-4. Server validates token and extracts agentId and role
-5. Capability service enforces role-based permissions
-
-**Token Payload**:
-```typescript
-{
-  agentId: string;
-  role: 'Actor' | 'Director' | 'Admin';
-  iat: number;  // Issued at
-  exp: number;  // Expiration
-}
-```
-
-**Configuration**:
-- `JWT_SECRET` - Signing secret (minimum 32 characters)
-- `JWT_EXPIRES_IN` - Token expiration (default: 24h)
-
-**Roles and Permissions**:
-- **Actor**: Can read/write semantic and procedural layers only
-- **Director**: Full access to all layers (core, scenario, semantic, procedural)
-- **Admin**: Full access to all layers
-
-**Implementation**: `src/services/capability.ts`, `src/routes/agents.ts`
-
----
-
-## Persistence Integrations
-
-### File System Storage
-
-**Snapshot Service**:
-- **Location**: `BLACKBOARD_DATA_DIR/blackboard.json` (default: `./data/blackboard.json`)
-- **Backup**: `blackboard.backup.json`
-- **Format**: JSON with schema version and timestamp
-- **Purpose**: Persist blackboard state for recovery
-
-**Audit Log Service**:
-- **Location**: `BLACKBOARD_DATA_DIR/audit-YYYY-MM-DD.jsonl`
-- **Format**: JSONL (one JSON object per line)
-- **Rotation**: Daily rotation by date
-- **Retention**: Current day + previous day
-
-**Template Storage** (Frontend):
-- **Location**: Browser localStorage
-- **Key**: `drama-templates`
-- **Format**: JSON array of templates
-- **Purpose**: Persistent session templates
-
-**Implementation**:
-- Snapshot: `src/services/snapshot.ts`
-- Audit Log: `src/services/auditLog.ts`
-- Templates: `frontend/src/utils/templateStorage.ts`
-
----
-
-## PDF Export Integration
-
-### html2pdf.js
-
-**Library**: `html2pdf.js 0.10.1`
-
-**Purpose**: Generate PDF from Markdown-formatted scripts
-
-**Workflow**:
-1. Fetch script in Markdown format from backend
-2. Convert Markdown to HTML
-3. Use html2pdf.js to generate PDF
-4. Trigger browser download
-
-**Features**:
-- Client-side PDF generation
-- Custom page formatting
-- Document metadata
-
-**Implementation**: `frontend/src/lib/pdfExporter.ts`
-
----
-
-## Development & Testing Integrations
-
-### Testing Framework
-
-**Vitest 2.0.0**:
-- Unit and integration testing
-- Watch mode for development
-- Environment: Node (server-side tests)
-- Test timeout: 30 seconds
-
-**Supertest 7.0.0**:
-- HTTP endpoint testing
-- Express app integration
-- Request/response assertion
-
-**Mock LLM Provider**:
-- Used in all tests to avoid API calls
-- Simulates realistic responses
-- Configurable delay for testing timeouts
-
-**Coverage Areas**:
-- Blackboard behavior
-- Cognitive boundary enforcement
-- Actor and Director logic
-- Memory management and folding
-- Protocol validation
-- End-to-end orchestration
-- Chaos resilience testing
-
-**Implementation**: `tests/` directory
-
----
-
-## Logging Integration
-
-### Pino Structured Logging
-
-**Library**: `pino 9.0.0`
-
-**Purpose**: Production-grade structured logging
-
-**Features**:
-- JSON-formatted logs
-- Log levels: debug, info, warn, error, fatal
-- Agent attribution in logs
-- Timestamps and context metadata
-- Pretty printing in development (pino-pretty)
-
-**Configuration**:
-- `LOG_LEVEL` environment variable
-- Default: `info`
-
-**Implementation**: `src/services/logger.ts`
-
----
-
-## Data Visualization Integration
-
-### ReactFlow
-
-**Library**: `reactflow 11.11.4`
-
-**Purpose**: Graph visualization for agent communication
-
-**Features**:
-- Interactive node graphs
-- Custom node styling
-- Real-time updates via Socket.IO
-- Message flow visualization
-
-**Implementation**: `frontend/src/components/dashboard/AgentGraph.tsx`
-
----
-
-## Frontend Build Integration
-
-### Vite
-
-**Library**: `Vite 6.0.7`
-
-**Purpose**: Fast build tool and dev server
-
-**Features**:
-- HMR (Hot Module Replacement)
-- TypeScript support
-- React plugin integration
-- Environment variable management (`VITE_*` prefix)
-- API proxy configuration
-- Production optimization
-
-**Configuration**:
-- Dev server port: 5174
-- Proxy `/api` → backend HTTP
-- Proxy `/socket.io` → backend Socket.IO
-
-**Implementation**: `frontend/vite.config.ts`
-
----
-
-## State Management Integration
-
-### Zustand
-
-**Library**: `zustand 5.0.3`
-
-**Purpose**: Lightweight global state management
-
-**Features**:
-- Minimal boilerplate
-- TypeScript support
-- Persistent state (sessions, config, templates)
-- Reactive updates
-- Integration with Socket.IO events
-
-**Implementation**: `frontend/src/store/appStore.ts`
-
----
-
-## Configuration Management
-
-### dotenv
-
-**Library**: `dotenv 16.4.0`
-
-**Purpose**: Environment variable loading
-
-**Features**:
-- Load from `.env` file
-- Type-safe configuration validation with Zod
-- Schema validation at startup
-- Detailed error messages for missing/invalid config
-
-**Implementation**: `src/config.ts`
-
----
-
-## Webhook Integration
-
-**Status**: Not currently implemented
-
-**Future Considerations**:
-- Webhook notifications for external systems
-- Integration with CI/CD pipelines
-- External system triggers for drama sessions
-
----
-
-## OAuth Integration
-
-**Status**: Not currently implemented
-
-**Current Authentication**:
-- JWT-based internal authentication
-- No external OAuth providers
-- Self-contained system with internal user management
-
-**Future Considerations**:
-- OAuth 2.0 for external integrations
-- SSO support for enterprise deployments
-
----
-
-## Database Integration
-
-**Status**: No external database used
-
-**Current Storage**:
-- File-based persistence (JSON)
-- In-memory blackboard state
-- localStorage for frontend templates
-- Audit logs in JSONL format
-
-**Future Considerations**:
-- PostgreSQL for production persistence
-- Redis for distributed caching
-- Database migration system
-- Distributed blackboard state
-
----
-
-## Monitoring & Observability
-
-**Status**: Basic health monitoring implemented
-
-**Current Features**:
-- `/health` endpoint for health checks
-- Structured logging (Pino)
-- Agent heartbeat monitoring
-- Connection status tracking
-- Error logging and reporting
-
-**Future Considerations**:
-- Metrics collection (Prometheus)
-- Distributed tracing (OpenTelemetry)
-- Alerting integration
-- Log aggregation (ELK stack)
-- Performance monitoring (APM)
-
----
-
-## External Service Dependencies Summary
-
-### Required for Production
-- **OpenAI API Key** OR **Anthropic API Key** (for LLM functionality)
-- **File System Access** (for snapshots and audit logs)
-
-### Optional for Development
-- MockLlmProvider (no API key required)
-- In-memory storage (no file system required)
-
-### Network Requirements
-- Outbound HTTPS access to LLM provider APIs
-- Inbound HTTP access on configured ports
-- WebSocket support for Socket.IO
-
-### Service Availability
-- Single-node deployment (no distributed dependencies)
-- No external message queues
-- No external databases
-- No external cache systems
