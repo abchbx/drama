@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import './SceneControls.css';
 
+// Track the last scene that was started to detect new scenes
+let lastSceneDramaId: string | null = null;
+
 interface SceneConfig {
   location: string;
   description: string;
@@ -50,10 +53,22 @@ export function SceneControls() {
     setConfig(defaultSceneConfig);
   };
 
+  const clearMessages = useAppStore(state => state.clearMessages);
+  const clearAgents = useAppStore(state => state.setAgents);
+
   const handleConfirmStart = async () => {
     console.log('[SceneControls] Starting scene with config:', config);
     setShowConfig(false);
     try {
+      // Clear previous messages and agents when starting a new scene
+      // This ensures we don't show data from a previous scene
+      if (selectedSession && selectedSession.dramaId !== lastSceneDramaId) {
+        console.log('[SceneControls] New session selected, clearing previous messages and agents');
+        clearMessages();
+        clearAgents([]);
+        lastSceneDramaId = selectedSession.dramaId;
+      }
+      
       // Don't pass actorIds - backend will use all actors from session by default
       await startScene(config.location, config.description, config.tone);
       console.log('[SceneControls] Scene started successfully');

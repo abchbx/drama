@@ -103,12 +103,19 @@ function AgentGraphInner() {
 
   // Create edges between director and actors
   useEffect(() => {
-    const director = agents.find(a => a.role === 'Director');
-    const actors = agents.filter(a => a.role === 'Actor');
+    // Role can be 'director' or 'actor' (lowercase from backend)
+    const director = agents.find(a => a.role === 'director' || a.role === 'Director');
+    const actors = agents.filter(a => a.role === 'actor' || a.role === 'Actor');
+
+    // Only create edges if we have a director
+    if (!director) {
+      setEdges([]);
+      return;
+    }
 
     const newEdges: Edge[] = actors.map((actor) => ({
-      id: `edge-${director?.id || 'director'}-${actor.id}`,
-      source: director?.id || 'director',
+      id: `edge-${director.id}-${actor.id}`,
+      source: director.id,
       target: actor.id,
       animated: true,
       markerEnd: { type: MarkerType.ArrowClosed },

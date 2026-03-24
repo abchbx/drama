@@ -192,4 +192,70 @@ export class BlackboardService {
   exportState(): BlackboardState {
     return JSON.parse(JSON.stringify(this.state));
   }
+
+  /**
+   * Read layer entries filtered by visibility for a specific actor.
+   * Implements perceptual boundaries - actors only see what they're allowed to see.
+   */
+  readLayerForActor(layer: BlackboardLayer, actorId: string): LayerReadResponse {
+    if (!LAYER_NAMES.includes(layer)) {
+      throw new ValidationError(`Invalid layer: ${String(layer)}`);
+    }
+    const ls = this.state[layer];
+    
+    // Filter entries based on visibility metadata
+    const visibleEntries = ls.entries.filter(entry => {
+      const metadata = entry.metadata as { 
+        visibility?: { 
+          scope?: string; 
+          visibleTo?: string[]; 
+          faction?: string;
+          overheardBy?: string[];
+        };
+        faction?: string;
+      } | undefined;
+      
+      // No visibility metadata = public by default
+      if (!metadata?.visibility) {
+        return true;
+      }
+      
+      const scope = metadata.visibility.scope || 'public';
+      
+      switch (scope) {
+        case 'public':
+          return true;
+        case 'private':
+          // Only visible to the writer
+          return entry.agentId === actorId;
+        case 'selective':
+          // Visible to specific actors
+          return metadata.visibility.visibleTo?.includes(actorId) || entry.agentId === actorId;
+        case 'faction':
+          // Visible to actors with same faction
+          const entryFaction = metadata.visibility.faction || metadata?.faction;
+          // For now, faction matching is simplified - would need actor faction info
+          return true; // TODO: Implement faction matching
+        case 'overheard':
+          // Visible to intended recipients + those who overheard
+          return metadata.visibility.visibleTo?.includes(actorId) || 
+                 metadata.visibility.overheardBy?.includes(actorId) ||
+                 entry.agentId === actorId;
+        default:
+          return true;
+      }
+    });
+    
+    const tokenCount = this.sumTokenCount(visibleEntries);
+    const budget = LAYER_BUDGETS[layer];
+    
+    return {
+      layer,
+      currentVersion: ls.version,
+      tokenCount,
+      tokenBudget: budget,
+      budgetUsedPct: budget > 0 ? Math.round((tokenCount / budget) * 100) : 0,
+      entries: visibleEntries,
+    };
+  }
 }

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { SessionMetadata, AppConfig, LLMConfig, SessionParams, SessionTemplate } from '../lib/types.js';
+import type { SessionMetadata, AppConfig, LLMConfig, SessionParams, SessionTemplate, Agent, RoutingMessage } from '../lib/types.js';
 import { apiClient } from '../lib/api.js';
 import { socketService } from '../lib/socket.js';
 import { toastService } from '../lib/toast.js';
@@ -32,6 +32,9 @@ interface AppState {
   selectedExportFormat: 'json' | 'markdown' | 'pdf';
   exporting: boolean;
   exportError: string | null;
+  // Persistent state for Dashboard and Visualization
+  agents: Agent[];
+  messages: RoutingMessage[];
   setConnectionStatus: (status: AppState['connectionStatus'], error?: string | null) => void;
   fetchSessions: () => Promise<void>;
   selectSession: (session: SessionMetadata | null) => void;
@@ -44,6 +47,7 @@ interface AppState {
   updateConfig: (config: Partial<AppConfig>) => Promise<void>;
   updateLLMConfig: (llmConfig: Partial<LLMConfig>) => Promise<void>;
   updateSessionParams: (sessionParams: Partial<SessionParams>) => Promise<void>;
+  testLLMConfig: (testConfig?: { provider: string; apiKey?: string; baseURL?: string; model?: string }) => Promise<{ success: boolean; provider: string; model?: string; latency: number; response?: string; error?: string }>;
   fetchTemplates: () => void;
   selectTemplate: (template: SessionTemplate | null) => void;
   saveTemplate: (template: Omit<SessionTemplate, 'createdAt' | 'updatedAt'>) => void;
@@ -53,6 +57,15 @@ interface AppState {
   setSelectedExportFormat: (format: 'json' | 'markdown' | 'pdf') => void;
   exportScript: () => Promise<void>;
   clearExportError: () => void;
+  // Dashboard actions
+  setAgents: (agents: Agent[]) => void;
+  updateAgent: (agent: Agent) => void;
+  removeAgent: (id: string) => void;
+  fetchAgents: () => Promise<void>;
+  // Visualization actions
+  addMessage: (message: RoutingMessage) => void;
+  setMessages: (messages: RoutingMessage[]) => void;
+  clearMessages: () => void;
 }
 
 const defaultConfig: AppConfig = {
@@ -91,6 +104,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedExportFormat: 'json',
   exporting: false,
   exportError: null,
+  agents: [],
+  messages: [],
   setActiveTab: (tab: TabType) => set({ activeTab: tab }),
 
   setConnectionStatus: (status, error = null) => {
@@ -99,21 +114,41 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   fetchSessions: async () => {
+    console.log('[fetchSessions] Fetching sessions from backend...');
     const response = await apiClient.getSessions();
+    console.log('[fetchSessions] API response success:', response.success);
+    console.log('[fetchSessions] Raw response data type:', typeof response.data, 'isArray:', Array.isArray(response.data));
+    
     if (response.success && response.data) {
       // 后端返回 { sessions: [...] }，需要提取数组
-      const sessions = Array.isArray(response.data) ? response.data : (response.data as any).sessions || [];
+      let sessions;
+      if (Array.isArray(response.data)) {
+        sessions = response.data;
+      } else if (response.data && typeof response.data === 'object') {
+        sessions = (response.data as any).sessions || [];
+      } else {
+        sessions = [];
+      }
+      
+      console.log('[fetchSessions] Parsed sessions count:', sessions.length);
+      sessions.forEach((s: any, i: number) => {
+        console.log(`[fetchSessions] Session ${i}: name="${s.name}", dramaId="${s.dramaId}"`);
+      });
       
       // 同步更新 selectedSession，保持选中状态的数据最新
       const { selectedSession } = get();
       if (selectedSession) {
         const updatedSelected = sessions.find((s: SessionMetadata) => s.dramaId === selectedSession.dramaId);
         if (updatedSelected) {
+          console.log('[fetchSessions] Updating selected session data');
           set({ sessions, selectedSession: updatedSelected });
           return;
         }
       }
+      console.log('[fetchSessions] Setting sessions:', sessions.length);
       set({ sessions });
+    } else {
+      console.error('[fetchSessions] Failed to fetch sessions:', response.error);
     }
   },
 
@@ -139,29 +174,69 @@ export const useAppStore = create<AppState>((set, get) => ({
   deleteSession: async (dramaId: string) => {
     set({ lastError: null });
 
+    console.log('[deleteSession] Starting delete for dramaId:', dramaId);
     const response = await apiClient.deleteSession(dramaId);
+    console.log('[deleteSession] API response:', response);
 
     // If session not found on backend, treat as success (already deleted)
     if (!response.success && response.technicalError?.includes('404')) {
       console.log('[deleteSession] Session already deleted on backend');
     } else if (!response.success) {
-      set({ lastError: response.error || 'Failed to delete session' });
-      toastService.error(response.error || 'Failed to delete session');
-      return;
+      const errorMsg = response.error || 'Failed to delete session';
+      console.error('[deleteSession] Delete failed:', errorMsg);
+      set({ lastError: errorMsg });
+      toastService.error(errorMsg);
+      throw new Error(errorMsg);
     }
+
+    console.log('[deleteSession] Delete API call successful');
 
     // If the deleted session was selected, clear it
     const { selectedSession } = get();
     if (selectedSession?.dramaId === dramaId) {
+      console.log('[deleteSession] Clearing selected session');
       set({ selectedSession: null });
     }
 
-    // Always refresh sessions list to sync with backend
-    await get().fetchSessions();
+    // Optimistically remove the session from local state first for immediate UI feedback
+    const currentSessions = get().sessions;
+    console.log('[deleteSession] Current sessions count before filter:', currentSessions.length);
+    console.log('[deleteSession] Filtering out dramaId:', dramaId);
+    console.log('[deleteSession] Current session IDs:', currentSessions.map(s => s.dramaId));
     
-    if (response.success) {
-      toastService.show('Session deleted', 'success');
+    const updatedSessions = currentSessions.filter(s => {
+      const match = s.dramaId === dramaId;
+      console.log(`[deleteSession] Comparing s.dramaId="${s.dramaId}" with dramaId="${dramaId}", match=${match}`);
+      return !match;
+    });
+    
+    console.log('[deleteSession] Updated sessions count after filter:', updatedSessions.length);
+    
+    // Force immediate state update before fetch
+    set({ sessions: updatedSessions });
+    console.log('[deleteSession] State updated optimistically');
+
+    // Then refresh from backend to ensure sync (but don't let it override our optimistic update if it fails)
+    console.log('[deleteSession] Fetching fresh sessions from backend...');
+    
+    try {
+      await get().fetchSessions();
+      const finalSessions = get().sessions;
+      console.log('[deleteSession] Final sessions count after fetch:', finalSessions.length);
+      
+      // Verify the deleted session is actually gone
+      const stillExists = finalSessions.some(s => s.dramaId === dramaId);
+      if (stillExists) {
+        console.error('[deleteSession] WARNING: Session still exists after fetch!');
+        // Force remove it again
+        set({ sessions: finalSessions.filter(s => s.dramaId !== dramaId) });
+      }
+    } catch (fetchError) {
+      console.error('[deleteSession] fetchSessions failed:', fetchError);
+      // Keep the optimistic update since fetch failed
     }
+    
+    toastService.show('Session deleted', 'success');
   },
 
   startScene: async (location, description, tone, actorIds) => {
@@ -211,7 +286,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ stoppingScene: false });
 
     if (!response.success) {
-      set({ lastError: response.error || 'Failed to stop scene' });
+      // Check if scene already completed (race condition)
+      if (response.technicalError?.includes('not running')) {
+        toastService.show('Scene already completed', 'info');
+        // Refresh sessions to get the latest state
+        await get().fetchSessions();
+      } else {
+        set({ lastError: response.error || 'Failed to stop scene' });
+      }
       return;
     }
 
@@ -277,6 +359,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       toastService.show('Session parameters updated', 'success');
     } else {
       set({ lastError: response.error || 'Failed to update session params' });
+    }
+  },
+
+  testLLMConfig: async (testConfig?: { provider: string; apiKey?: string; baseURL?: string; model?: string }) => {
+    console.log('[AppStore] testLLMConfig called with config:', testConfig);
+    const response = await apiClient.testLLMConfig(testConfig);
+    console.log('[AppStore] testLLMConfig response:', response);
+    if (response.success && response.data) {
+      return response.data;
+    } else {
+      throw new Error(response.error || 'Test failed');
     }
   },
 
@@ -370,6 +463,70 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   clearExportError: () => set({ exportError: null }),
+
+  // Dashboard actions
+  setAgents: (agents: Agent[]) => set({ agents }),
+  updateAgent: (agent: Agent) => set((state) => {
+    const existing = state.agents.find(a => a.id === agent.id);
+    if (existing) {
+      return { agents: state.agents.map(a => a.id === agent.id ? { ...a, ...agent } : a) };
+    }
+    return { agents: [...state.agents, agent] };
+  }),
+  removeAgent: (id: string) => set((state) => ({
+    agents: state.agents.map(a => a.id === id ? { ...a, status: 'disconnected' as const } : a)
+  })),
+  fetchAgents: async () => {
+    const response = await apiClient.getAgents();
+    if (response.success && response.data) {
+      const fetchedAgents = response.data.agents || [];
+      console.log('[AppStore] fetchAgents received:', fetchedAgents.length, 'agents');
+      
+      // Only update if we got data, otherwise keep existing
+      if (fetchedAgents.length > 0) {
+        const mapped: Agent[] = fetchedAgents.map((a: any) => {
+          let name: string;
+          if (a.agentId.startsWith('director-')) {
+            name = 'Director';
+          } else if (a.agentId.startsWith('actor-')) {
+            const match = a.agentId.match(/-(\d+)$/);
+            const num = match ? match[1] : '';
+            name = `Actor ${num}`;
+          } else {
+            name = a.agentId.substring(0, 8);
+          }
+          return {
+            id: a.agentId,
+            name,
+            role: a.role,
+            status: 'connected' as const,
+            latency: 0,
+            lastHeartbeat: new Date(a.lastPong).toISOString(),
+          };
+        });
+        set({ agents: mapped });
+      } else {
+        console.log('[AppStore] fetchAgents: no agents from server, keeping existing');
+      }
+    }
+  },
+
+  // Visualization actions
+  addMessage: (message: RoutingMessage) => {
+    console.log('[AppStore] Adding message:', {
+      type: message?.type,
+      from: message?.from,
+      hasPayload: !!message?.payload,
+      payloadKeys: message?.payload ? Object.keys(message.payload) : []
+    });
+    set((state) => {
+      const newMessages = [...state.messages, message];
+      console.log('[AppStore] Message count:', newMessages.length);
+      return { messages: newMessages };
+    });
+  },
+  setMessages: (messages: RoutingMessage[]) => set({ messages }),
+  clearMessages: () => set({ messages: [] }),
 }));
 
 // Track previous connection status to detect transitions

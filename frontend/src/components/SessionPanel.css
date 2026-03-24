@@ -242,9 +242,28 @@
   animation: pulse 2s infinite;
 }
 
-/* Scene Status Section */
+/* Scene Tab Content - Two column layout */
+.scene-tab-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .scene-tab-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Scene Controls Section - Left side */
+.scene-controls-section {
+  grid-column: 1;
+}
+
+/* Scene Status Section - Right side (bottom right) */
 .scene-status-section {
-  grid-column: 1 / -1;
+  grid-column: 2;
 }
 
 .scene-status-display {
@@ -269,6 +288,21 @@
   color: var(--color-text-tertiary);
 }
 
+.scene-status-indicator.completed {
+  color: var(--color-accent-blue);
+  text-shadow: 0 0 20px rgba(10, 132, 255, 0.3);
+}
+
+.scene-status-indicator.interrupted {
+  color: var(--color-accent-orange);
+  text-shadow: 0 0 20px rgba(255, 159, 10, 0.3);
+}
+
+.scene-status-indicator.failed {
+  color: var(--color-status-error);
+  text-shadow: 0 0 20px rgba(255, 69, 58, 0.3);
+}
+
 .pulse-dot {
   width: 12px;
   height: 12px;
@@ -283,6 +317,27 @@
   height: 12px;
   border-radius: 50%;
   background: var(--color-text-tertiary);
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-dot.completed {
+  background: var(--color-accent-blue);
+  box-shadow: 0 0 15px var(--color-accent-blue);
+}
+
+.status-dot.interrupted {
+  background: var(--color-accent-orange);
+  box-shadow: 0 0 15px var(--color-accent-orange);
+}
+
+.status-dot.failed {
+  background: var(--color-status-error);
+  box-shadow: 0 0 15px var(--color-status-error);
 }
 
 @keyframes pulse-dot {

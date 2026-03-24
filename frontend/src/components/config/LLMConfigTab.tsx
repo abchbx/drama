@@ -16,8 +16,19 @@ const llmConfigSchema = z.object({
 
 type LLMConfigFormData = z.infer<typeof llmConfigSchema>;
 
+interface TestResult {
+  success: boolean;
+  provider: string;
+  model?: string;
+  latency: number;
+  response?: string;
+  error?: string;
+}
+
 const LLMConfigTab: React.FC = () => {
-  const { config, loadingConfig, updatingConfig, updateLLMConfig, fetchConfig } = useAppStore();
+  const { config, loadingConfig, updatingConfig, updateLLMConfig, fetchConfig, testLLMConfig } = useAppStore();
+  const [testing, setTesting] = React.useState(false);
+  const [testResult, setTestResult] = React.useState<TestResult | null>(null);
 
   const {
     register,
@@ -42,6 +53,38 @@ const LLMConfigTab: React.FC = () => {
 
   const handleFormSubmit = async (data: LLMConfigFormData) => {
     await updateLLMConfig(data);
+    // Clear test result when config changes
+    setTestResult(null);
+  };
+
+  const handleTest = async () => {
+    console.log('[LLMConfigTab] Starting test...');
+    setTesting(true);
+    setTestResult(null);
+    try {
+      // Get current form values (not saved config)
+      const formValues = watch();
+      console.log('[LLMConfigTab] Testing with form values:', formValues);
+      
+      const result = await testLLMConfig({
+        provider: formValues.provider,
+        apiKey: formValues.apiKey,
+        baseURL: formValues.baseURL,
+        model: formValues.model,
+      });
+      console.log('[LLMConfigTab] Test result:', result);
+      setTestResult(result);
+    } catch (error) {
+      console.error('[LLMConfigTab] Test failed:', error);
+      setTestResult({
+        success: false,
+        provider: watch('provider'),
+        latency: 0,
+        error: error instanceof Error ? error.message : 'Test failed',
+      });
+    } finally {
+      setTesting(false);
+    }
   };
 
   const providers: { value: LLMProvider; label: string; description: string }[] = [
@@ -178,10 +221,35 @@ const LLMConfigTab: React.FC = () => {
             <button type="button" onClick={() => reset()} className="btn btn-secondary">
               Reset to Defaults
             </button>
+            <button 
+              type="button" 
+              onClick={handleTest} 
+              disabled={testing} 
+              className="btn btn-secondary"
+            >
+              {testing ? 'Testing...' : 'Test Connection'}
+            </button>
             <button type="submit" disabled={updatingConfig} className="btn btn-primary">
               {updatingConfig ? 'Updating...' : 'Save Changes'}
             </button>
           </div>
+
+          {testResult && (
+            <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
+              <h4>{testResult.success ? '✅ Connection Successful' : '❌ Connection Failed'}</h4>
+              <div className="test-details">
+                <p><strong>Provider:</strong> {testResult.provider}</p>
+                {testResult.model && <p><strong>Model:</strong> {testResult.model}</p>}
+                <p><strong>Latency:</strong> {testResult.latency}ms</p>
+                {testResult.response && (
+                  <p><strong>Response:</strong> {testResult.response}</p>
+                )}
+                {testResult.error && (
+                  <p className="error-message"><strong>Error:</strong> {testResult.error}</p>
+                )}
+              </div>
+            </div>
+          )}
         </form>
       )}
     </div>

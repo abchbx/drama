@@ -43,10 +43,10 @@ const BlackboardConfigSchema = z.object({
 // Routing config schema
 const RoutingConfigSchema = z.object({
   HEARTBEAT_INTERVAL_MS: z.coerce.number().default(5000),
-  ACTOR_TIMEOUT_MS: z.coerce.number().default(30000),
-  ACTOR_RETRY_TIMEOUT_MS: z.coerce.number().default(15000),
+  ACTOR_TIMEOUT_MS: z.coerce.number().default(300000), // 5 minutes for LLM API calls (increased for complex prompts)
+  ACTOR_RETRY_TIMEOUT_MS: z.coerce.number().default(120000), // 2 minutes for retry
   SOCKET_GRACE_PERIOD_MS: z.coerce.number().default(10000),
-  SCENE_TIMEOUT_MS: z.coerce.number().default(300000),
+  SCENE_TIMEOUT_MS: z.coerce.number().default(900000), // 15 minutes max scene duration
 });
 
 // Complete config schema

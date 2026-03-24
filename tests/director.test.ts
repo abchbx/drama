@@ -160,6 +160,7 @@ function createMockLogger(): pino.Logger {
 function createPlanningContext(existingBackbone = ''): PlanningContext {
   return {
     dramaId: 'drama-1',
+    theme: '复仇与救赎',
     characters: [
       { agentId: 'actor-001', name: 'Lord Malachar', role: 'villain', objectives: ['seek revenge'] },
       { agentId: 'actor-002', name: 'Ser Aldric', role: 'hero', objectives: ['protect the innocent'] },

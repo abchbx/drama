@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// CloudStudio 环境检测
+const isCloudStudio = process.env.CLOUDSTUDIO_APP_ID !== undefined ||
+  process.env.WORKSPACE_ID !== undefined ||
+  process.env.HOSTNAME?.includes('cloudstudio');
+
 export default defineConfig({
   plugins: [react()],
   envPrefix: 'VITE_',
@@ -25,11 +30,15 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
-      '/socket.io': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        ws: true,
-      },
+      // CloudStudio 环境下不代理 socket.io，让前端直接使用当前域名连接
+      // 本地开发时启用代理
+      ...(isCloudStudio ? {} : {
+        '/socket.io': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+          ws: true,
+        },
+      }),
     },
   },
 });

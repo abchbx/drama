@@ -39,7 +39,23 @@ export default function App() {
   // Initialize socket connection on mount
   useEffect(() => {
     socketService.connect();
+    
+    // Debug: Listen for all messages
+    const unsubscribe = socketService.on('message:received', (data: unknown) => {
+      const msg = data as { type?: string; from?: string; payload?: unknown };
+      console.log('[App] Global message received:', {
+        type: msg?.type,
+        from: msg?.from,
+        hasPayload: !!msg?.payload,
+        fullData: data
+      });
+    });
+    
+    // Expose socketService to window for debugging
+    (window as any).socketService = socketService;
+    
     return () => {
+      unsubscribe();
       socketService.disconnect();
     };
   }, []);

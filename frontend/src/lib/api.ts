@@ -14,7 +14,28 @@ import type {
 
 import { pdfExporter } from './pdfExporter.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Detect CloudStudio environment and construct appropriate API URL
+function getApiBaseUrl(): string {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && envUrl !== '/api') {
+    return envUrl;
+  }
+  
+  // In CloudStudio, we should use the relative path /api
+  // CloudStudio's reverse proxy will handle forwarding to the backend
+  if (typeof window !== 'undefined') {
+    const host = window.location.host;
+    // If we're on a cloudstudio domain, use relative API path
+    // The CloudStudio proxy will forward /api to the backend service
+    if (host.includes('cloudstudio')) {
+      return '/api';
+    }
+  }
+  
+  return '/api';
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 function getUserFriendlyErrorMessage(status: number, errorText: string): string {
   switch (status) {
@@ -55,16 +76,21 @@ async function fetchWithErrorHandling<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log('[API] Fetching:', options.method || 'GET', url);
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
       },
       ...options,
     });
 
+    console.log('[API] Response status:', response.status, url);
+
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
+      console.error('[API] Error response:', errorText);
       const userFriendlyError = getUserFriendlyErrorMessage(response.status, errorText);
       const technicalError = `HTTP ${response.status}: ${errorText || response.statusText}`;
 
@@ -76,9 +102,11 @@ async function fetchWithErrorHandling<T>(
     }
 
     const data = await response.json();
+    console.log('[API] Success response:', endpoint, JSON.stringify(data).substring(0, 200));
     return { success: true, data };
   } catch (err) {
     const errorMessage = extractErrorMessage(err);
+    console.error('[API] Fetch error:', errorMessage);
 
     // Check for network errors
     if (err instanceof TypeError && err.message.includes('fetch')) {
@@ -110,24 +138,28 @@ export class ApiClient {
   }
 
   async getSession(dramaId: string): Promise<ApiResponse<SessionMetadata>> {
-    return fetchWithErrorHandling(`/sessions/${dramaId}`);
+    const encodedId = encodeURIComponent(dramaId);
+    return fetchWithErrorHandling(`/sessions/${encodedId}`);
   }
 
   async deleteSession(dramaId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return fetchWithErrorHandling(`/sessions/${dramaId}`, {
+    const encodedId = encodeURIComponent(dramaId);
+    return fetchWithErrorHandling(`/sessions/${encodedId}`, {
       method: 'DELETE',
     });
   }
 
   async startScene(dramaId: string, sceneConfig: StartSceneInput): Promise<ApiResponse<BackendSceneResult>> {
-    return fetchWithErrorHandling(`/sessions/${dramaId}/scene/start`, {
+    const encodedId = encodeURIComponent(dramaId);
+    return fetchWithErrorHandling(`/sessions/${encodedId}/scene/start`, {
       method: 'POST',
       body: JSON.stringify(sceneConfig),
     });
   }
 
   async stopScene(dramaId: string, status: 'completed' | 'interrupted' | 'timeout' = 'completed'): Promise<ApiResponse<{ success: boolean }>> {
-    return fetchWithErrorHandling(`/sessions/${dramaId}/scene/stop`, {
+    const encodedId = encodeURIComponent(dramaId);
+    return fetchWithErrorHandling(`/sessions/${encodedId}/scene/stop`, {
       method: 'POST',
       body: JSON.stringify({ status }),
     });
@@ -156,6 +188,16 @@ export class ApiClient {
       method: 'PUT',
       body: JSON.stringify(sessionParams),
     });
+  }
+
+  async testLLMConfig(testConfig?: { provider: string; apiKey?: string; baseURL?: string; model?: string }): Promise<ApiResponse<{ success: boolean; provider: string; model?: string; latency: number; response?: string; error?: string }>> {
+    console.log('[API] testLLMConfig called with config:', testConfig);
+    const result = await fetchWithErrorHandling('/config/test', {
+      method: 'POST',
+      body: JSON.stringify({ testConfig }),
+    });
+    console.log('[API] testLLMConfig result:', result);
+    return result;
   }
 
   async getTemplates(): Promise<ApiResponse<SessionTemplate[]>> {
@@ -194,6 +236,16 @@ export class ApiClient {
     return fetchWithErrorHandling('/metrics');
   }
 
+  async getAgents(): Promise<ApiResponse<{ agents: Array<{ agentId: string; role: string; socketId: string; connectedAt: number; lastPong: number }> }>> {
+    return fetchWithErrorHandling('/sessions/agents');
+  }
+
+  async sendTestMessage(): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return fetchWithErrorHandling('/sessions/test-message', {
+      method: 'POST',
+    });
+  }
+
   /**
    * Export session data as text (JSON or Markdown)
    */
@@ -201,8 +253,9 @@ export class ApiClient {
     dramaId: string,
     format: 'json' | 'markdown'
   ): Promise<ApiResponse<string>> {
+    const encodedId = encodeURIComponent(dramaId);
     return fetchWithErrorHandling<string>(
-      `/sessions/${dramaId}/export?format=${format}`
+      `/sessions/${encodedId}/export?format=${format}`
     );
   }
 

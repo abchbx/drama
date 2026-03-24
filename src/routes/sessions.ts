@@ -2,12 +2,14 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { SessionRegistry } from '../services/sessionRegistry.js';
 import { RouterService } from '../services/router.js';
+import type { RouterService as RouterServiceType } from '../services/router.js';
 import { SessionStatus, ExportFormat } from '../types/session.js';
 import { ExportService } from '../services/exportService.js';
 import { DramaSession } from '../session.js';
 import { BlackboardService } from '../services/blackboard.js';
 import { MemoryManagerService } from '../services/memoryManager.js';
 import { createLlmProvider } from '../services/llm.js';
+import { getLLMConfig } from './config.js';
 import { createCapabilityService } from '../services/capability.js';
 import { pino } from 'pino';
 
@@ -26,9 +28,63 @@ sessionsRouter.get('/', (req: Request, res: Response) => {
   try {
     const registry = (req.app.locals as any).sessionRegistry as SessionRegistry;
     const sessions = registry.list();
+    console.log('[API GET /sessions] Returning sessions:', sessions.map((s: any) => ({ dramaId: s.dramaId, name: s.name })));
     res.json({ sessions });
   } catch (err) {
     res.status(500).json({ error: 'Failed to list sessions' });
+  }
+});
+
+/**
+ * GET /sessions/agents
+ * Returns list of all currently connected agents
+ */
+sessionsRouter.get('/agents', (req: Request, res: Response) => {
+  try {
+    const routerService = (req.app.locals as any).routerService as RouterService | undefined;
+    if (!routerService) {
+      return res.status(500).json({ error: 'Router service not available' });
+    }
+    const agents = routerService.getAgents();
+    res.json({ agents });
+  } catch (err) {
+    console.error('[API GET /sessions/agents] Error:', err);
+    res.status(500).json({ error: 'Failed to get agents' });
+  }
+});
+
+/**
+ * POST /sessions/test-message
+ * Sends a test message via Socket.IO to verify connectivity
+ */
+sessionsRouter.post('/test-message', (req: Request, res: Response) => {
+  try {
+    const routerService = (req.app.locals as any).routerService as RouterService | undefined;
+    if (!routerService) {
+      return res.status(500).json({ error: 'Router service not available' });
+    }
+    
+    // Send a test message to all connected clients
+    const testMessage = {
+      id: crypto.randomUUID(),
+      type: 'scene_start' as const,
+      from: 'test-director',
+      to: ['test-actor'],
+      payload: {
+        role: 'Director',
+        text: 'This is a test message from the server',
+        sceneId: 'test-scene',
+      },
+      timestamp: Date.now(),
+    };
+    
+    routerService.sendBroadcast(testMessage);
+    console.log('[API POST /sessions/test-message] Test message sent');
+    
+    res.json({ success: true, message: 'Test message sent' });
+  } catch (err) {
+    console.error('[API POST /sessions/test-message] Error:', err);
+    res.status(500).json({ error: 'Failed to send test message' });
   }
 });
 
@@ -69,6 +125,12 @@ sessionsRouter.post('/', async (req: Request, res: Response) => {
     const router = (req.app.locals as any).routerService as RouterService;
     const config = (req.app.locals as any).config as { SCENE_TIMEOUT_MS: number; ACTOR_TIMEOUT_MS: number; LOG_LEVEL: string };
 
+    // Validate registry is available
+    if (!registry) {
+      console.error('[API POST /sessions] SessionRegistry not available in app.locals');
+      return res.status(500).json({ error: 'Session registry not initialized' });
+    }
+
     const { name, sceneDurationMinutes, agentCount } = req.body;
 
     if (!name || !sceneDurationMinutes || !agentCount) {
@@ -81,13 +143,18 @@ sessionsRouter.post('/', async (req: Request, res: Response) => {
       sceneDurationMinutes,
       agentCount,
     });
+    console.log('[API POST /sessions] Created session:', { dramaId: session.dramaId, name: session.name });
 
     // Create and initialize DramaSession
     const logger = pino({ level: config.LOG_LEVEL });
     const llmProvider = await createLlmProvider(logger);
     const capabilityService = createCapabilityService();
+    
+    // Each session gets its OWN blackboard instance (isolation fix)
+    const sessionBlackboard = new BlackboardService();
+    
     const memoryManager = new MemoryManagerService({
-      blackboard,
+      blackboard: sessionBlackboard,
       llmProvider,
       logger,
       alertCallback: () => {},
@@ -97,11 +164,12 @@ sessionsRouter.post('/', async (req: Request, res: Response) => {
 
     const dramaSession = new DramaSession({
       dramaId: session.dramaId,
+      name: session.name,  // Pass session name as drama theme
       config: {
         sceneTimeoutMs: config.SCENE_TIMEOUT_MS,
         actorTimeoutMs: config.ACTOR_TIMEOUT_MS,
       },
-      blackboard,
+      blackboard: sessionBlackboard,  // Use session-specific blackboard
       router,
       memoryManager,
       llmProvider,
@@ -165,10 +233,19 @@ sessionsRouter.post('/:id/scene/start', async (req: Request, res: Response) => {
       sceneConfig.actorIds = actorIds;
     }
 
-    const session = await registry.startScene(dramaId, `scene-${Date.now()}`, sceneConfig);
+    // Get routerService for agent registration and socket events
+    const routerService = (req.app.locals as any).routerService as RouterService | undefined;
+    console.log('[API POST /scene/start] routerService available:', !!routerService);
+    console.log('[API POST /scene/start] routerService.io available:', !!routerService?.io);
+
+    const session = await registry.startScene(
+      dramaId,
+      `scene-${Date.now()}`,
+      sceneConfig,
+      routerService
+    );
 
     // Emit Socket.IO events for scene state changes (null-safe)
-    const routerService = (req.app.locals as any).routerService as RouterService | undefined;
     if (routerService?.io) {
       const sceneId = session.activeSceneId;
       routerService.io.emit('scene_started', { dramaId, sceneId, status: session.status });
@@ -297,27 +374,61 @@ sessionsRouter.delete('/:id', (req: Request, res: Response) => {
     const { id } = req.params;
     const dramaId = Array.isArray(id) ? id[0] : id;
 
+    console.log('[API DELETE /sessions/:id] Received delete request for id:', id, 'dramaId:', dramaId, 'length:', dramaId?.length);
+
     if (!dramaId) {
+      console.log('[API DELETE /sessions/:id] Missing session ID');
       return res.status(400).json({ error: 'Missing session ID' });
     }
 
-    // Check if session exists
-    const session = registry.get(dramaId);
+    // List all sessions to debug
+    const allSessions = registry.list();
+    console.log('[API DELETE /sessions/:id] All sessions count:', allSessions.length);
+    console.log('[API DELETE /sessions/:id] All session IDs:', allSessions.map((s: any) => ({ dramaId: s.dramaId, name: s.name, idLength: s.dramaId?.length })));
+
+    // Check if session exists - wrap in try/catch to handle SessionNotFoundError
+    let session;
+    try {
+      session = registry.get(dramaId);
+      console.log('[API DELETE /sessions/:id] Session lookup successful:', session?.name, 'status:', session?.status);
+    } catch (lookupErr: any) {
+      console.log('[API DELETE /sessions/:id] Session lookup failed:', lookupErr.message);
+      // Check if it's a "not found" error
+      if (lookupErr.message.includes('not found')) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      throw lookupErr;
+    }
+
     if (!session) {
+      console.log('[API DELETE /sessions/:id] Session is null/undefined');
       return res.status(404).json({ error: 'Session not found' });
     }
 
     // Prevent deleting running sessions
     if (session.status === 'running') {
+      console.log('[API DELETE /sessions/:id] Cannot delete running session');
       return res.status(409).json({ error: 'Cannot delete a running session. Please stop it first.' });
     }
 
     // Remove from registry
-    registry.remove(dramaId);
+    console.log('[API DELETE /sessions/:id] Calling registry.remove for:', dramaId);
+    try {
+      const removed = registry.remove(dramaId);
+      console.log('[API DELETE /sessions/:id] registry.remove returned:', removed);
+    } catch (removeErr: any) {
+      console.error('[API DELETE /sessions/:id] registry.remove failed:', removeErr.message);
+      throw removeErr;
+    }
+
+    // Verify deletion
+    const sessionsAfterDelete = registry.list();
+    console.log('[API DELETE /sessions/:id] Sessions count after delete:', sessionsAfterDelete.length);
 
     res.json({ success: true, message: 'Session deleted successfully' });
   } catch (err: any) {
-    if (err.message.includes('not found')) {
+    console.error('[API DELETE /sessions/:id] Unhandled error:', err.message);
+    if (err.message?.includes('not found')) {
       return res.status(404).json({ error: 'Session not found' });
     }
     res.status(500).json({ error: 'Failed to delete session' });

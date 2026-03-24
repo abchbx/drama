@@ -113,7 +113,17 @@ export function SessionPanel() {
 
       case 'scene':
         return (
-          <div className="tab-content-inner">
+          <div className="tab-content-inner scene-tab-content">
+            <div className="detail-section scene-controls-section">
+              <h3>Scene Controls</h3>
+              <p className="section-hint">
+                {session.status === 'running'
+                  ? 'The scene is currently running. You can stop it using the controls below.'
+                  : 'Start a new scene with the controls below.'}
+              </p>
+              <SceneControls />
+            </div>
+
             <div className="detail-section scene-status-section">
               <h3>Scene Status</h3>
               <div className="scene-status-display">
@@ -128,6 +138,21 @@ export function SessionPanel() {
                       <dd className="monospace">{session.activeSceneId}</dd>
                     </div>
                   </>
+                ) : session.lastResult ? (
+                  <>
+                    <div className={`scene-status-indicator ${session.lastResult.status}`}>
+                      <span className={`status-dot ${session.lastResult.status}`}></span>
+                      Last Scene: {session.lastResult.status === 'completed' ? 'Completed' : session.lastResult.status === 'interrupted' ? 'Interrupted' : 'Failed'}
+                    </div>
+                    <div className="detail-item">
+                      <dt>Scene ID</dt>
+                      <dd className="monospace">{session.lastResult.sceneId}</dd>
+                    </div>
+                    <div className="detail-item">
+                      <dt>Entries</dt>
+                      <dd>{session.lastResult.entryCount}</dd>
+                    </div>
+                  </>
                 ) : (
                   <div className="scene-status-indicator idle">
                     <span className="idle-dot"></span>
@@ -135,16 +160,6 @@ export function SessionPanel() {
                   </div>
                 )}
               </div>
-            </div>
-
-            <div className="detail-section">
-              <h3>Scene Controls</h3>
-              <p className="section-hint">
-                {session.status === 'running'
-                  ? 'The scene is currently running. You can stop it using the controls below.'
-                  : 'Start a new scene with the controls below.'}
-              </p>
-              <SceneControls />
             </div>
           </div>
         );

@@ -13,11 +13,21 @@ type ConnectionStatusListener = (status: ConnectionStatus, error?: string) => vo
 type GenericEventListener = (data: unknown) => void;
 
 // CloudStudio HTTPS 环境处理：
-// 空字符串时使用 window.location.origin，让 CloudStudio 代理转发到后端
+// 检测是否在 CloudStudio 环境
+const isCloudStudio = typeof window !== 'undefined' && (
+  window.location.hostname.includes('cloudstudio') ||
+  window.location.hostname.includes('ap-shanghai')
+);
+
+// 空字符串或未设置时使用 window.location.origin
+// CloudStudio 环境下始终使用当前域名，让代理处理转发
 const viteSocketUrl = import.meta.env.VITE_SOCKET_URL;
-const socketUrl = viteSocketUrl === '' || viteSocketUrl === undefined 
+const socketUrl = (viteSocketUrl === '' || viteSocketUrl === undefined || isCloudStudio)
   ? window.location.origin 
   : viteSocketUrl;
+
+console.log('[SocketService] Environment detected:', isCloudStudio ? 'CloudStudio' : 'local');
+console.log('[SocketService] Socket URL:', socketUrl);
 
 const SOCKET_CONFIG_DEFAULTS: SocketConfig = {
   url: socketUrl,
@@ -43,6 +53,20 @@ export class SocketService {
     this.status = status;
     for (const listener of this.connectionStatusListeners) {
       listener(status, error);
+    }
+  }
+
+  /**
+   * Register all pending listeners to the current socket instance.
+   * This is called when socket connects to ensure listeners registered before connect() are applied.
+   */
+  private registerPendingListeners(): void {
+    if (!this.socket) return;
+    for (const [event, callbacks] of this.listeners.entries()) {
+      for (const callback of callbacks) {
+        this.socket.on(event, callback);
+        console.log(`[SocketService] Registered pending listener for event: ${event}`);
+      }
     }
   }
 
@@ -92,6 +116,8 @@ export class SocketService {
 
     this.socket.on('connect', () => {
       console.log('[SocketService] ✅ Connected successfully, socket id:', this.socket?.id);
+      // Re-register all pending listeners to the new socket instance
+      this.registerPendingListeners();
       this.emitConnectionState('connected');
     });
 
@@ -122,6 +148,8 @@ export class SocketService {
 
     this.socket.on('reconnect', (attempt: number) => {
       console.log(`[SocketService] ✅ Reconnected after ${attempt} attempts`);
+      // Re-register listeners after reconnection
+      this.registerPendingListeners();
     });
 
     this.socket.on('reconnect_failed', () => {

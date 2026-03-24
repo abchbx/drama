@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
@@ -10,9 +10,11 @@ import ReactFlow, {
   MarkerType,
   type Edge,
   type Connection,
+  type Node,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { socketService } from '../../lib/socket';
+import { useAppStore } from '../../store/appStore';
 import type { RoutingMessage } from '../../lib/types';
 import './visualization.css';
 
@@ -73,9 +75,19 @@ interface AgentInfo {
   lastMessage?: string;
 }
 
-// Helper to determine agent role from message payload
-function getRole(payload: Record<string, unknown>): string {
-  if (typeof payload.role === 'string') return payload.role;
+// Helper to determine agent role from message payload or agentId
+function getRole(payload: Record<string, unknown>, agentId?: string): string {
+  // First try to get from agentId (more reliable)
+  if (agentId) {
+    if (agentId.startsWith('director-')) return 'Director';
+    if (agentId.startsWith('actor-')) return 'Actor';
+  }
+  // Fallback to payload (which contains character name, not role type)
+  if (typeof payload.role === 'string') {
+    // If role looks like a character name (contains spaces or numbers), treat as Actor
+    if (payload.role.match(/\d/)) return 'Actor';
+    return payload.role;
+  }
   return 'Actor';
 }
 
@@ -90,9 +102,13 @@ function CommunicationGraphInner({ isPaused, filters }: CommunicationGraphProps)
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<MessageNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Track agent information by ID
   const agentInfoRef = useRef<Map<string, AgentInfo>>(new Map());
+
+  // Get messages from store to rebuild graph on mount
+  const messages = useAppStore(state => state.messages);
 
   // Get position for new nodes (arrange in a circle)
   const getNodePosition = useCallback((_agentId: string, existingCount: number) => {
@@ -106,13 +122,15 @@ function CommunicationGraphInner({ isPaused, filters }: CommunicationGraphProps)
   // Process incoming message and update graph
   // Apply filters to nodes
   useEffect(() => {
-    const allAgents = Array.from(agentInfoRef.current.values());
+    const allAgents = Array.from(agentInfoRef.current.entries());
     const filteredIds = new Set<string>();
 
-    allAgents.forEach((info) => {
-      if (info.role === 'Director' && !filters.showDirector) return;
-      if (info.role !== 'Director' && !filters.showActors) return;
-      filteredIds.add(info.name);
+    allAgents.forEach(([agentId, info]) => {
+      // Check role case-insensitively (backend sends lowercase)
+      const isDirector = info.role.toLowerCase() === 'director';
+      if (isDirector && !filters.showDirector) return;
+      if (!isDirector && !filters.showActors) return;
+      filteredIds.add(agentId); // Use agentId, not name
     });
 
     setNodes((nds) =>
@@ -130,21 +148,24 @@ function CommunicationGraphInner({ isPaused, filters }: CommunicationGraphProps)
     const message = data as RoutingMessage;
     const { from, to, payload } = message;
 
+    // Get role from agentId (more reliable than payload.role which is character name)
+    const senderRole = getRole(payload, from);
+
     // Skip dialogue-type messages if filter is off
     if (!filters.showDialogues && ['dialogue', 'reaction'].includes(message.type)) return;
     // Skip director messages if filter is off
-    if (!filters.showDirector && getRole(payload) === 'Director') return;
+    if (!filters.showDirector && senderRole === 'Director') return;
     // Skip actor messages if filter is off
-    if (!filters.showActors && getRole(payload) !== 'Director') return;
+    if (!filters.showActors && senderRole !== 'Director') return;
 
-    // Get or create sender node
-    const senderRole = getRole(payload);
     const senderText = getMessageText(payload);
+    // Use character name from payload if available, otherwise use agentId
+    const senderName = typeof payload.role === 'string' ? payload.role : from;
 
     if (!agentInfoRef.current.has(from)) {
       const position = getNodePosition(from, agentInfoRef.current.size);
       agentInfoRef.current.set(from, {
-        name: from,
+        name: senderName,
         role: senderRole,
         messageCount: 0,
       });
@@ -163,6 +184,10 @@ function CommunicationGraphInner({ isPaused, filters }: CommunicationGraphProps)
     const senderInfo = agentInfoRef.current.get(from)!;
     senderInfo.messageCount++;
     if (senderText) senderInfo.lastMessage = senderText;
+    // Update name if we got a better one from payload
+    if (typeof payload.role === 'string' && senderInfo.name === from) {
+      senderInfo.name = payload.role;
+    }
 
     // Update sender node
     setNodes((nds) =>
@@ -178,9 +203,10 @@ function CommunicationGraphInner({ isPaused, filters }: CommunicationGraphProps)
       // Get or create recipient node
       if (!agentInfoRef.current.has(recipient)) {
         const position = getNodePosition(recipient, agentInfoRef.current.size);
+        const recipientRole = recipient.startsWith('director-') ? 'Director' : 'Actor';
         agentInfoRef.current.set(recipient, {
           name: recipient,
-          role: 'Actor',
+          role: recipientRole,
           messageCount: 0,
         });
         setNodes((nds) => [
@@ -236,11 +262,110 @@ function CommunicationGraphInner({ isPaused, filters }: CommunicationGraphProps)
     });
   }, [isPaused, filters, getNodePosition, setNodes, setEdges]);
 
-  // Listen to Socket.IO messages
+  // Initialize graph from stored messages when component mounts
   useEffect(() => {
-    socketService.on('message:received', handleMessageReceived);
+    if (isInitialized || messages.length === 0) return;
+    
+    console.log('[CommunicationGraph] Initializing graph from', messages.length, 'stored messages');
+    
+    // Clear existing state
+    agentInfoRef.current.clear();
+    const newNodes: Node<MessageNodeData>[] = [];
+    const newEdges: Edge[] = [];
+    const processedAgents = new Set<string>();
+    
+    // Process all stored messages to rebuild the graph
+    messages.forEach((message, index) => {
+      const { from, to, payload, type } = message;
+      
+      // Get role from agentId
+      const senderRole = getRole(payload, from);
+      const senderText = getMessageText(payload);
+      const senderName = typeof payload.role === 'string' ? payload.role : from;
+      
+      // Check filters
+      if (!filters.showDialogues && ['dialogue', 'reaction'].includes(type)) return;
+      if (!filters.showDirector && senderRole === 'Director') return;
+      if (!filters.showActors && senderRole !== 'Director') return;
+      
+      // Process sender
+      if (!processedAgents.has(from)) {
+        processedAgents.add(from);
+        const position = getNodePosition(from, processedAgents.size - 1);
+        const agentInfo: AgentInfo = {
+          name: senderName,
+          role: senderRole,
+          messageCount: 0,
+        };
+        agentInfoRef.current.set(from, agentInfo);
+        newNodes.push({
+          id: from,
+          type: 'messageNode',
+          position,
+          data: agentInfo,
+        });
+      }
+      
+      // Update sender message count
+      const senderInfo = agentInfoRef.current.get(from)!;
+      senderInfo.messageCount++;
+      if (senderText) senderInfo.lastMessage = senderText;
+      
+      // Process recipients
+      to.forEach((recipient) => {
+        if (!processedAgents.has(recipient)) {
+          processedAgents.add(recipient);
+          const position = getNodePosition(recipient, processedAgents.size - 1);
+          const recipientRole = recipient.startsWith('director-') ? 'Director' : 'Actor';
+          const recipientInfo: AgentInfo = {
+            name: recipient,
+            role: recipientRole,
+            messageCount: 0,
+          };
+          agentInfoRef.current.set(recipient, recipientInfo);
+          newNodes.push({
+            id: recipient,
+            type: 'messageNode',
+            position,
+            data: recipientInfo,
+          });
+        }
+        
+        // Update recipient message count
+        const recipientInfo = agentInfoRef.current.get(recipient)!;
+        recipientInfo.messageCount++;
+        
+        // Create edge
+        const edgeId = `edge-${from}-${recipient}`;
+        if (!newEdges.find(e => e.id === edgeId)) {
+          newEdges.push({
+            id: edgeId,
+            source: from,
+            target: recipient,
+            animated: index === messages.length - 1, // Animate only the last message
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#6b7280' },
+            style: { stroke: '#6b7280', strokeWidth: 2 },
+          });
+        }
+      });
+    });
+    
+    setNodes(newNodes);
+    setEdges(newEdges);
+    setIsInitialized(true);
+    console.log('[CommunicationGraph] Graph initialized with', newNodes.length, 'nodes and', newEdges.length, 'edges');
+  }, [messages, filters, getNodePosition, isInitialized, setNodes, setEdges]);
+
+  // Listen to new Socket.IO messages
+  useEffect(() => {
+    console.log('[CommunicationGraph] Setting up message:received listener');
+    const unsubscribe = socketService.on('message:received', (data) => {
+      console.log('[CommunicationGraph] Received new message:', data);
+      handleMessageReceived(data);
+    });
     return () => {
-      socketService.off('message:received', handleMessageReceived);
+      console.log('[CommunicationGraph] Cleaning up message:received listener');
+      unsubscribe();
     };
   }, [handleMessageReceived]);
 

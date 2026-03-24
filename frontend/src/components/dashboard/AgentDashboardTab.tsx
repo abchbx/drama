@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import type { Agent } from '../../lib/types.js';
 import { socketService } from '../../lib/socket.js';
+import { useAppStore } from '../../store/appStore.js';
 import { SystemHealth } from './SystemHealth.js';
 import { AgentGraph } from './AgentGraph.js';
 import './dashboard.css';
@@ -27,7 +28,17 @@ function getStatusBadgeClass(status: string): string {
 }
 
 export function AgentDashboardTab() {
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const agents = useAppStore(state => state.agents);
+  const setAgents = useAppStore(state => state.setAgents);
+  const updateAgent = useAppStore(state => state.updateAgent);
+  const removeAgent = useAppStore(state => state.removeAgent);
+  const fetchAgents = useAppStore(state => state.fetchAgents);
+
+  // Fetch agents on mount
+  useEffect(() => {
+    console.log('[AgentDashboardTab] Fetching agents on mount');
+    fetchAgents();
+  }, [fetchAgents]);
 
   // Handle agent events via Socket.IO
   useEffect(() => {
@@ -36,36 +47,42 @@ export function AgentDashboardTab() {
       const payload = data as { agents?: Array<{ agentId: string; role: string; socketId: string; lastPong: number }> };
       if (payload.agents && Array.isArray(payload.agents)) {
         // Replace entire agent list with server-side truth
-        const mapped: Agent[] = payload.agents.map(a => ({
-          id: a.agentId,
-          name: a.agentId.replace(/^(actor|director)-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-          role: a.role,
-          status: 'connected' as const,
-          latency: 0,
-          lastHeartbeat: new Date(a.lastPong).toISOString(),
-        }));
+        const mapped: Agent[] = payload.agents.map(a => {
+          // Extract a human-readable name from agentId
+          // Format: director-{dramaId} or actor-{dramaId}-{number}
+          let name: string;
+          if (a.agentId.startsWith('director-')) {
+            name = 'Director';
+          } else if (a.agentId.startsWith('actor-')) {
+            // Extract actor number from ID like "actor-{uuid}-1"
+            const match = a.agentId.match(/-(\d+)$/);
+            const num = match ? match[1] : '';
+            name = `Actor ${num}`;
+          } else {
+            name = a.agentId.substring(0, 8);
+          }
+          
+          return {
+            id: a.agentId,
+            name,
+            role: a.role, // Keep original role from backend (director/actor)
+            status: 'connected' as const,
+            latency: 0,
+            lastHeartbeat: new Date(a.lastPong).toISOString(),
+          };
+        });
         setAgents(mapped);
       }
     };
 
     const handleAgentConnected = (data: unknown) => {
       const agent = data as Agent;
-      setAgents(prev => {
-        const existing = prev.find(a => a.id === agent.id);
-        if (existing) {
-          return prev.map(a => a.id === agent.id ? { ...a, ...agent, status: 'connected' } : a);
-        }
-        return [...prev, { ...agent, status: 'connected' }];
-      });
+      updateAgent({ ...agent, status: 'connected' });
     };
 
     const handleAgentDisconnected = (data: unknown) => {
       const { id } = data as { id: string };
-      setAgents(prev =>
-        prev.map(a =>
-          a.id === id ? { ...a, status: 'disconnected' } : a
-        )
-      );
+      removeAgent(id);
     };
 
     socketService.on('agent_updated', handleAgentUpdated);
@@ -77,7 +94,7 @@ export function AgentDashboardTab() {
       socketService.off('agent_connected', handleAgentConnected);
       socketService.off('agent_disconnected', handleAgentDisconnected);
     };
-  }, []);
+  }, [setAgents, updateAgent, removeAgent]);
 
   return (
     <div className="tab-content agent-dashboard-tab">

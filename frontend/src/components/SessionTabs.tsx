@@ -50,14 +50,14 @@ export function SessionTabs() {
 
   const handleDelete = async (e: React.MouseEvent, dramaId: string) => {
     e.stopPropagation();
+    console.log('[SessionTabs] handleDelete called with dramaId:', dramaId, 'length:', dramaId.length);
     setDeletingId(dramaId);
     try {
       await deleteSession(dramaId);
-      // Always refresh to sync with backend state
-      await fetchSessions();
+      // deleteSession already calls fetchSessions() internally
     } catch (error) {
       console.error('[SessionTabs] Delete failed:', error);
-      // Refresh on error too to ensure UI is in sync
+      // Refresh on error to ensure UI is in sync with backend
       await fetchSessions();
     } finally {
       setDeletingId(null);
@@ -86,6 +86,7 @@ export function SessionTabs() {
             const config = statusConfig[session.status];
             const isSelected = selectedSession?.dramaId === session.dramaId;
             const isDeleting = deletingId === session.dramaId;
+            console.log('[SessionTabs] Rendering session:', session.name, 'dramaId:', session.dramaId, 'length:', session.dramaId?.length);
 
             return (
               <div
@@ -99,10 +100,12 @@ export function SessionTabs() {
                 </span>
                 <span className="session-tab-name">{session.name}</span>
                 <button
+                  type="button"
                   className="session-tab-delete"
                   onClick={(e) => handleDelete(e, session.dramaId)}
                   disabled={isDeleting}
                   title="Delete session"
+                  aria-label={`Delete session ${session.name}`}
                 >
                   {isDeleting ? '...' : '×'}
                 </button>

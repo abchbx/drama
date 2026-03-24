@@ -7,6 +7,7 @@ export const MessageType = [
   'scene_end',
   'your_turn',
   'dialogue',
+  'narration',
   'reaction',
   'heartbeat',
   'fallback',

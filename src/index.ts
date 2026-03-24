@@ -93,46 +93,6 @@ const memoryManager = new MemoryManagerService({
 });
 
 // ---------------------------------------------------------------------------
-// Drama Session endpoint
-// ---------------------------------------------------------------------------
-
-// POST /session - create a new drama session
-app.post('/session', async (req, res) => {
-  try {
-    const { name, sceneDurationMinutes, agentCount } = req.body || {};
-
-    // Create a new drama session
-    const dramaSession = new DramaSession({
-      config: {
-        sceneTimeoutMs: config.SCENE_TIMEOUT_MS,
-        actorTimeoutMs: config.ACTOR_TIMEOUT_MS,
-      },
-      blackboard: blackboardService,
-      router: routerService,
-      memoryManager,
-      llmProvider,
-      capabilityService,
-      logger,
-    });
-
-    // Also store in session registry if metadata provided
-    if (name && sceneDurationMinutes !== undefined && agentCount !== undefined) {
-      sessionRegistry.create({
-        name,
-        sceneDurationMinutes,
-        agentCount,
-        dramaId: dramaSession.dramaId, // Link to the same dramaId
-      });
-    }
-
-    res.json({ dramaId: dramaSession.dramaId, status: 'created' });
-  } catch (err) {
-    logger.error({ err }, 'Failed to create drama session');
-    res.status(500).json({ error: 'Failed to create session' });
-  }
-});
-
-// ---------------------------------------------------------------------------
 // Start server
 // ---------------------------------------------------------------------------
 

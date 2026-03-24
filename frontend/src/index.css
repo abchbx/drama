@@ -289,7 +289,8 @@ input::placeholder, textarea::placeholder {
   backdrop-filter: blur(var(--blur-lg));
   -webkit-backdrop-filter: blur(var(--blur-lg));
   border-right: 1px solid var(--glass-border);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: all var(--transition-base);
   position: relative;
   flex-shrink: 0;
@@ -495,9 +496,9 @@ h6 { font-size: var(--font-size-md); line-height: var(--line-height-normal); }
   left: var(--sidebar-width);
   right: 0;
   height: 80px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-xl));
-  -webkit-backdrop-filter: blur(var(--blur-xl));
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-bottom: 1px solid var(--glass-border);
   display: flex;
   align-items: center;

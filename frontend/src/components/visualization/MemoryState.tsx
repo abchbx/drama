@@ -122,7 +122,7 @@ export function MemoryState({ isPaused }: MemoryStateProps) {
               {/* Inline Token Progress */}
               <div className="token-progress">
                 <div className="token-progress-header">
-                  <span className="token-progress-label">Token Usage</span>
+                  <span className="token-progress-label">Tokens</span>
                   <span className="token-progress-value">
                     {state.tokensUsed.toLocaleString()} / {state.budget.toLocaleString()}
                   </span>
@@ -133,32 +133,6 @@ export function MemoryState({ isPaused }: MemoryStateProps) {
                     style={{ width: `${tokenPercentage}%` }}
                   />
                 </div>
-              </div>
-
-              <div className="layer-content">
-                {hasContent ? (
-                  <ul className="layer-entries">
-                    {entries.map((entry) => (
-                      <li key={entry.id} className="layer-entry">
-                        <div className="entry-meta">
-                          {entry.agentId && (
-                            <span className="entry-agent">{entry.agentId}</span>
-                          )}
-                          <span className="entry-time">
-                            {new Date(entry.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <p className="entry-text">
-                          {entry.content.length > 150
-                            ? entry.content.substring(0, 150) + '...'
-                            : entry.content}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="layer-empty">No entries yet. Content will appear when agents write to this layer.</p>
-                )}
               </div>
             </div>
           );

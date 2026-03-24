@@ -8,6 +8,7 @@ import { z } from 'zod';
  */
 export interface PlanningContext {
   dramaId: string;
+  theme: string;                     // session name as drama theme/topic
   characters: CharacterSummary[];
   existingBackbone: string;        // current backbone prose (empty if new session)
   previousScenes: SceneSummary[];   // previous scene outcomes for continuity
@@ -37,10 +38,26 @@ export interface SceneSummary {
 
 // === DirectorBackboneOutput — written to core layer ===
 
+export interface CharacterDefinition {
+  name: string;
+  role: string;
+  backstory: string;
+  objectives: string[];
+  voice: {
+    vocabularyRange: string[];
+    sentenceLength: 'short' | 'medium' | 'long';
+    emotionalRange: string[];
+    speechPatterns: string[];
+    forbiddenTopics: string[];
+    forbiddenWords: string[];
+  };
+}
+
 export interface DirectorBackboneOutput {
   exchangeId: string;
   backboneProse: string;    // prose narrative with [ACTOR DISCRETION] markers
   scenes: SceneMarker[];     // structured scene markers embedded in prose
+  characters: CharacterDefinition[];  // characters generated based on theme
   tokenCount: number;
   modelUsed?: string;
 }
@@ -116,10 +133,26 @@ export const SceneMarkerSchema = z.object({
   characters: z.array(z.string()),
 });
 
+export const CharacterDefinitionSchema = z.object({
+  name: z.string(),
+  role: z.string(),
+  backstory: z.string(),
+  objectives: z.array(z.string()),
+  voice: z.object({
+    vocabularyRange: z.array(z.string()),
+    sentenceLength: z.enum(['short', 'medium', 'long']),
+    emotionalRange: z.array(z.string()),
+    speechPatterns: z.array(z.string()),
+    forbiddenTopics: z.array(z.string()),
+    forbiddenWords: z.array(z.string()),
+  }),
+});
+
 export const DirectorBackboneOutputSchema = z.object({
   exchangeId: z.string(),
   backboneProse: z.string(),
   scenes: z.array(SceneMarkerSchema),
+  characters: z.array(CharacterDefinitionSchema),
   tokenCount: z.number(),
   modelUsed: z.string().optional(),
 });

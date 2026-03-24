@@ -156,6 +156,58 @@ export class RouterService {
     return typeof value === 'string' ? value : undefined;
   }
 
+  /**
+   * Register an internal agent (no Socket.IO connection, e.g., backend DramaSession actors)
+   */
+  registerInternalAgent(agentId: string, role: AgentRole): void {
+    const agent: ConnectedAgent = {
+      socketId: `internal-${agentId}`,
+      agentId,
+      role,
+      connectedAt: Date.now(),
+      lastPong: Date.now(),
+    };
+
+    this.agents.set(agentId, agent);
+
+    // Emit to frontend dashboard
+    this._io.emit('agent_connected', {
+      agentId,
+      role,
+      socketId: agent.socketId,
+      timestamp: Date.now(),
+    });
+
+    this.emitAgentUpdated();
+
+    this.logger.info({ agentId, role }, 'router: internal agent registered');
+  }
+
+  /**
+   * Unregister an internal agent
+   */
+  unregisterInternalAgent(agentId: string): void {
+    const agent = this.agents.get(agentId);
+    if (!agent) return;
+
+    // Only unregister if it's an internal agent
+    if (!agent.socketId.startsWith('internal-')) return;
+
+    this.agents.delete(agentId);
+
+    // Emit to frontend dashboard
+    this._io.emit('agent_disconnected', {
+      agentId,
+      role: agent.role,
+      socketId: agent.socketId,
+      timestamp: Date.now(),
+    });
+
+    this.emitAgentUpdated();
+
+    this.logger.info({ agentId }, 'router: internal agent unregistered');
+  }
+
   private registerConnection(socket: Socket, agentId: string, role: AgentRole): void {
     const existingGrace = this.disconnectStates.get(agentId);
     if (existingGrace) {
@@ -265,9 +317,11 @@ export class RouterService {
 
   sendBroadcast(message: Omit<RoutingMessage, 'sequenceNum'>): RoutingMessage {
     const routed = { ...message, sequenceNum: this.nextSequence(message.from) };
+    this.logger.info({ messageId: routed.id, type: routed.type, from: routed.from, to: routed.to }, 'router: broadcasting message');
     this._io.to('actors').emit('routing:message', routed);
     this.emit('message:received', routed);
     this._io.emit('message:received', routed); // Socket.IO broadcast to all clients
+    this.logger.info({ clientCount: this._io.engine.clientsCount }, 'router: message broadcasted to all clients');
     return routed;
   }
 
@@ -355,6 +409,10 @@ export class RouterService {
     this.timeoutManager.startSceneTimer(sceneId);
   }
 
+  startSceneWithDuration(sceneId: string, durationMs: number): void {
+    this.timeoutManager.startSceneTimerWithDuration(sceneId, durationMs);
+  }
+
   endScene(sceneId: string): void {
     this.timeoutManager.cancelSceneTimer(sceneId);
   }
@@ -368,5 +426,18 @@ export class RouterService {
     this.heartbeat.stop();
     this._io.close();
     this.events.removeAllListeners();
+  }
+
+  /**
+   * Get all currently connected agents
+   */
+  getAgents(): Array<{ agentId: string; role: string; socketId: string; connectedAt: number; lastPong: number }> {
+    return Array.from(this.agents.values()).map((agent) => ({
+      agentId: agent.agentId,
+      role: agent.role,
+      socketId: agent.socketId,
+      connectedAt: agent.connectedAt,
+      lastPong: agent.lastPong,
+    }));
   }
 }

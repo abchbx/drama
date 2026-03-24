@@ -1,30 +1,31 @@
-/* Memory State - Modern Glassmorphism Design */
+/* Memory State - Modern Glassmorphism Design - Compact Layout */
 .memory-state {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
 }
 
 .memory-layers {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   overflow-y: auto;
   padding-right: var(--spacing-xs);
 }
 
-/* Individual Memory Layer Card */
+/* Individual Memory Layer Card - Compact */
 .memory-layer {
   background: var(--glass-bg-hover);
   backdrop-filter: blur(var(--blur-md));
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-border);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .memory-layer::before {
@@ -49,80 +50,75 @@
   opacity: 1;
 }
 
-/* Layer Header */
+/* Layer Header - Compact */
 .layer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .layer-title {
-  font-size: var(--font-size-md);
-  font-weight: 700;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  letter-spacing: -0.01em;
+  gap: var(--spacing-xs);
 }
 
 .layer-title::before {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--gradient-primary);
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
 }
 
 .layer-stats {
   font-size: var(--font-size-xs);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-accent-violet);
   background: rgba(139, 92, 246, 0.15);
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: var(--radius-full);
   border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
-/* Layer Description */
+/* Layer Description - Hidden in compact mode, shown on hover */
 .layer-description {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  margin: 0 0 var(--spacing-md) 0;
-  line-height: 1.5;
-  padding-left: var(--spacing-md);
-  border-left: 2px solid var(--glass-border);
+  display: none;
 }
 
-/* Token Progress */
+/* Token Progress - Compact */
 .token-progress {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
 }
 
 .token-progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 2px;
   font-size: var(--font-size-xs);
 }
 
 .token-progress-label {
-  color: var(--color-text-secondary);
-  font-weight: 500;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
 }
 
 .token-progress-value {
-  color: var(--color-text-primary);
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-weight: 500;
   font-family: var(--font-family-mono);
+  font-size: 10px;
 }
 
 .token-progress-bar {
-  height: 6px;
+  height: 4px;
   background: var(--glass-bg);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -165,38 +161,38 @@
   100% { transform: translateX(100%); }
 }
 
-/* Layer Content */
+/* Layer Content - Hidden by default in compact mode */
 .layer-content {
-  margin-top: var(--spacing-md);
+  display: none;
 }
 
-/* Empty State */
+/* Empty State - Compact */
 .layer-empty {
   font-size: var(--font-size-xs);
   color: var(--color-text-quaternary);
   text-align: center;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   background: var(--glass-bg);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   border: 1px dashed var(--glass-border);
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-/* Layer Entries List */
+/* Layer Entries List - Compact */
 .layer-entries {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 
 .layer-entry {
   background: var(--glass-bg);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
   border: 1px solid var(--glass-border);
   transition: all var(--transition-fast);
 }
@@ -204,37 +200,38 @@
 .layer-entry:hover {
   background: var(--glass-bg-active);
   border-color: var(--glass-border-strong);
-  transform: translateX(2px);
 }
 
 .entry-meta {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xs);
-  font-size: var(--font-size-xs);
+  gap: var(--spacing-xs);
+  margin-bottom: 2px;
+  font-size: 10px;
 }
 
 .entry-agent {
   color: var(--color-accent-violet);
-  font-weight: 600;
+  font-weight: 500;
   background: rgba(139, 92, 246, 0.1);
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: var(--radius-sm);
+  font-size: 10px;
 }
 
 .entry-time {
   color: var(--color-text-quaternary);
   font-family: var(--font-family-mono);
+  font-size: 10px;
 }
 
 .entry-text {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -294,19 +291,37 @@
   background: var(--glass-border-strong);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .memory-layer {
-    padding: var(--spacing-md);
-  }
-
-  .layer-header {
-    flex-direction: column;
-    align-items: flex-start;
+/* Responsive - Adaptive sizing */
+@media (max-width: 991px) {
+  .memory-layers {
     gap: var(--spacing-xs);
   }
-
+  
+  .memory-layer {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .layer-header {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  
   .layer-title {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .memory-state {
+    padding: var(--spacing-xs);
+  }
+  
+  .memory-layer {
+    padding: 6px 10px;
+  }
+  
+  .token-progress-bar {
+    height: 3px;
   }
 }

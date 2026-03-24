@@ -131,14 +131,19 @@ export class TimeoutManager {
 
   /** Start a scene-level ceiling timer. If nothing stops the scene, it ends automatically. */
   startSceneTimer(sceneId: string): void {
+    this.startSceneTimerWithDuration(sceneId, this.sceneTimeoutMs);
+  }
+
+  /** Start a scene-level ceiling timer with custom duration. */
+  startSceneTimerWithDuration(sceneId: string, durationMs: number): void {
     this.cancelSceneTimer(sceneId);
     const timer = setTimeout(() => {
       this.sceneTimers.delete(sceneId);
       this.logger.warn({ sceneId }, 'timeout: scene ceiling reached');
       this.onSceneCeiling?.();
-    }, this.sceneTimeoutMs);
+    }, durationMs);
     this.sceneTimers.set(sceneId, timer);
-    this.logger.debug({ sceneId, timeoutMs: this.sceneTimeoutMs }, 'timeout: scene ceiling timer started');
+    this.logger.info({ sceneId, timeoutMs: durationMs }, 'timeout: scene ceiling timer started');
   }
 
   /** Cancel the scene-level ceiling timer (e.g. scene ends normally). */

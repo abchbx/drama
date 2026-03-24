@@ -122,7 +122,7 @@ export interface SystemMetrics {
 }
 
 // Routing message types
-export type MessageType = 'scene_start' | 'scene_end' | 'your_turn' | 'dialogue' | 'reaction' | 'heartbeat' | 'fallback' | 'actor_unavailable' | 'actor_reconnected';
+export type MessageType = 'scene_start' | 'scene_end' | 'your_turn' | 'dialogue' | 'narration' | 'reaction' | 'heartbeat' | 'fallback' | 'actor_unavailable' | 'actor_reconnected';
 export type ScenePhase = 'setup' | 'rising' | 'climax' | 'falling' | 'resolution';
 
 export interface RoutingMessage {
@@ -136,6 +136,7 @@ export interface RoutingMessage {
     tokensUsed: number;
   };
   timestamp: number;
+  sequenceNum?: number; // Optional sequence number from backend
   sequenceNum: number;
 }
 

@@ -2,6 +2,7 @@ import type pino from 'pino';
 import type { BlackboardService } from './blackboard.js';
 import type { CapabilityService } from './capability.js';
 import type { MemoryManagerService } from './memoryManager.js';
+import { DirectorMemoryService } from './directorMemory.js';
 import { type LlmProvider } from './llm.js';
 import {
   buildDirectorSystemPrompt,
@@ -39,6 +40,7 @@ export class Director {
   private readonly memoryManager: MemoryManagerService;
   private readonly logger: pino.Logger;
   private readonly agentId: string;
+  private readonly memory: DirectorMemoryService;
 
   constructor(options: DirectorOptions) {
     if (!options.blackboard) throw new Error('Director requires blackboard service');
@@ -54,12 +56,36 @@ export class Director {
     this.memoryManager = options.memoryManager;
     this.logger = options.logger;
     this.agentId = options.agentId;
+    
+    // Initialize director's memory system
+    const memoryLogger = options.logger.child({ component: 'DirectorMemory' });
+    this.memory = new DirectorMemoryService({
+      logger: memoryLogger,
+      maxAnchors: 15,
+      maxThreads: 8,
+      compressionThreshold: 3,  // Compress every 3 scenes
+    });
 
     // Hard assertion: Director MUST NOT write to semantic layer (role contract — DIR-03)
     const allowedLayers = this.capabilityService.capabilityMap['Director'];
     if ((allowedLayers as string[]).includes('semantic')) {
       throw new Error('Director capability configuration error: semantic layer write must be denied for Director role');
     }
+  }
+
+  /**
+   * Initialize director memory with theme and characters
+   */
+  initializeMemory(theme: string, characters: Array<{ name: string; role: string; objectives: string[] }>): void {
+    this.memory.initialize(theme, characters);
+    this.logger.info({ theme, characterCount: characters.length }, 'Director memory initialized');
+  }
+
+  /**
+   * Get the director's memory service
+   */
+  getMemory(): DirectorMemoryService {
+    return this.memory;
   }
 
   /**
@@ -98,12 +124,21 @@ export class Director {
     const exchangeId = crypto.randomUUID();
     this.logger.debug({ exchangeId, agentId: this.agentId }, 'Director.planBackbone: starting');
 
-    // Read fact context from all layers
+    // Get compressed context from memory system (token-efficient)
+    const compressedContext = this.memory.getContextForPrompt();
+    
+    // Read additional fact context from blackboard
     const factContext = this.readAllLayerContext();
+    
+    // Check memory health
+    const health = this.memory.getHealth();
+    if (health.driftRiskScore > 70) {
+      this.logger.warn({ driftRisk: health.driftRiskScore }, 'High drift risk detected!');
+    }
 
-    // Build prompts
+    // Build prompts with compressed context
     const system = buildDirectorSystemPrompt();
-    const user = buildDirectorUserPrompt(context, factContext);
+    const user = buildDirectorUserPrompt(context, factContext, compressedContext, health);
 
     // Call LLM
     let rawContent: string;
@@ -115,10 +150,13 @@ export class Director {
       throw this.handleLlmFailure(err);
     }
 
-    // Parse JSON
+    // Parse JSON (handle both pure JSON and markdown-wrapped JSON)
     let parsed: unknown;
     try {
-      parsed = JSON.parse(rawContent);
+      // Try to extract JSON from markdown code blocks if present
+      const jsonMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const contentToParse = jsonMatch?.[1] ? jsonMatch[1].trim() : rawContent.trim();
+      parsed = JSON.parse(contentToParse);
     } catch {
       throw new DirectorGenerationError('json_parse', 'LLM response is not valid JSON', rawContent);
     }
